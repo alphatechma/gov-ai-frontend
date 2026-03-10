@@ -36,8 +36,8 @@ const categoryLabels: Record<string, string> = {
 }
 
 const columns: Column<HelpRecord>[] = [
-  { key: 'category', label: 'Categoria', render: (h) => categoryLabels[h.category] ?? h.category },
-  { key: 'description', label: 'Descricao', render: (h) => <span className="line-clamp-1 max-w-xs">{h.description}</span> },
+  { key: 'category', label: 'Categoria', render: (h) => h.category ? (categoryLabels[h.category] ?? h.category) : '-' },
+  { key: 'observations', label: 'Descricao', render: (h) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
   { key: 'status', label: 'Status', render: (h) => <Badge variant={statusColors[h.status] ?? 'secondary'}>{statusLabels[h.status] ?? h.status}</Badge> },
   { key: 'createdAt', label: 'Data', render: (h) => formatDate(h.createdAt) },
   {
@@ -54,7 +54,7 @@ const columns: Column<HelpRecord>[] = [
 export function HelpRecordsPage() {
   const [search, setSearch] = useState('')
   const { list } = useCrud<HelpRecord>('help-records')
-  const filtered = (list.data ?? []).filter((h) => h.description.toLowerCase().includes(search.toLowerCase()))
+  const filtered = (list.data ?? []).filter((h) => (h.observations ?? '').toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div className="space-y-6">
