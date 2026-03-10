@@ -96,16 +96,26 @@ export interface Leader {
   updatedAt: string
 }
 
+export interface HelpType {
+  id: string
+  tenantId: string
+  name: string
+  createdAt: string
+}
+
 export interface HelpRecord {
   id: string
   tenantId: string
   voterId: string | null
   voter?: Voter
-  category: string
+  type: string | null
+  category: string | null
   status: HelpStatus
-  description: string
+  observations: string | null
   resolution: string | null
   responsibleId: string | null
+  leaderId: string | null
+  date: string | null
   documents: string[]
   createdAt: string
   updatedAt: string

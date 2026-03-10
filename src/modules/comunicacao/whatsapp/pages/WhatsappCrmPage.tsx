@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import {
   MessageCircle, Send, Search, Wifi, WifiOff, QrCode,
-  Phone, X, Users, RefreshCw, Check, CheckCheck, Clock,
+  Phone, X, RefreshCw, Check, CheckCheck, Clock,
   AlertCircle, Megaphone,
 } from 'lucide-react'
 import api from '@/lib/api'

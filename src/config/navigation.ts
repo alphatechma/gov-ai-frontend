@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   Users,
   Crown,
-  Headphones,
   MapPin,
   ListTodo,
   UserCog,
@@ -58,7 +57,6 @@ export const navigation: NavGroup[] = [
     label: 'Gabinete',
     icon: Briefcase,
     items: [
-      { label: 'Atendimentos', path: '/atendimentos', icon: Headphones, moduleKey: 'help-records' },
       { label: 'Visitas', path: '/visitas', icon: MapPin, moduleKey: 'visits' },
       { label: 'Tarefas', path: '/tarefas', icon: ListTodo, moduleKey: 'tasks' },
       { label: 'Compromissos', path: '/agenda', icon: CalendarDays, moduleKey: 'agenda' },

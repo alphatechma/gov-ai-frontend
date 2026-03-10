@@ -19,7 +19,6 @@ import { LeaderFormPage } from '@/modules/liderancas/pages/LeaderFormPage'
 import { ElectionResultsPage } from '@/modules/inteligencia/pages/ElectionResultsPage'
 
 // Gabinete
-import { HelpRecordsPage } from '@/modules/gabinete/pages/HelpRecordsPage'
 import { HelpRecordFormPage } from '@/modules/gabinete/pages/HelpRecordFormPage'
 import { VisitsPage } from '@/modules/gabinete/pages/VisitsPage'
 import { VisitFormPage } from '@/modules/gabinete/pages/VisitFormPage'
@@ -96,8 +95,7 @@ export const router = createBrowserRouter([
           moduleRoute('leaders', '/liderancas/:id/editar', <LeaderFormPage />),
           moduleRoute('election-analysis', '/resultados-eleitorais', <ElectionResultsPage />),
 
-          // Gabinete
-          moduleRoute('help-records', '/atendimentos', <HelpRecordsPage />),
+          // Gabinete (atendimentos list is embedded in VotersListPage)
           moduleRoute('help-records', '/atendimentos/novo', <HelpRecordFormPage />),
           moduleRoute('help-records', '/atendimentos/:id/editar', <HelpRecordFormPage />),
           moduleRoute('visits', '/visitas', <VisitsPage />),
