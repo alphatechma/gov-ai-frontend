@@ -5,7 +5,7 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Trash2, UserPlus } from 'lucide-react'
 import type { StaffMember } from '@/types/entities'
 
 export function StaffFormPage() {
@@ -23,6 +23,9 @@ export function StaffFormPage() {
     salary: '',
     startDate: new Date().toISOString().substring(0, 10),
   })
+
+  const [createAccess, setCreateAccess] = useState(false)
+  const [password, setPassword] = useState('')
 
   const member = useQuery({
     queryKey: ['staff-member', id],
@@ -56,6 +59,11 @@ export function StaffFormPage() {
       if (form.email) payload.email = form.email
       if (form.salary) payload.salary = parseFloat(form.salary)
       if (form.startDate) payload.startDate = form.startDate
+
+      if (!isEdit && createAccess) {
+        payload.createAccess = true
+        payload.password = password
+      }
 
       return isEdit ? api.patch(`/staff/${id}`, payload) : api.post('/staff', payload)
     },
@@ -113,8 +121,8 @@ export function StaffFormPage() {
               <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="(00) 00000-0000" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">E-mail</label>
-              <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
+              <label className="text-sm font-medium">E-mail {createAccess && '*'}</label>
+              <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required={createAccess} />
             </div>
           </CardContent>
         </Card>
@@ -141,6 +149,54 @@ export function StaffFormPage() {
           </CardContent>
         </Card>
 
+        {!isEdit && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Acesso a Plataforma
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={createAccess}
+                  onChange={(e) => {
+                    setCreateAccess(e.target.checked)
+                    if (!e.target.checked) setPassword('')
+                  }}
+                  className="h-4 w-4 rounded border-input"
+                />
+                <span className="text-sm font-medium">Criar acesso na aplicacao para este membro</span>
+              </label>
+              <p className="text-xs text-muted-foreground">
+                O membro podera acessar a plataforma com o e-mail informado e a senha definida abaixo. Perfil: Assessor
+              </p>
+
+              {createAccess && (
+                <div className="grid gap-4 sm:grid-cols-2 pt-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">E-mail de acesso</label>
+                    <Input type="email" value={form.email} disabled className="bg-muted" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Senha *</label>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Minimo 6 caracteres"
+                      required={createAccess}
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/equipe')}>Cancelar</Button>
           <Button type="submit" disabled={save.isPending}>
@@ -149,7 +205,11 @@ export function StaffFormPage() {
           </Button>
         </div>
 
-        {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}
+        {save.isError && (
+          <p className="text-sm text-destructive">
+            {(save.error as any)?.response?.data?.message || 'Erro ao salvar. Verifique os dados e tente novamente.'}
+          </p>
+        )}
       </form>
     </div>
   )

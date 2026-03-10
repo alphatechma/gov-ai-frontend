@@ -429,8 +429,9 @@ function TabSecoes({ electionId }: { electionId: string }) {
 // ══════════════════════════════════════════════════════
 // TAB: INSIGHTS
 // ══════════════════════════════════════════════════════
-function TabInsights({ electionId }: { electionId: string }) {
+function TabInsights({ electionId, elections }: { electionId: string; elections: any[] }) {
   const [selectedCandidate, setSelectedCandidate] = useState<string>('')
+  const [compareElectionId, setCompareElectionId] = useState<string>('')
   const { data: insights, isLoading } = useElection<any>(electionId, 'insights',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
   )
@@ -445,6 +446,16 @@ function TabInsights({ electionId }: { electionId: string }) {
     electionId,
     'candidate-by-section',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+  )
+
+  // Cross-election comparison
+  const otherElections = elections.filter(e => e.id !== electionId)
+  const { data: crossData, isLoading: loadingCross } = useElection<any>(
+    electionId,
+    'cross-election',
+    selectedCandidate && compareElectionId
+      ? { candidateName: selectedCandidate, compareElectionId }
+      : undefined,
   )
 
   if (isLoading) return <LoadingCards />
@@ -634,6 +645,185 @@ function TabInsights({ electionId }: { electionId: string }) {
           </div>
         )
       })()}
+
+      {/* Comparacao entre Eleicoes */}
+      {selectedCandidate && otherElections.length > 0 && (
+        <div className="space-y-4">
+          <hr className="border-border" />
+          <p className="text-lg font-semibold">Comparacao entre Eleicoes</p>
+
+          <Card>
+            <CardContent className="p-4">
+              <label className="block text-sm font-medium mb-2">Comparar com:</label>
+              <Select value={compareElectionId} onChange={e => setCompareElectionId(e.target.value)}>
+                <option value="">Selecionar eleicao para comparar...</option>
+                {otherElections.map((el: any) => (
+                  <option key={el.id} value={el.id}>
+                    {el.cargo} — {el.city}/{el.state} {el.year} ({el.round}o Turno)
+                  </option>
+                ))}
+              </Select>
+            </CardContent>
+          </Card>
+
+          {compareElectionId && loadingCross && <LoadingCards count={4} />}
+
+          {compareElectionId && crossData && crossData.candidateFound && (() => {
+            const ev = crossData.evolution
+            const currentEl = crossData.current
+            const compareEl = crossData.compare
+            const growthColor = ev.votesDiff >= 0 ? '#16a34a' : '#dc2626'
+            const rankColor = ev.rankChange > 0 ? '#16a34a' : ev.rankChange < 0 ? '#dc2626' : '#6b7280'
+
+            return (
+              <div className="space-y-4">
+                {/* KPIs de evolucao */}
+                <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                  <KpiCard
+                    label="Variacao de Votos"
+                    value={`${ev.votesDiff >= 0 ? '+' : ''}${fmt(ev.votesDiff)}`}
+                    color={growthColor}
+                    subtitle={`${ev.votesGrowth >= 0 ? '+' : ''}${ev.votesGrowth}% de crescimento`}
+                  />
+                  <KpiCard
+                    label="Mudanca de Ranking"
+                    value={`${compareEl.rank}o → ${currentEl.rank}o`}
+                    color={rankColor}
+                    subtitle={ev.rankChange > 0 ? `Subiu ${ev.rankChange} posicao(oes)` : ev.rankChange < 0 ? `Desceu ${Math.abs(ev.rankChange)}` : 'Manteve posicao'}
+                  />
+                  <KpiCard
+                    label="Variacao %"
+                    value={`${ev.percentageDiff >= 0 ? '+' : ''}${ev.percentageDiff} p.p.`}
+                    color={ev.percentageDiff >= 0 ? '#16a34a' : '#dc2626'}
+                    subtitle={`${compareEl.percentage}% → ${currentEl.percentage}%`}
+                  />
+                  <KpiCard
+                    label="Zonas com Votos"
+                    value={`${compareEl.zones} → ${currentEl.zones}`}
+                    color="#8b5cf6"
+                    subtitle={ev.zonesGained.length > 0 ? `+${ev.zonesGained.length} nova(s)` : ev.zonesLost.length > 0 ? `-${ev.zonesLost.length} perdida(s)` : 'Sem alteracao'}
+                  />
+                </div>
+
+                {/* Info de partido */}
+                {currentEl.party !== compareEl.party && (
+                  <Card className="border-l-4 border-l-amber-500">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <span className="text-amber-500 text-lg">⚠</span>
+                      <p className="text-sm">Mudanca de partido: <strong>{compareEl.party}</strong> ({compareEl.year}) → <strong>{currentEl.party}</strong> ({currentEl.year})</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Grafico de barras side-by-side por zona */}
+                <Card>
+                  <CardHeader><CardTitle>Evolucao por Zona</CardTitle></CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={Math.max(300, ev.byZone.length * 40)}>
+                      <BarChart data={ev.byZone} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" tickFormatter={(v) => fmt(v)} />
+                        <YAxis type="category" dataKey="zone" tick={{ fontSize: 12 }} width={50}
+                          tickFormatter={(v) => `Zona ${v}`} />
+                        <Tooltip formatter={((v: number) => fmt(v)) as any} />
+                        <Bar dataKey="compareVotes" name={`${compareEl.year}`} fill="#94A3B8" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="currentVotes" name={`${currentEl.year}`} fill="#3B82F6" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Tabela detalhada por zona */}
+                <Card>
+                  <CardHeader><CardTitle>Detalhamento por Zona</CardTitle></CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-auto max-h-[400px]">
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
+                          <tr className="border-b">
+                            <th className="p-3 text-left font-medium">Zona</th>
+                            <th className="p-3 text-right font-medium">{compareEl.year}</th>
+                            <th className="p-3 text-right font-medium">{currentEl.year}</th>
+                            <th className="p-3 text-right font-medium">Diferenca</th>
+                            <th className="p-3 text-right font-medium">Crescimento</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ev.byZone.map((z: any, i: number) => (
+                            <tr key={z.zone} className={`border-b ${i % 2 === 0 ? 'bg-muted/20' : ''}`}>
+                              <td className="p-3 font-medium">Zona {z.zone}</td>
+                              <td className="p-3 text-right text-muted-foreground">{fmt(z.compareVotes)}</td>
+                              <td className="p-3 text-right font-semibold">{fmt(z.currentVotes)}</td>
+                              <td className={`p-3 text-right font-semibold ${z.diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {z.diff >= 0 ? '+' : ''}{fmt(z.diff)}
+                              </td>
+                              <td className={`p-3 text-right ${z.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {z.growth >= 0 ? '+' : ''}{z.growth}%
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Zonas ganhas/perdidas */}
+                {(ev.zonesGained.length > 0 || ev.zonesLost.length > 0) && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {ev.zonesGained.length > 0 && (
+                      <Card className="border-l-4 border-l-green-500">
+                        <CardHeader className="pb-2"><CardTitle className="text-green-600 text-base">Zonas Conquistadas</CardTitle></CardHeader>
+                        <CardContent>
+                          <p className="text-sm">
+                            {ev.zonesGained.map((z: number) => `Zona ${z}`).join(', ')}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">Zonas onde nao havia votos em {compareEl.year}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {ev.zonesLost.length > 0 && (
+                      <Card className="border-l-4 border-l-red-500">
+                        <CardHeader className="pb-2"><CardTitle className="text-red-600 text-base">Zonas Perdidas</CardTitle></CardHeader>
+                        <CardContent>
+                          <p className="text-sm">
+                            {ev.zonesLost.map((z: number) => `Zona ${z}`).join(', ')}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">Zonas onde nao ha votos em {currentEl.year}</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
+          {/* Candidato nao encontrado na outra eleicao */}
+          {compareElectionId && crossData && !crossData.candidateFound && !crossData.error && (
+            <Card className="border-l-4 border-l-amber-500">
+              <CardContent className="p-5">
+                <p className="font-semibold text-amber-700 dark:text-amber-400 mb-2">
+                  Candidato nao encontrado em {crossData.compareElection?.year}
+                </p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  "{crossData.candidateName}" nao participou desta eleicao{crossData.compareElection ? ` (${crossData.compareElection.cargo} ${crossData.compareElection.year})` : ''}.
+                </p>
+                {crossData.suggestions && crossData.suggestions.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Nomes similares encontrados:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {crossData.suggestions.map((name: string) => (
+                        <span key={name} className="text-xs px-2 py-1 rounded-full bg-muted font-medium">{name}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {selectedCandidate && <hr className="border-border" />}
 
@@ -1151,7 +1341,7 @@ export function ElectionResultsPage() {
           {selectedElectionId ? <TabSecoes electionId={selectedElectionId} /> : <NoElection />}
         </TabsContent>
         <TabsContent value="insights">
-          {selectedElectionId ? <TabInsights electionId={selectedElectionId} /> : <NoElection />}
+          {selectedElectionId ? <TabInsights electionId={selectedElectionId} elections={elections} /> : <NoElection />}
         </TabsContent>
         <TabsContent value="comparar">
           {selectedElectionId ? <TabComparar electionId={selectedElectionId} /> : <NoElection />}
