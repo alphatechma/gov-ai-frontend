@@ -53,9 +53,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Header */}
         <div className={cn('flex h-16 items-center border-b', collapsed ? 'justify-center px-2' : 'justify-between px-6')}>
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-              G
-            </div>
+            <img src="/icon-governe.png" alt="GoverneAI" className="h-8 w-8 flex-shrink-0 rounded-lg" />
             {!collapsed && (
               <span className="text-lg font-bold text-sidebar-foreground">
                 GoverneAI

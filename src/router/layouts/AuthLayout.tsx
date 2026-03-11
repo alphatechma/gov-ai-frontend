@@ -16,9 +16,7 @@ export function AuthLayout() {
         <div className="relative z-10 flex flex-col justify-between p-10 w-full">
           {/* Logo + Name */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm text-white font-bold text-lg">
-              G
-            </div>
+            <img src="/icon-governe-branco.png" alt="GoverneAI" className="h-10 w-10" />
             <span className="text-xl font-semibold text-white tracking-tight">
               GoverneAI
             </span>
@@ -45,9 +43,7 @@ export function AuthLayout() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-              G
-            </div>
+            <img src="/icon-governe.png" alt="GoverneAI" className="h-10 w-10 rounded-lg" />
             <span className="text-xl font-semibold tracking-tight">
               GoverneAI
             </span>
