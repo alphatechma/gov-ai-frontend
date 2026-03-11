@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Send, MessageSquare, Users, User, X, Search,
-  Settings, UserPlus, LogOut, Trash2, Check,
+  Settings, UserPlus, LogOut, Trash2, Check, ArrowLeft,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
@@ -275,9 +275,181 @@ export function ChatPage() {
   const myRole = selectedConv?.participants.find((p) => p.userId === userId)?.role
   const typingNames = typing[selectedId ?? ''] ?? []
 
+  /* ─── conversation list component ─── */
+  const ConversationList = (
+    <Card className="flex flex-col overflow-hidden h-full">
+      <div className="p-3 border-b">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Buscar conversa..." value={searchConv} onChange={(e) => setSearchConv(e.target.value)} className="pl-8 h-9 text-sm" />
+        </div>
+      </div>
+      <ScrollArea className="flex-1">
+        <div className="p-1.5 space-y-0.5">
+          {conversations.map((conv) => {
+            const name = getDisplayName(conv)
+            const unread = conv.participants.find((p) => p.userId === userId)?.unreadCount ?? 0
+            return (
+              <button
+                key={conv.id}
+                onClick={() => setSelectedId(conv.id)}
+                className={cn(
+                  'w-full rounded-lg p-3 text-left transition-colors flex gap-3 items-center cursor-pointer',
+                  selectedId === conv.id ? 'bg-accent' : 'hover:bg-accent/50',
+                )}
+              >
+                <div className={cn(
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white',
+                  conv.type === 'GROUP' ? 'bg-purple-500' : 'bg-blue-500',
+                )}>
+                  {conv.type === 'GROUP' ? <Users className="h-4 w-4" /> : getInitials(name)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium truncate">{name}</p>
+                    {conv.lastMessageAt && (
+                      <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{formatTime(conv.lastMessageAt)}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <p className="text-xs text-muted-foreground truncate">
+                      {conv.lastMessageText ?? 'Sem mensagens'}
+                    </p>
+                    {unread > 0 && (
+                      <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5 text-[10px] shrink-0">
+                        {unread}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+          {conversations.length === 0 && (
+            <div className="flex flex-col items-center py-12 text-center">
+              <MessageSquare className="h-8 w-8 text-muted-foreground/40" />
+              <p className="mt-2 text-xs text-muted-foreground">Nenhuma conversa</p>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </Card>
+  )
+
+  /* ─── chat area component ─── */
+  const ChatArea = (
+    <Card className="flex flex-1 flex-col overflow-hidden h-full">
+      {selectedConv ? (
+        <>
+          {/* header */}
+          <div className="flex items-center justify-between border-b px-3 py-3 sm:px-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden shrink-0"
+                onClick={() => setSelectedId(null)}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className={cn(
+                'flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white shrink-0',
+                selectedConv.type === 'GROUP' ? 'bg-purple-500' : 'bg-blue-500',
+              )}>
+                {selectedConv.type === 'GROUP' ? <Users className="h-4 w-4" /> : getInitials(getDisplayName(selectedConv))}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{getDisplayName(selectedConv)}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {typingNames.length > 0
+                    ? `${typingNames.join(', ')} digitando...`
+                    : selectedConv.type === 'GROUP'
+                      ? `${selectedConv.participants.length} membros`
+                      : 'Conversa direta'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              {selectedConv.type === 'GROUP' && (
+                <Button variant="ghost" size="icon" onClick={() => { setEditGroupName(selectedConv.name ?? ''); setShowGroupInfo(true) }}>
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-destructive"
+                onClick={() => { if (confirm('Apagar esta conversa?')) deleteConv.mutate() }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* messages */}
+          <ScrollArea className="flex-1 p-3 sm:p-4">
+            <div className="space-y-3">
+              {(msgQuery.data ?? []).map((msg) => {
+                const isMine = msg.senderId === userId
+                return (
+                  <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
+                    <div className={cn(
+                      'max-w-[85%] sm:max-w-[70%] rounded-xl px-3.5 py-2 text-sm',
+                      isMine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm',
+                    )}>
+                      {!isMine && selectedConv.type === 'GROUP' && (
+                        <p className="text-xs font-semibold mb-0.5 text-primary">{msg.senderName}</p>
+                      )}
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      <p className={cn('text-[10px] mt-1 text-right', isMine ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
+                        {formatTime(msg.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+              <div ref={scrollRef} />
+            </div>
+          </ScrollArea>
+
+          {/* input */}
+          <CardContent className="border-t p-3">
+            <form onSubmit={(e) => { e.preventDefault(); handleSend() }} className="flex gap-2">
+              <Input
+                placeholder="Digite uma mensagem..."
+                value={input}
+                onChange={(e) => handleInputChange(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit" size="icon" disabled={!input.trim() || sendMsg.isPending}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </CardContent>
+        </>
+      ) : (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center px-4">
+            <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground/30" />
+            <p className="mt-4 text-sm text-muted-foreground">Selecione uma conversa para comecar</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowNewDirect(true)}>
+                <User className="h-4 w-4" /> Nova Conversa
+              </Button>
+              <Button size="sm" onClick={() => setShowNewGroup(true)}>
+                <Users className="h-4 w-4" /> Novo Grupo
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+
   /* ─── render ─── */
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col gap-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Chat</h1>
@@ -285,173 +457,23 @@ export function ChatPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowNewDirect(true)}>
-            <User className="h-4 w-4" /> Conversa
+            <User className="h-4 w-4" /> <span className="hidden sm:inline">Conversa</span>
           </Button>
           <Button size="sm" onClick={() => setShowNewGroup(true)}>
-            <Users className="h-4 w-4" /> Grupo
+            <Users className="h-4 w-4" /> <span className="hidden sm:inline">Grupo</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* ─── sidebar ─── */}
-        <Card className="w-80 shrink-0 flex flex-col overflow-hidden">
-          <div className="p-3 border-b">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar conversa..." value={searchConv} onChange={(e) => setSearchConv(e.target.value)} className="pl-8 h-9 text-sm" />
-            </div>
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="p-1.5 space-y-0.5">
-              {conversations.map((conv) => {
-                const name = getDisplayName(conv)
-                const unread = conv.participants.find((p) => p.userId === userId)?.unreadCount ?? 0
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => setSelectedId(conv.id)}
-                    className={cn(
-                      'w-full rounded-lg p-3 text-left transition-colors flex gap-3 items-center cursor-pointer',
-                      selectedId === conv.id ? 'bg-accent' : 'hover:bg-accent/50',
-                    )}
-                  >
-                    <div className={cn(
-                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white',
-                      conv.type === 'GROUP' ? 'bg-purple-500' : 'bg-blue-500',
-                    )}>
-                      {conv.type === 'GROUP' ? <Users className="h-4 w-4" /> : getInitials(name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium truncate">{name}</p>
-                        {conv.lastMessageAt && (
-                          <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{formatTime(conv.lastMessageAt)}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs text-muted-foreground truncate">
-                          {conv.lastMessageText ?? 'Sem mensagens'}
-                        </p>
-                        {unread > 0 && (
-                          <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5 text-[10px] shrink-0">
-                            {unread}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                )
-              })}
-              {conversations.length === 0 && (
-                <div className="flex flex-col items-center py-12 text-center">
-                  <MessageSquare className="h-8 w-8 text-muted-foreground/40" />
-                  <p className="mt-2 text-xs text-muted-foreground">Nenhuma conversa</p>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </Card>
+      {/* Desktop: side-by-side */}
+      <div className="hidden lg:flex flex-1 gap-4 overflow-hidden">
+        <div className="w-80 shrink-0">{ConversationList}</div>
+        {ChatArea}
+      </div>
 
-        {/* ─── chat area ─── */}
-        <Card className="flex flex-1 flex-col overflow-hidden">
-          {selectedConv ? (
-            <>
-              {/* header */}
-              <div className="flex items-center justify-between border-b px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white',
-                    selectedConv.type === 'GROUP' ? 'bg-purple-500' : 'bg-blue-500',
-                  )}>
-                    {selectedConv.type === 'GROUP' ? <Users className="h-4 w-4" /> : getInitials(getDisplayName(selectedConv))}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{getDisplayName(selectedConv)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {typingNames.length > 0
-                        ? `${typingNames.join(', ')} digitando...`
-                        : selectedConv.type === 'GROUP'
-                          ? `${selectedConv.participants.length} membros`
-                          : 'Conversa direta'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  {selectedConv.type === 'GROUP' && (
-                    <Button variant="ghost" size="icon" onClick={() => { setEditGroupName(selectedConv.name ?? ''); setShowGroupInfo(true) }}>
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => { if (confirm('Apagar esta conversa?')) deleteConv.mutate() }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-3">
-                  {(msgQuery.data ?? []).map((msg) => {
-                    const isMine = msg.senderId === userId
-                    return (
-                      <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
-                        <div className={cn(
-                          'max-w-[70%] rounded-xl px-3.5 py-2 text-sm',
-                          isMine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm',
-                        )}>
-                          {!isMine && selectedConv.type === 'GROUP' && (
-                            <p className="text-xs font-semibold mb-0.5 text-primary">{msg.senderName}</p>
-                          )}
-                          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                          <p className={cn('text-[10px] mt-1 text-right', isMine ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
-                            {formatTime(msg.createdAt)}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <div ref={scrollRef} />
-                </div>
-              </ScrollArea>
-
-              {/* input */}
-              <CardContent className="border-t p-3">
-                <form onSubmit={(e) => { e.preventDefault(); handleSend() }} className="flex gap-2">
-                  <Input
-                    placeholder="Digite uma mensagem..."
-                    value={input}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button type="submit" size="icon" disabled={!input.trim() || sendMsg.isPending}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
-              </CardContent>
-            </>
-          ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <div className="text-center">
-                <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground/30" />
-                <p className="mt-4 text-sm text-muted-foreground">Selecione uma conversa para comecar</p>
-                <div className="mt-4 flex justify-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setShowNewDirect(true)}>
-                    <User className="h-4 w-4" /> Nova Conversa
-                  </Button>
-                  <Button size="sm" onClick={() => setShowNewGroup(true)}>
-                    <Users className="h-4 w-4" /> Novo Grupo
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </Card>
+      {/* Mobile: show list or chat */}
+      <div className="flex lg:hidden flex-1 overflow-hidden">
+        {selectedId ? ChatArea : ConversationList}
       </div>
 
       {/* ─── Modal: Nova Conversa Direta ─── */}
@@ -478,9 +500,9 @@ export function ChatPage() {
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
                         {getInitials(u.name)}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">{u.name}</p>
-                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{u.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                       </div>
                     </button>
                   ))}
@@ -551,9 +573,9 @@ export function ChatPage() {
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-xs font-bold text-white">
                             {getInitials(u.name)}
                           </div>
-                          <div>
-                            <p className="text-sm font-medium">{u.name}</p>
-                            <p className="text-xs text-muted-foreground">{u.email}</p>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{u.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                           </div>
                         </button>
                       )
@@ -613,19 +635,19 @@ export function ChatPage() {
                   <div className="space-y-1">
                     {selectedConv.participants.map((p) => (
                       <div key={p.id} className="flex items-center justify-between rounded-lg p-2.5">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white shrink-0">
                             {getInitials(p.userName ?? '?')}
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium">{p.userName ?? 'Usuario'}</p>
-                              {p.role === 'ADMIN' && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Admin</Badge>}
+                              <p className="text-sm font-medium truncate">{p.userName ?? 'Usuario'}</p>
+                              {p.role === 'ADMIN' && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Admin</Badge>}
                             </div>
                           </div>
                         </div>
                         {myRole === 'ADMIN' && p.userId !== userId && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeMember.mutate(p.userId)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeMember.mutate(p.userId)}>
                             <LogOut className="h-4 w-4" />
                           </Button>
                         )}
@@ -670,9 +692,9 @@ export function ChatPage() {
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
                         {getInitials(u.name)}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">{u.name}</p>
-                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{u.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                       </div>
                     </button>
                   ))}
