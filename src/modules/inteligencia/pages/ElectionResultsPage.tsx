@@ -1399,7 +1399,7 @@ export function ElectionResultsPage() {
       ) : null}
 
       <Tabs defaultValue="resumo">
-        <TabsList className="flex-wrap">
+        <TabsList className="h-auto flex-wrap gap-1">
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="bairros">{selectedElection?.type === 'estadual_federal' ? 'Municipios' : 'Bairros'}</TabsTrigger>
           <TabsTrigger value="secoes">Secoes</TabsTrigger>

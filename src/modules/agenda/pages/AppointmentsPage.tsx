@@ -70,7 +70,7 @@ export function AppointmentsPage() {
         title="Agenda"
         description="Compromissos e eventos"
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* View toggle */}
             <div className="flex rounded-lg border bg-muted p-1">
               <button

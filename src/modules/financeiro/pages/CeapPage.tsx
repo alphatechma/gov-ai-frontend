@@ -153,52 +153,52 @@ export function CeapPage() {
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-              <TrendingUp className="h-6 w-6" />
+        <Card className="min-w-0">
+          <CardContent className="flex items-center gap-3 p-4 sm:gap-4 sm:p-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 sm:h-12 sm:w-12">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Receitas</p>
-              <p className="text-2xl font-bold">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.totalReceitas ?? 0)}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-              <TrendingDown className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Despesas</p>
-              <p className="text-2xl font-bold">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.totalDespesas ?? 0)}</p>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground sm:text-sm">Total Receitas</p>
+              <p className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.totalReceitas ?? 0)}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-              <Wallet className="h-6 w-6" />
+        <Card className="min-w-0">
+          <CardContent className="flex items-center gap-3 p-4 sm:gap-4 sm:p-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 sm:h-12 sm:w-12">
+              <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Saldo</p>
-              <p className={`text-2xl font-bold ${(s?.saldo ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground sm:text-sm">Total Despesas</p>
+              <p className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.totalDespesas ?? 0)}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="min-w-0">
+          <CardContent className="flex items-center gap-3 p-4 sm:gap-4 sm:p-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 sm:h-12 sm:w-12">
+              <Wallet className="h-5 w-5 sm:h-6 sm:w-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground sm:text-sm">Saldo</p>
+              <p className={`truncate text-lg font-bold sm:text-2xl ${(s?.saldo ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.saldo ?? 0)}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400">
-              <Clock className="h-6 w-6" />
+        <Card className="min-w-0">
+          <CardContent className="flex items-center gap-3 p-4 sm:gap-4 sm:p-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400 sm:h-12 sm:w-12">
+              <Clock className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Pendentes</p>
-              <p className="text-2xl font-bold">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : s?.pendentes ?? 0}</p>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground sm:text-sm">Pendentes</p>
+              <p className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : s?.pendentes ?? 0}</p>
             </div>
           </CardContent>
         </Card>

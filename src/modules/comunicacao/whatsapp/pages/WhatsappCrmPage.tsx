@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   MessageCircle, Send, Search, Wifi, WifiOff, QrCode,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
-  AlertCircle, Megaphone,
+  AlertCircle, Megaphone, ArrowLeft,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -189,16 +189,16 @@ function ConnectionSetup({ connection, onRefresh }: { connection: WaConnection |
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
             <div className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-full',
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
               isConnected ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground',
             )}>
               {isConnected ? <Wifi className="h-5 w-5" /> : <WifiOff className="h-5 w-5" />}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm font-semibold">
                   {isConnected ? 'Conectado' : isPending ? 'Aguardando QR Code...' : 'Desconectado'}
                 </p>
@@ -207,7 +207,7 @@ function ConnectionSetup({ connection, onRefresh }: { connection: WaConnection |
                 </Badge>
               </div>
               {isConnected && connection?.phoneNumber && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   {formatPhone(connection.phoneNumber)}
                   {connection.pushName ? ` - ${connection.pushName}` : ''}
                 </p>
@@ -215,7 +215,7 @@ function ConnectionSetup({ connection, onRefresh }: { connection: WaConnection |
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-2">
             {isConnected ? (
               <Button
                 variant="outline"
@@ -519,15 +519,15 @@ export function WhatsappCrmPage() {
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">WhatsApp CRM</h1>
           <p className="text-sm text-muted-foreground">Gerencie conversas e disparos via WhatsApp</p>
         </div>
         {isConnected && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={handleNewChat}>
-              <Phone className="h-4 w-4" /> Nova Conversa
+              <Phone className="h-4 w-4" /> <span className="hidden sm:inline">Nova Conversa</span><span className="sm:hidden">Conversa</span>
             </Button>
             <Button size="sm" onClick={() => setShowBroadcast(true)}>
               <Megaphone className="h-4 w-4" /> Broadcast
@@ -545,10 +545,9 @@ export function WhatsappCrmPage() {
       />
 
       {/* Chat area - only when connected */}
-      {isConnected && (
-        <div className="flex flex-1 gap-4 overflow-hidden">
-          {/* ─── Chat sidebar ─── */}
-          <Card className="w-80 shrink-0 flex flex-col overflow-hidden">
+      {isConnected && (() => {
+        const ChatSidebar = (
+          <Card className="flex flex-col overflow-hidden h-full">
             <div className="p-3 border-b">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -617,22 +616,31 @@ export function WhatsappCrmPage() {
               </div>
             </ScrollArea>
           </Card>
+        )
 
-          {/* ─── Message area ─── */}
-          <Card className="flex flex-1 flex-col overflow-hidden">
+        const ChatArea = (
+          <Card className="flex flex-1 flex-col overflow-hidden h-full">
             {selectedPhone ? (
               <>
                 {/* Chat header */}
-                <div className="flex items-center justify-between border-b px-4 py-3">
+                <div className="flex items-center justify-between border-b px-3 py-3 sm:px-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="lg:hidden shrink-0"
+                      onClick={() => setSelectedPhone(null)}
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
                       {getInitials(selectedChat?.remoteName || selectedPhone.slice(-4))}
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">
                         {selectedChat?.remoteName || formatPhone(selectedPhone)}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground truncate">
                         {formatPhone(selectedPhone)}
                         {selectedChat ? ` - ${selectedChat.messageCount} mensagens` : ''}
                       </p>
@@ -642,14 +650,14 @@ export function WhatsappCrmPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setSelectedPhone(null)}
-                    className="text-muted-foreground"
+                    className="text-muted-foreground hidden lg:inline-flex"
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
+                <ScrollArea className="flex-1 p-3 sm:p-4">
                   <div className="space-y-3">
                     {msgQuery.isLoading ? (
                       Array.from({ length: 3 }).map((_, i) => (
@@ -667,7 +675,7 @@ export function WhatsappCrmPage() {
                       return (
                         <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
                           <div className={cn(
-                            'max-w-[70%] rounded-xl px-3.5 py-2 text-sm',
+                            'max-w-[85%] sm:max-w-[70%] rounded-xl px-3.5 py-2 text-sm',
                             isMine
                               ? 'bg-green-500 text-white rounded-br-sm'
                               : 'bg-muted rounded-bl-sm',
@@ -713,7 +721,7 @@ export function WhatsappCrmPage() {
               </>
             ) : (
               <div className="flex flex-1 items-center justify-center">
-                <div className="text-center">
+                <div className="text-center px-4">
                   <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground/30" />
                   <p className="mt-4 text-sm text-muted-foreground">Selecione uma conversa ou inicie uma nova</p>
                   <Button variant="outline" size="sm" className="mt-3" onClick={handleNewChat}>
@@ -723,8 +731,23 @@ export function WhatsappCrmPage() {
               </div>
             )}
           </Card>
-        </div>
-      )}
+        )
+
+        return (
+          <>
+            {/* Desktop: side-by-side */}
+            <div className="hidden lg:flex flex-1 gap-4 overflow-hidden">
+              <div className="w-80 shrink-0">{ChatSidebar}</div>
+              {ChatArea}
+            </div>
+
+            {/* Mobile: show list or chat */}
+            <div className="flex lg:hidden flex-1 overflow-hidden">
+              {selectedPhone ? ChatArea : ChatSidebar}
+            </div>
+          </>
+        )
+      })()}
 
       {/* Empty state when not connected */}
       {!isConnected && !connQuery.isLoading && (

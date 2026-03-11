@@ -378,7 +378,7 @@ export function VotersListPage() {
   return (
     <div className="space-y-6">
       {/* ─── Tab toggle + header ─── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="inline-flex items-center rounded-lg border bg-muted p-1 mb-2">
             <button
@@ -413,7 +413,7 @@ export function VotersListPage() {
 
         {/* ─── Actions ─── */}
         {tab === 'eleitores' ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={exportVoters} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Exportar
@@ -430,7 +430,7 @@ export function VotersListPage() {
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={exportHelp} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Exportar
@@ -519,7 +519,7 @@ export function VotersListPage() {
           )}
 
           {/* Voter KPIs */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Card>
               <CardContent className="flex items-center gap-3 p-4">
                 <div className="rounded-lg bg-blue-100 p-2.5 dark:bg-blue-900/30">
@@ -594,7 +594,7 @@ export function VotersListPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Select value={voterFilterBairro} onChange={(e) => setVoterFilterBairro(e.target.value)}>
                   <option value="">Todos os bairros</option>
                   {(stats?.bairros ?? []).map((b) => (
