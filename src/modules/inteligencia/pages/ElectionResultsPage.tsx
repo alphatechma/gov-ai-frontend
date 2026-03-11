@@ -188,56 +188,70 @@ function TabResumo({ electionId }: { electionId: string }) {
 // ══════════════════════════════════════════════════════
 // TAB: BAIRROS
 // ══════════════════════════════════════════════════════
-function TabBairros({ electionId }: { electionId: string }) {
+function TabBairros({ electionId, electionType }: { electionId: string; electionType?: string }) {
+  const isStateLevel = electionType === 'estadual_federal'
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null)
-  const { data: neighborhoods, isLoading } = useElection<any[]>(electionId, 'by-neighborhood')
+
+  // Para eleicoes estaduais: usa by-city; para municipais: usa by-neighborhood
+  const { data: neighborhoods, isLoading: loadingNeighborhoods } = useElection<any[]>(electionId, 'by-neighborhood')
+  const { data: cities, isLoading: loadingCities } = useElection<any[]>(electionId, 'by-city')
+
   const { data: details } = useElection<any>(
     electionId,
     'neighborhood-details',
-    selectedNeighborhood ? { neighborhood: selectedNeighborhood } : undefined,
+    !isStateLevel && selectedNeighborhood ? { neighborhood: selectedNeighborhood } : undefined,
   )
 
   const NEIGHBORHOOD_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1']
 
+  const isLoading = isStateLevel ? loadingCities : loadingNeighborhoods
   if (isLoading) return <LoadingCards count={2} />
 
-  const maxVotes = (neighborhoods ?? []).length > 0 ? Math.max(...(neighborhoods ?? []).map(n => n.totalVotes)) : 1
+  // Normalizar dados para renderizar a mesma UI
+  const items: { label: string; votes: number; sections?: number; zones?: number; percentage: number }[] = isStateLevel
+    ? (cities ?? []).map((c: any) => ({ label: c.cityName, votes: c.votes, zones: c.zones, sections: c.sections, percentage: c.percentage }))
+    : (neighborhoods ?? []).map((n: any) => ({ label: n.neighborhood, votes: n.totalVotes, sections: n.sectionsCount, percentage: n.percentage }))
+
+  const maxVotes = items.length > 0 ? Math.max(...items.map(i => i.votes)) : 1
+  const entityLabel = isStateLevel ? 'municipio' : 'bairro'
+  const entityLabelPlural = isStateLevel ? 'municipios' : 'bairros'
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Distribuicao por Bairro</CardTitle>
-          <CardDescription>{(neighborhoods ?? []).length} bairros - Clique em um bairro para ver detalhes</CardDescription>
+          <CardTitle>Distribuicao por {isStateLevel ? 'Municipio' : 'Bairro'}</CardTitle>
+          <CardDescription>{items.length} {entityLabelPlural} - {isStateLevel ? 'Ordenados por votos' : 'Clique em um bairro para ver detalhes'}</CardDescription>
         </CardHeader>
         <CardContent>
-          {(neighborhoods ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum dado de bairro disponivel. Importe dados com mapeamento de bairros na aba Importar.</p>
+          {items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum dado de {entityLabel} disponivel.</p>
           ) : (
-            <div className="space-y-2">
-              {(neighborhoods ?? []).slice(0, 20).map((item, index) => {
-                const barW = (item.totalVotes / maxVotes) * 100
+            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+              {items.slice(0, isStateLevel ? 50 : 20).map((item, index) => {
+                const barW = (item.votes / maxVotes) * 100
                 const color = NEIGHBORHOOD_COLORS[index % NEIGHBORHOOD_COLORS.length]
-                const isSelected = selectedNeighborhood === item.neighborhood
+                const isSelected = !isStateLevel && selectedNeighborhood === item.label
                 return (
                   <button
-                    key={item.neighborhood}
-                    onClick={() => setSelectedNeighborhood(isSelected ? null : item.neighborhood)}
-                    className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'}`}
+                    key={item.label}
+                    onClick={() => !isStateLevel && setSelectedNeighborhood(isSelected ? null : item.label)}
+                    className={`w-full text-left p-3 rounded-lg border transition-all ${!isStateLevel ? 'cursor-pointer' : 'cursor-default'} ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'}`}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                         style={{ backgroundColor: color }}>
                         {index + 1}
                       </div>
-                      <span className="font-medium text-sm truncate flex-1">{item.neighborhood}</span>
-                      <span className="text-xs text-muted-foreground">{item.sectionsCount} secoes</span>
+                      <span className="font-medium text-sm truncate flex-1">{item.label}</span>
+                      {item.zones !== undefined && <span className="text-xs text-muted-foreground">{item.zones} zonas</span>}
+                      {item.sections !== undefined && <span className="text-xs text-muted-foreground">{item.sections} secoes</span>}
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${barW}%`, backgroundColor: color }} />
                     </div>
                     <div className="flex justify-between mt-1">
-                      <span className="text-sm font-semibold">{fmt(item.totalVotes)} votos</span>
+                      <span className="text-sm font-semibold">{fmt(item.votes)} votos</span>
                       <span className="text-sm text-muted-foreground">{item.percentage}%</span>
                     </div>
                   </button>
@@ -248,7 +262,7 @@ function TabBairros({ electionId }: { electionId: string }) {
         </CardContent>
       </Card>
 
-      {selectedNeighborhood && details && (
+      {!isStateLevel && selectedNeighborhood && details && (
         <Card>
           <CardHeader><CardTitle>{selectedNeighborhood}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -429,7 +443,8 @@ function TabSecoes({ electionId }: { electionId: string }) {
 // ══════════════════════════════════════════════════════
 // TAB: INSIGHTS
 // ══════════════════════════════════════════════════════
-function TabInsights({ electionId, elections }: { electionId: string; elections: any[] }) {
+function TabInsights({ electionId, elections, electionType }: { electionId: string; elections: any[]; electionType?: string }) {
+  const isStateLevel = electionType === 'estadual_federal'
   const [selectedCandidate, setSelectedCandidate] = useState<string>('')
   const [compareElectionId, setCompareElectionId] = useState<string>('')
   const { data: insights, isLoading } = useElection<any>(electionId, 'insights',
@@ -446,6 +461,11 @@ function TabInsights({ electionId, elections }: { electionId: string; elections:
     electionId,
     'candidate-by-section',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+  )
+  const { data: candidateByCity } = useElection<any[]>(
+    electionId,
+    'candidate-by-city',
+    isStateLevel && selectedCandidate ? { candidateName: selectedCandidate } : undefined,
   )
 
   // Cross-election comparison
@@ -500,7 +520,7 @@ function TabInsights({ electionId, elections }: { electionId: string; elections:
             <Card>
               <CardHeader><CardTitle>Distribuicao por Zona</CardTitle></CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
                   {candZones.sort((a: any, b: any) => b.votes - a.votes).map((z: any) => (
                     <div key={z.zone} className="flex items-center gap-3">
                       <span className="w-16 text-sm font-medium">Zona {z.zone}</span>
@@ -515,6 +535,31 @@ function TabInsights({ electionId, elections }: { electionId: string; elections:
               </CardContent>
             </Card>
           )}
+
+          {isStateLevel && (candidateByCity ?? []).length > 0 && (() => {
+            const candCities = candidateByCity ?? []
+            const candMaxCity = Math.max(...candCities.map((c: any) => c.votes), 1)
+            return (
+              <Card>
+                <CardHeader><CardTitle>Distribuicao por Municipio</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+                    {candCities.map((c: any, idx: number) => (
+                      <div key={c.cityName} className="flex items-center gap-3">
+                        <span className="w-6 text-xs font-semibold text-muted-foreground text-right">{idx + 1}</span>
+                        <span className="w-32 text-sm font-medium truncate">{c.cityName}</span>
+                        <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                          <div className="h-full rounded transition-all"
+                            style={{ width: `${(c.votes / candMaxCity) * 100}%`, backgroundColor: getPartyColor(candidateInfo.party) }} />
+                        </div>
+                        <span className="w-16 text-sm font-semibold text-right">{fmt(c.votes)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })()}
 
           {candSections.length > 0 && (
             <Card>
@@ -659,7 +704,7 @@ function TabInsights({ electionId, elections }: { electionId: string; elections:
                 <option value="">Selecionar eleicao para comparar...</option>
                 {otherElections.map((el: any) => (
                   <option key={el.id} value={el.id}>
-                    {el.cargo} — {el.city}/{el.state} {el.year} ({el.round}o Turno)
+                    {el.cargo} — {el.type === 'estadual_federal' ? `${el.state} (Estado)` : `${el.city}/${el.state}`} {el.year}{el.round > 1 ? ` (${el.round}o Turno)` : ''}
                   </option>
                 ))}
               </Select>
@@ -1290,7 +1335,7 @@ export function ElectionResultsPage() {
               <Select value={selectedElectionId} onChange={e => setSelectedElectionId(e.target.value)} className="flex-1">
                 {elections.map((el: any) => (
                   <option key={el.id} value={el.id}>
-                    {el.cargo} — {el.city}/{el.state} {el.year} ({el.round}o Turno)
+                    {el.cargo} — {el.type === 'estadual_federal' ? `${el.state} (Estado)` : `${el.city}/${el.state}`} {el.year}{el.round > 1 ? ` (${el.round}o Turno)` : ''}
                   </option>
                 ))}
               </Select>
@@ -1309,7 +1354,7 @@ export function ElectionResultsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <p className="text-sm font-medium">
-                  {selectedElection.cargo} — {selectedElection.city}/{selectedElection.state} {selectedElection.year} ({selectedElection.round}o Turno)
+                  {selectedElection.cargo} — {selectedElection.type === 'estadual_federal' ? `${selectedElection.state} (Estado)` : `${selectedElection.city}/${selectedElection.state}`} {selectedElection.year}{selectedElection.round > 1 ? ` (${selectedElection.round}o Turno)` : ''}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -1324,7 +1369,7 @@ export function ElectionResultsPage() {
       <Tabs defaultValue="resumo">
         <TabsList className="flex-wrap">
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
-          <TabsTrigger value="bairros">Bairros</TabsTrigger>
+          <TabsTrigger value="bairros">{selectedElection?.type === 'estadual_federal' ? 'Municipios' : 'Bairros'}</TabsTrigger>
           <TabsTrigger value="secoes">Secoes</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
           <TabsTrigger value="comparar">Comparar</TabsTrigger>
@@ -1335,13 +1380,13 @@ export function ElectionResultsPage() {
           {selectedElectionId ? <TabResumo electionId={selectedElectionId} /> : <NoElection />}
         </TabsContent>
         <TabsContent value="bairros">
-          {selectedElectionId ? <TabBairros electionId={selectedElectionId} /> : <NoElection />}
+          {selectedElectionId ? <TabBairros electionId={selectedElectionId} electionType={selectedElection?.type} /> : <NoElection />}
         </TabsContent>
         <TabsContent value="secoes">
           {selectedElectionId ? <TabSecoes electionId={selectedElectionId} /> : <NoElection />}
         </TabsContent>
         <TabsContent value="insights">
-          {selectedElectionId ? <TabInsights electionId={selectedElectionId} elections={elections} /> : <NoElection />}
+          {selectedElectionId ? <TabInsights electionId={selectedElectionId} elections={elections} electionType={selectedElection?.type} /> : <NoElection />}
         </TabsContent>
         <TabsContent value="comparar">
           {selectedElectionId ? <TabComparar electionId={selectedElectionId} /> : <NoElection />}

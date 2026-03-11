@@ -1,13 +1,14 @@
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import api from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Map, Users, Layers } from 'lucide-react'
+import { Map, Users, Layers, MapPin, Loader2, RefreshCw } from 'lucide-react'
 import { useTenantStore } from '@/stores/tenantStore'
 import 'leaflet/dist/leaflet.css'
 
@@ -162,10 +163,45 @@ function getBubbleRadius(count: number, maxCount: number, baseRadius: number): n
   return Math.max(baseRadius, baseRadius + ratio * 30)
 }
 
+interface GeocodeStatus {
+  total: number
+  pending: number
+  groups: number
+  estimatedSeconds: number
+}
+
 export function HeatmapPage() {
   const politicalProfile = useTenantStore((s) => s.politicalProfile)
   const config = PROFILE_CONFIGS[politicalProfile ?? ''] ?? DEFAULT_CONFIG
   const isAggregated = config.viewMode === 'aggregated'
+  const qc = useQueryClient()
+  const [geocodeStarted, setGeocodeStarted] = useState(false)
+
+  // Status de geocoding
+  const { data: geocodeStatus } = useQuery<GeocodeStatus>({
+    queryKey: ['geocode-status'],
+    queryFn: () => api.get('/voters/geocode-status').then(r => r.data),
+    refetchInterval: geocodeStarted ? 5000 : false,
+  })
+
+  const geocodeMutation = useMutation({
+    mutationFn: () => api.post('/voters/geocode-all'),
+    onSuccess: () => {
+      setGeocodeStarted(true)
+    },
+  })
+
+  // Quando o geocoding terminar (pending === 0), parar de pollar e atualizar mapa
+  const pendingCount = geocodeStatus?.pending ?? 0
+  useEffect(() => {
+    if (geocodeStarted && pendingCount === 0) {
+      setGeocodeStarted(false)
+      qc.invalidateQueries({ queryKey: ['voters-heatmap'] })
+      qc.invalidateQueries({ queryKey: ['voters-heatmap-aggregated'] })
+      qc.invalidateQueries({ queryKey: ['voters-stats'] })
+      qc.invalidateQueries({ queryKey: ['geocode-status'] })
+    }
+  }, [geocodeStarted, pendingCount, qc])
 
   // Dados individuais (para vereador)
   const { data: voters, isLoading: loadingVoters } = useQuery({
@@ -286,6 +322,50 @@ export function HeatmapPage() {
           )}
         </div>
       </div>
+
+      {/* Geocoding banner */}
+      {geocodeStatus && geocodeStatus.pending > 0 && (
+        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/50">
+                <MapPin className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">
+                  {geocodeStarted
+                    ? `Geocodificando... ${geocodeStatus.pending} eleitores restantes`
+                    : `${geocodeStatus.pending} eleitores sem coordenadas`
+                  }
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {geocodeStarted
+                    ? `${geocodeStatus.groups} grupos restantes (~${Math.ceil(geocodeStatus.estimatedSeconds / 60)} min)`
+                    : `${geocodeStatus.groups} grupos unicos de bairro/cidade · Estimativa: ~${Math.ceil(geocodeStatus.estimatedSeconds / 60)} min`
+                  }
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => geocodeMutation.mutate()}
+              disabled={geocodeStarted || geocodeMutation.isPending}
+            >
+              {geocodeStarted ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" />
+                  Geocodificar
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-4">
         <Card className="lg:col-span-3">

@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import api from '@/lib/api'
@@ -9,9 +9,8 @@ import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Search, Pencil, Upload, Download, Loader2, CheckCircle, AlertTriangle, X, Users, Headphones, ClipboardList, Clock, CheckCircle2, MapPin, Phone } from 'lucide-react'
-import { useCrud } from '@/lib/useCrud'
 import { cn, formatDate } from '@/lib/utils'
-import type { Voter, HelpRecord, HelpType, Leader } from '@/types/entities'
+import type { Voter, HelpType, Leader } from '@/types/entities'
 
 /* ─── Voters columns ─── */
 const voterColumns: Column<Voter>[] = [
@@ -44,6 +43,24 @@ const statusLabels: Record<string, string> = {
   CANCELLED: 'Cancelado',
 }
 
+/* ─── Help columns (with server-joined voter data) ─── */
+const helpColumns: Column<any>[] = [
+  { key: 'date', label: 'Data', render: (h: any) => h.date ? formatDate(h.date) : formatDate(h.createdAt) },
+  { key: 'type', label: 'Tipo', render: (h: any) => h.type ?? '-' },
+  { key: 'voterNeighborhood', label: 'Bairro', render: (h: any) => h.voterNeighborhood ?? '-' },
+  { key: 'observations', label: 'Observacoes', render: (h: any) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
+  { key: 'status', label: 'Status', render: (h: any) => <Badge variant={statusColors[h.status] ?? 'secondary'}>{statusLabels[h.status] ?? h.status}</Badge> },
+  {
+    key: 'id',
+    label: 'Acoes',
+    render: (h: any) => (
+      <Button variant="ghost" size="sm" asChild>
+        <Link to={`/atendimentos/${h.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+      </Button>
+    ),
+  },
+]
+
 /* ─── Import types ─── */
 interface ImportResult {
   imported: number
@@ -52,12 +69,46 @@ interface ImportResult {
   errors: string[]
 }
 
+interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+}
+
+interface VoterStats {
+  total: number
+  withPhone: number
+  withNeighborhood: number
+  bairros: string[]
+  genders: string[]
+  top5Bairros: { name: string; count: number }[]
+}
+
+interface HelpStats {
+  total: number
+  pending: number
+  inProgress: number
+  completed: number
+  cancelled: number
+  types: { name: string; count: number }[]
+  bairros: string[]
+}
+
 type Tab = 'eleitores' | 'atendimentos'
+
+/* ─── Debounce hook ─── */
+function useDebounce(value: string, delay = 400) {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+  return debounced
+}
 
 export function VotersListPage() {
   const [tab, setTab] = useState<Tab>('eleitores')
-  const [voterSearch, setVoterSearch] = useState('')
-  const [helpSearch, setHelpSearch] = useState('')
   const [showImport, setShowImport] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [showHelpImport, setShowHelpImport] = useState(false)
@@ -66,59 +117,143 @@ export function VotersListPage() {
   const helpFileRef = useRef<HTMLInputElement>(null)
   const qc = useQueryClient()
 
-  // Atendimentos filters
+  // ── Eleitores state ──
+  const [voterSearch, setVoterSearch] = useState('')
+  const [voterFilterBairro, setVoterFilterBairro] = useState('')
+  const [voterFilterLeader, setVoterFilterLeader] = useState('')
+  const [voterFilterGender, setVoterFilterGender] = useState('')
+  const [voterPage, setVoterPage] = useState(1)
+  const debouncedVoterSearch = useDebounce(voterSearch)
+
+  // ── Atendimentos state ──
+  const [helpSearch, setHelpSearch] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterBairro, setFilterBairro] = useState('')
   const [filterDateFrom, setFilterDateFrom] = useState('')
   const [filterDateTo, setFilterDateTo] = useState('')
+  const [helpPage, setHelpPage] = useState(1)
+  const debouncedHelpSearch = useDebounce(helpSearch)
 
-  // Eleitores filters
-  const [voterFilterBairro, setVoterFilterBairro] = useState('')
-  const [voterFilterLeader, setVoterFilterLeader] = useState('')
-  const [voterFilterGender, setVoterFilterGender] = useState('')
+  // Reset page when filters change
+  useEffect(() => { setVoterPage(1) }, [debouncedVoterSearch, voterFilterBairro, voterFilterLeader, voterFilterGender])
+  useEffect(() => { setHelpPage(1) }, [debouncedHelpSearch, filterType, filterStatus, filterBairro, filterDateFrom, filterDateTo])
 
-  const { list: votersList } = useCrud<Voter>('voters')
-  const { list: helpList } = useCrud<HelpRecord>('help-records')
+  // ── Build query params ──
+  const voterParams = {
+    page: String(voterPage),
+    limit: '50',
+    ...(debouncedVoterSearch && { search: debouncedVoterSearch }),
+    ...(voterFilterBairro && { neighborhood: voterFilterBairro }),
+    ...(voterFilterLeader && { leaderId: voterFilterLeader }),
+    ...(voterFilterGender && { gender: voterFilterGender }),
+  }
+
+  const voterFilterParams = {
+    ...(debouncedVoterSearch && { search: debouncedVoterSearch }),
+    ...(voterFilterBairro && { neighborhood: voterFilterBairro }),
+    ...(voterFilterLeader && { leaderId: voterFilterLeader }),
+    ...(voterFilterGender && { gender: voterFilterGender }),
+  }
+
+  const helpParams = {
+    page: String(helpPage),
+    limit: '50',
+    ...(debouncedHelpSearch && { search: debouncedHelpSearch }),
+    ...(filterType && { type: filterType }),
+    ...(filterStatus && { status: filterStatus }),
+    ...(filterBairro && { neighborhood: filterBairro }),
+    ...(filterDateFrom && { dateFrom: filterDateFrom }),
+    ...(filterDateTo && { dateTo: filterDateTo }),
+  }
+
+  const helpFilterParams = {
+    ...(debouncedHelpSearch && { search: debouncedHelpSearch }),
+    ...(filterType && { type: filterType }),
+    ...(filterStatus && { status: filterStatus }),
+    ...(filterBairro && { neighborhood: filterBairro }),
+    ...(filterDateFrom && { dateFrom: filterDateFrom }),
+    ...(filterDateTo && { dateTo: filterDateTo }),
+  }
+
+  // ── Queries: Voters ──
+  const votersQuery = useQuery<PaginatedResponse<Voter>>({
+    queryKey: ['voters', voterParams],
+    queryFn: () => api.get('/voters', { params: voterParams }).then(r => r.data),
+  })
+
+  const voterStatsQuery = useQuery<VoterStats>({
+    queryKey: ['voters-stats', voterFilterParams],
+    queryFn: () => api.get('/voters/list-stats', { params: voterFilterParams }).then(r => r.data),
+  })
 
   const leaders = useQuery({
     queryKey: ['leaders'],
-    queryFn: () => api.get<Leader[]>('/leaders').then((r) => r.data),
+    queryFn: () => api.get<Leader[]>('/leaders').then(r => r.data),
+  })
+
+  // ── Queries: Atendimentos ──
+  const helpQuery = useQuery<PaginatedResponse<any>>({
+    queryKey: ['help-records', helpParams],
+    queryFn: () => api.get('/help-records', { params: helpParams }).then(r => r.data),
+  })
+
+  const helpStatsQuery = useQuery<HelpStats>({
+    queryKey: ['help-stats', helpFilterParams],
+    queryFn: () => api.get('/help-records/list-stats', { params: helpFilterParams }).then(r => r.data),
   })
 
   const helpTypes = useQuery({
     queryKey: ['help-types'],
-    queryFn: () => api.get<HelpType[]>('/help-records/types').then((r) => r.data),
+    queryFn: () => api.get<HelpType[]>('/help-records/types').then(r => r.data),
   })
 
-  // Voter map for cross-referencing bairro
-  const voterMap = useMemo(() => {
-    const map = new Map<string, Voter>()
-    for (const v of votersList.data ?? []) map.set(v.id, v)
-    return map
-  }, [votersList.data])
+  // ── Derived data ──
+  const voters = votersQuery.data?.data ?? []
+  const voterTotal = votersQuery.data?.total ?? 0
+  const voterTotalPages = Math.ceil(voterTotal / 50)
 
-  // Unique neighborhoods from voters linked to atendimentos
-  const bairros = useMemo(() => {
-    const set = new Set<string>()
-    for (const h of helpList.data ?? []) {
-      if (h.voterId) {
-        const voter = voterMap.get(h.voterId)
-        if (voter?.neighborhood) set.add(voter.neighborhood)
-      }
-    }
-    return Array.from(set).sort()
-  }, [helpList.data, voterMap])
+  const helpRecords = helpQuery.data?.data ?? []
+  const helpTotal = helpQuery.data?.total ?? 0
+  const helpTotalPages = Math.ceil(helpTotal / 50)
 
+  const stats = voterStatsQuery.data
+  const helpStats = helpStatsQuery.data
+
+  const top5Bairros = stats?.top5Bairros ?? []
+  const top5BairrosMax = top5Bairros.length > 0 ? top5Bairros[0].count : 0
+
+  const top5Types = (helpStats?.types ?? []).slice(0, 5)
+  const top5Max = top5Types.length > 0 ? top5Types[0].count : 0
+
+  const hasVoterFilters = voterFilterBairro || voterFilterLeader || voterFilterGender
+  const hasActiveFilters = filterType || filterStatus || filterBairro || filterDateFrom || filterDateTo
+
+  const clearVoterFilters = () => {
+    setVoterFilterBairro('')
+    setVoterFilterLeader('')
+    setVoterFilterGender('')
+  }
+
+  const clearFilters = () => {
+    setFilterType('')
+    setFilterStatus('')
+    setFilterBairro('')
+    setFilterDateFrom('')
+    setFilterDateTo('')
+  }
+
+  // ── Import mutations ──
   const upload = useMutation({
     mutationFn: (file: File) => {
       const form = new FormData()
       form.append('file', file)
-      return api.post<ImportResult>('/voters/import/upload', form).then((r) => r.data)
+      return api.post<ImportResult>('/voters/import/upload', form).then(r => r.data)
     },
     onSuccess: (data) => {
       setImportResult(data)
       qc.invalidateQueries({ queryKey: ['voters'] })
+      qc.invalidateQueries({ queryKey: ['voters-stats'] })
       if (fileRef.current) fileRef.current.value = ''
     },
   })
@@ -145,11 +280,12 @@ export function VotersListPage() {
     mutationFn: (file: File) => {
       const form = new FormData()
       form.append('file', file)
-      return api.post<ImportResult>('/help-records/import/upload', form).then((r) => r.data)
+      return api.post<ImportResult>('/help-records/import/upload', form).then(r => r.data)
     },
     onSuccess: (data) => {
       setHelpImportResult(data)
       qc.invalidateQueries({ queryKey: ['help-records'] })
+      qc.invalidateQueries({ queryKey: ['help-stats'] })
       qc.invalidateQueries({ queryKey: ['help-types'] })
       if (helpFileRef.current) helpFileRef.current.value = ''
     },
@@ -162,6 +298,18 @@ export function VotersListPage() {
     helpUpload.mutate(file)
   }
 
+  const downloadHelpTemplate = () => {
+    api.get('/help-records/import/template', { responseType: 'blob' }).then((res) => {
+      const url = window.URL.createObjectURL(new Blob([res.data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'modelo_atendimentos.xlsx'
+      a.click()
+      window.URL.revokeObjectURL(url)
+    })
+  }
+
+  // ── Export ──
   const [exporting, setExporting] = useState(false)
 
   const exportVoters = () => {
@@ -201,202 +349,6 @@ export function VotersListPage() {
       window.URL.revokeObjectURL(url)
     }).finally(() => setExporting(false))
   }
-
-  const downloadHelpTemplate = () => {
-    api.get('/help-records/import/template', { responseType: 'blob' }).then((res) => {
-      const url = window.URL.createObjectURL(new Blob([res.data]))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'modelo_atendimentos.xlsx'
-      a.click()
-      window.URL.revokeObjectURL(url)
-    })
-  }
-
-  // Filtered voters
-  const filteredVoters = useMemo(() => {
-    let voters = votersList.data ?? []
-
-    if (voterSearch) {
-      const q = voterSearch.toLowerCase()
-      voters = voters.filter((v) =>
-        v.name.toLowerCase().includes(q) ||
-        (v.phone ?? '').includes(q),
-      )
-    }
-
-    if (voterFilterBairro) {
-      voters = voters.filter((v) => v.neighborhood === voterFilterBairro)
-    }
-
-    if (voterFilterLeader) {
-      voters = voters.filter((v) => v.leaderId === voterFilterLeader)
-    }
-
-    if (voterFilterGender) {
-      voters = voters.filter((v) => v.gender === voterFilterGender)
-    }
-
-    return voters
-  }, [votersList.data, voterSearch, voterFilterBairro, voterFilterLeader, voterFilterGender])
-
-  // Voter KPIs
-  const voterKpis = useMemo(() => {
-    const all = filteredVoters
-    const withPhone = all.filter((v) => v.phone).length
-    const withNeighborhood = all.filter((v) => v.neighborhood).length
-    return { total: all.length, withPhone, withNeighborhood }
-  }, [filteredVoters])
-
-  // Unique voter bairros
-  const voterBairros = useMemo(() => {
-    const set = new Set<string>()
-    for (const v of votersList.data ?? []) {
-      if (v.neighborhood) set.add(v.neighborhood)
-    }
-    return Array.from(set).sort()
-  }, [votersList.data])
-
-  // Unique genders
-  const voterGenders = useMemo(() => {
-    const set = new Set<string>()
-    for (const v of votersList.data ?? []) {
-      if (v.gender) set.add(v.gender)
-    }
-    return Array.from(set).sort()
-  }, [votersList.data])
-
-  // Top 5 bairros
-  const top5Bairros = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const v of filteredVoters) {
-      const key = v.neighborhood ?? 'Sem bairro'
-      counts.set(key, (counts.get(key) ?? 0) + 1)
-    }
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-  }, [filteredVoters])
-
-  const top5BairrosMax = top5Bairros.length > 0 ? top5Bairros[0][1] : 0
-
-  const hasVoterFilters = voterFilterBairro || voterFilterLeader || voterFilterGender
-
-  const clearVoterFilters = () => {
-    setVoterFilterBairro('')
-    setVoterFilterLeader('')
-    setVoterFilterGender('')
-  }
-
-  // Filtered help records
-  const filteredHelp = useMemo(() => {
-    let records = helpList.data ?? []
-
-    // Text search
-    if (helpSearch) {
-      const q = helpSearch.toLowerCase()
-      records = records.filter((h) =>
-        (h.type ?? '').toLowerCase().includes(q) ||
-        (h.observations ?? '').toLowerCase().includes(q),
-      )
-    }
-
-    // Type filter
-    if (filterType) {
-      records = records.filter((h) => h.type === filterType)
-    }
-
-    // Status filter
-    if (filterStatus) {
-      records = records.filter((h) => h.status === filterStatus)
-    }
-
-    // Bairro filter (cross-reference voter)
-    if (filterBairro) {
-      records = records.filter((h) => {
-        if (!h.voterId) return false
-        const voter = voterMap.get(h.voterId)
-        return voter?.neighborhood === filterBairro
-      })
-    }
-
-    // Date range
-    if (filterDateFrom) {
-      records = records.filter((h) => {
-        const d = h.date ?? h.createdAt.slice(0, 10)
-        return d >= filterDateFrom
-      })
-    }
-    if (filterDateTo) {
-      records = records.filter((h) => {
-        const d = h.date ?? h.createdAt.slice(0, 10)
-        return d <= filterDateTo
-      })
-    }
-
-    return records
-  }, [helpList.data, helpSearch, filterType, filterStatus, filterBairro, filterDateFrom, filterDateTo, voterMap])
-
-  // KPIs based on filtered data
-  const kpis = useMemo(() => {
-    const all = filteredHelp
-    return {
-      total: all.length,
-      pending: all.filter((h) => h.status === 'PENDING').length,
-      inProgress: all.filter((h) => h.status === 'IN_PROGRESS').length,
-      completed: all.filter((h) => h.status === 'COMPLETED').length,
-      cancelled: all.filter((h) => h.status === 'CANCELLED').length,
-    }
-  }, [filteredHelp])
-
-  // Top 5 tipos de atendimento
-  const top5Types = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const h of filteredHelp) {
-      const key = h.type ?? 'Sem tipo'
-      counts.set(key, (counts.get(key) ?? 0) + 1)
-    }
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-  }, [filteredHelp])
-
-  const top5Max = top5Types.length > 0 ? top5Types[0][1] : 0
-
-  const hasActiveFilters = filterType || filterStatus || filterBairro || filterDateFrom || filterDateTo
-
-  const clearFilters = () => {
-    setFilterType('')
-    setFilterStatus('')
-    setFilterBairro('')
-    setFilterDateFrom('')
-    setFilterDateTo('')
-  }
-
-  // Help columns (need voterMap for bairro column)
-  const helpColumns: Column<HelpRecord>[] = [
-    { key: 'date', label: 'Data', render: (h) => h.date ? formatDate(h.date) : formatDate(h.createdAt) },
-    { key: 'type', label: 'Tipo', render: (h) => h.type ?? '-' },
-    {
-      key: 'voterId',
-      label: 'Bairro',
-      render: (h) => {
-        if (!h.voterId) return '-'
-        return voterMap.get(h.voterId)?.neighborhood ?? '-'
-      },
-    },
-    { key: 'observations', label: 'Observacoes', render: (h) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
-    { key: 'status', label: 'Status', render: (h) => <Badge variant={statusColors[h.status] ?? 'secondary'}>{statusLabels[h.status] ?? h.status}</Badge> },
-    {
-      key: 'id',
-      label: 'Acoes',
-      render: (h) => (
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/atendimentos/${h.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-        </Button>
-      ),
-    },
-  ]
 
   return (
     <div className="space-y-6">
@@ -549,7 +501,7 @@ export function VotersListPage() {
                   <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{voterKpis.total}</p>
+                  <p className="text-2xl font-bold">{stats?.total ?? 0}</p>
                   <p className="text-xs text-muted-foreground">Total de Eleitores</p>
                 </div>
               </CardContent>
@@ -560,7 +512,7 @@ export function VotersListPage() {
                   <Phone className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{voterKpis.withPhone}</p>
+                  <p className="text-2xl font-bold">{stats?.withPhone ?? 0}</p>
                   <p className="text-xs text-muted-foreground">Com Telefone</p>
                 </div>
               </CardContent>
@@ -571,7 +523,7 @@ export function VotersListPage() {
                   <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{voterKpis.withNeighborhood}</p>
+                  <p className="text-2xl font-bold">{stats?.withNeighborhood ?? 0}</p>
                   <p className="text-xs text-muted-foreground">Com Bairro</p>
                 </div>
               </CardContent>
@@ -585,18 +537,18 @@ export function VotersListPage() {
                 <CardTitle className="text-base">Top 5 Bairros por Cadastro</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1 pb-4">
-                {top5Bairros.map(([name, count], i) => (
-                  <div key={name} className="flex items-center gap-3 py-2">
+                {top5Bairros.map((b, i) => (
+                  <div key={b.name} className="flex items-center gap-3 py-2">
                     <span className="w-6 text-center text-sm font-semibold text-primary">{i + 1}°</span>
-                    <span className="flex-1 text-sm truncate">{name}</span>
+                    <span className="flex-1 text-sm truncate">{b.name}</span>
                     <div className="flex items-center gap-2.5 w-32 justify-end">
                       <div className="w-20 h-2 rounded-full bg-muted overflow-hidden">
                         <div
                           className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${(count / top5BairrosMax) * 100}%` }}
+                          style={{ width: `${(b.count / top5BairrosMax) * 100}%` }}
                         />
                       </div>
-                      <span className="text-sm font-semibold tabular-nums w-10 text-right">{count}</span>
+                      <span className="text-sm font-semibold tabular-nums w-10 text-right">{b.count}</span>
                     </div>
                   </div>
                 ))}
@@ -620,7 +572,7 @@ export function VotersListPage() {
               <div className="grid grid-cols-3 gap-3">
                 <Select value={voterFilterBairro} onChange={(e) => setVoterFilterBairro(e.target.value)}>
                   <option value="">Todos os bairros</option>
-                  {voterBairros.map((b) => (
+                  {(stats?.bairros ?? []).map((b) => (
                     <option key={b} value={b}>{b}</option>
                   ))}
                 </Select>
@@ -634,7 +586,7 @@ export function VotersListPage() {
 
                 <Select value={voterFilterGender} onChange={(e) => setVoterFilterGender(e.target.value)}>
                   <option value="">Todos os generos</option>
-                  {voterGenders.map((g) => (
+                  {(stats?.genders ?? []).map((g) => (
                     <option key={g} value={g}>{g}</option>
                   ))}
                 </Select>
@@ -651,7 +603,15 @@ export function VotersListPage() {
             </CardContent>
           </Card>
 
-          <DataTable columns={voterColumns} data={filteredVoters} isLoading={votersList.isLoading} />
+          <DataTable
+            columns={voterColumns}
+            data={voters}
+            isLoading={votersQuery.isLoading}
+            page={voterPage}
+            totalPages={voterTotalPages}
+            total={voterTotal}
+            onPageChange={setVoterPage}
+          />
         </>
       )}
 
@@ -733,7 +693,7 @@ export function VotersListPage() {
                   <ClipboardList className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{kpis.total}</p>
+                  <p className="text-2xl font-bold">{helpStats?.total ?? 0}</p>
                   <p className="text-xs text-muted-foreground">Total</p>
                 </div>
               </CardContent>
@@ -744,7 +704,7 @@ export function VotersListPage() {
                   <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{kpis.pending}</p>
+                  <p className="text-2xl font-bold">{helpStats?.pending ?? 0}</p>
                   <p className="text-xs text-muted-foreground">Pendentes</p>
                 </div>
               </CardContent>
@@ -755,7 +715,7 @@ export function VotersListPage() {
                   <Loader2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{kpis.inProgress}</p>
+                  <p className="text-2xl font-bold">{helpStats?.inProgress ?? 0}</p>
                   <p className="text-xs text-muted-foreground">Em Andamento</p>
                 </div>
               </CardContent>
@@ -766,7 +726,7 @@ export function VotersListPage() {
                   <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{kpis.completed}</p>
+                  <p className="text-2xl font-bold">{helpStats?.completed ?? 0}</p>
                   <p className="text-xs text-muted-foreground">Concluidos</p>
                 </div>
               </CardContent>
@@ -780,18 +740,18 @@ export function VotersListPage() {
                 <CardTitle className="text-base">Top 5 Tipos de Atendimento</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1 pb-4">
-                {top5Types.map(([name, count], i) => (
-                  <div key={name} className="flex items-center gap-3 py-2">
+                {top5Types.map((t, i) => (
+                  <div key={t.name} className="flex items-center gap-3 py-2">
                     <span className="w-6 text-center text-sm font-semibold text-primary">{i + 1}°</span>
-                    <span className="flex-1 text-sm truncate">{name}</span>
+                    <span className="flex-1 text-sm truncate">{t.name}</span>
                     <div className="flex items-center gap-2.5 w-32 justify-end">
                       <div className="w-20 h-2 rounded-full bg-muted overflow-hidden">
                         <div
                           className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${(count / top5Max) * 100}%` }}
+                          style={{ width: `${(t.count / top5Max) * 100}%` }}
                         />
                       </div>
-                      <span className="text-sm font-semibold tabular-nums w-10 text-right">{count}</span>
+                      <span className="text-sm font-semibold tabular-nums w-10 text-right">{t.count}</span>
                     </div>
                   </div>
                 ))}
@@ -829,7 +789,7 @@ export function VotersListPage() {
 
                 <Select value={filterBairro} onChange={(e) => setFilterBairro(e.target.value)}>
                   <option value="">Todos os bairros</option>
-                  {bairros.map((b) => (
+                  {(helpStats?.bairros ?? []).map((b) => (
                     <option key={b} value={b}>{b}</option>
                   ))}
                 </Select>
@@ -862,7 +822,15 @@ export function VotersListPage() {
             </CardContent>
           </Card>
 
-          <DataTable columns={helpColumns} data={filteredHelp} isLoading={helpList.isLoading} />
+          <DataTable
+            columns={helpColumns}
+            data={helpRecords}
+            isLoading={helpQuery.isLoading}
+            page={helpPage}
+            totalPages={helpTotalPages}
+            total={helpTotal}
+            onPageChange={setHelpPage}
+          />
         </>
       )}
     </div>
