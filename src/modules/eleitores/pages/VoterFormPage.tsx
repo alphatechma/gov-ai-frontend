@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Trash2, Plus } from 'lucide-react'
 import type { Voter, Leader } from '@/types/entities'
 
 const GENDER_OPTIONS = [
@@ -90,6 +90,20 @@ export function VoterFormPage() {
     queryFn: () => api.get<Leader[]>('/leaders').then((r) => r.data),
   })
 
+  const [leaderSearch, setLeaderSearch] = useState('')
+  const [showLeaderDropdown, setShowLeaderDropdown] = useState(false)
+  const leaderRef = useRef<HTMLDivElement>(null)
+
+  const createLeader = useMutation({
+    mutationFn: (name: string) => api.post<Leader>('/leaders', { name }).then((r) => r.data),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['leaders'] })
+      setForm((p) => ({ ...p, leaderId: data.id }))
+      setLeaderSearch(data.name)
+      setShowLeaderDropdown(false)
+    },
+  })
+
   useEffect(() => {
     if (voter.data) {
       const v = voter.data
@@ -112,8 +126,12 @@ export function VoterFormPage() {
         tags: v.tags?.join(', ') ?? '',
         notes: v.notes ?? '',
       })
+      if (v.leaderId && leaders.data) {
+        const leader = leaders.data.find((l) => l.id === v.leaderId)
+        if (leader) setLeaderSearch(leader.name)
+      }
     }
-  }, [voter.data])
+  }, [voter.data, leaders.data])
 
   const save = useMutation({
     mutationFn: async () => {
@@ -185,6 +203,9 @@ export function VoterFormPage() {
     const handler = (e: MouseEvent) => {
       if (neighborhoodRef.current && !neighborhoodRef.current.contains(e.target as Node)) {
         setShowNeighborhoodSuggestions(false)
+      }
+      if (leaderRef.current && !leaderRef.current.contains(e.target as Node)) {
+        setShowLeaderDropdown(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -315,12 +336,54 @@ export function VoterFormPage() {
               <label className="text-sm font-medium">Secao Eleitoral</label>
               <Input value={form.votingSection} onChange={(e) => set('votingSection', e.target.value)} />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 relative" ref={leaderRef}>
               <label className="text-sm font-medium">Lideranca</label>
-              <Select value={form.leaderId} onChange={(e) => set('leaderId', e.target.value)}>
-                <option value="">Nenhuma</option>
-                {(leaders.data ?? []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-              </Select>
+              <Input
+                value={leaderSearch}
+                onChange={(e) => {
+                  setLeaderSearch(e.target.value)
+                  if (!e.target.value) setForm((p) => ({ ...p, leaderId: '' }))
+                  setShowLeaderDropdown(true)
+                }}
+                onFocus={() => setShowLeaderDropdown(true)}
+                placeholder="Digite o nome da lideranca..."
+              />
+              {showLeaderDropdown && leaderSearch.length > 0 && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                  {(leaders.data ?? [])
+                    .filter((l) => l.active && l.name.toLowerCase().includes(leaderSearch.toLowerCase()))
+                    .map((l) => (
+                      <div key={l.id} className="flex items-center rounded-sm hover:bg-accent hover:text-accent-foreground">
+                        <button
+                          type="button"
+                          className="flex-1 px-3 py-2 text-left text-sm"
+                          onClick={() => {
+                            setForm((p) => ({ ...p, leaderId: l.id }))
+                            setLeaderSearch(l.name)
+                            setShowLeaderDropdown(false)
+                          }}
+                        >
+                          {l.name}
+                        </button>
+                      </div>
+                    ))}
+                  {!(leaders.data ?? []).some((l) => l.active && l.name.toLowerCase() === leaderSearch.toLowerCase()) && leaderSearch.trim().length > 0 && (
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm font-medium text-primary hover:bg-accent"
+                      onClick={() => createLeader.mutate(leaderSearch.trim())}
+                      disabled={createLeader.isPending}
+                    >
+                      {createLeader.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                      Cadastrar &quot;{leaderSearch.trim()}&quot;
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium">Tags</label>

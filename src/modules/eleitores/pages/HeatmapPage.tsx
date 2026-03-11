@@ -448,7 +448,7 @@ export function HeatmapPage() {
                         opacity: 0.8,
                       }}
                     >
-                      <Tooltip direction="top" permanent={validAggregated.length <= 30} className="font-semibold">
+                      <Tooltip direction="top" className="font-semibold">
                         {point.label} ({count})
                       </Tooltip>
                       <Popup>

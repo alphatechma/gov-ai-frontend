@@ -39,6 +39,10 @@ export function HelpRecordFormPage() {
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const typeRef = useRef<HTMLDivElement>(null)
 
+  const [leaderSearch, setLeaderSearch] = useState('')
+  const [showLeaderDropdown, setShowLeaderDropdown] = useState(false)
+  const leaderRef = useRef<HTMLDivElement>(null)
+
   const record = useQuery({
     queryKey: ['help-record', id],
     queryFn: () => api.get<HelpRecord>(`/help-records/${id}`).then((r) => r.data),
@@ -47,7 +51,7 @@ export function HelpRecordFormPage() {
 
   const voters = useQuery({
     queryKey: ['voters'],
-    queryFn: () => api.get<Voter[]>('/voters').then((r) => r.data),
+    queryFn: () => api.get<{ data: Voter[] }>('/voters?limit=10000').then((r) => r.data.data),
   })
 
   const leaders = useQuery({
@@ -77,6 +81,16 @@ export function HelpRecordFormPage() {
     },
   })
 
+  const createLeader = useMutation({
+    mutationFn: (name: string) => api.post<Leader>('/leaders', { name }).then((r) => r.data),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['leaders'] })
+      setForm((p) => ({ ...p, leaderId: data.id }))
+      setLeaderSearch(data.name)
+      setShowLeaderDropdown(false)
+    },
+  })
+
   useEffect(() => {
     if (record.data) {
       const r = record.data
@@ -91,14 +105,22 @@ export function HelpRecordFormPage() {
         date: r.date ?? new Date().toISOString().slice(0, 10),
       })
       setTypeSearch(r.type ?? '')
+      // Populate leader search with the leader name
+      if (r.leaderId && leaders.data) {
+        const leader = leaders.data.find((l) => l.id === r.leaderId)
+        if (leader) setLeaderSearch(leader.name)
+      }
     }
-  }, [record.data])
+  }, [record.data, leaders.data])
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (typeRef.current && !typeRef.current.contains(e.target as Node)) {
         setShowTypeDropdown(false)
+      }
+      if (leaderRef.current && !leaderRef.current.contains(e.target as Node)) {
+        setShowLeaderDropdown(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -146,6 +168,14 @@ export function HelpRecordFormPage() {
   )
   const exactMatch = (helpTypes.data ?? []).some((t) => t.name.toLowerCase() === typeSearch.toLowerCase())
 
+  // Filter leaders based on search
+  const filteredLeaders = (leaders.data ?? []).filter((l) =>
+    l.active && l.name.toLowerCase().includes(leaderSearch.toLowerCase()),
+  )
+  const leaderExactMatch = (leaders.data ?? []).some((l) =>
+    l.active && l.name.toLowerCase() === leaderSearch.toLowerCase(),
+  )
+
   if (isEdit && record.isLoading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
   }
@@ -178,14 +208,52 @@ export function HelpRecordFormPage() {
               <Input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 relative" ref={leaderRef}>
               <label className="text-sm font-medium">Lideranca Responsavel</label>
-              <Select value={form.leaderId} onChange={(e) => set('leaderId', e.target.value)}>
-                <option value="">Nenhuma</option>
-                {(leaders.data ?? []).filter((l) => l.active).map((l) => (
-                  <option key={l.id} value={l.id}>{l.name}</option>
-                ))}
-              </Select>
+              <Input
+                value={leaderSearch}
+                onChange={(e) => {
+                  setLeaderSearch(e.target.value)
+                  if (!e.target.value) setForm((p) => ({ ...p, leaderId: '' }))
+                  setShowLeaderDropdown(true)
+                }}
+                onFocus={() => setShowLeaderDropdown(true)}
+                placeholder="Digite o nome da lideranca..."
+              />
+              {showLeaderDropdown && leaderSearch.length > 0 && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                  {filteredLeaders.map((l) => (
+                    <div key={l.id} className="flex items-center rounded-sm hover:bg-accent hover:text-accent-foreground">
+                      <button
+                        type="button"
+                        className="flex-1 px-3 py-2 text-left text-sm"
+                        onClick={() => {
+                          setForm((p) => ({ ...p, leaderId: l.id }))
+                          setLeaderSearch(l.name)
+                          setShowLeaderDropdown(false)
+                        }}
+                      >
+                        {l.name}
+                      </button>
+                    </div>
+                  ))}
+                  {!leaderExactMatch && leaderSearch.trim().length > 0 && (
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm font-medium text-primary hover:bg-accent"
+                      onClick={() => createLeader.mutate(leaderSearch.trim())}
+                      disabled={createLeader.isPending}
+                    >
+                      {createLeader.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                      Cadastrar &quot;{leaderSearch.trim()}&quot;
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 relative" ref={typeRef}>

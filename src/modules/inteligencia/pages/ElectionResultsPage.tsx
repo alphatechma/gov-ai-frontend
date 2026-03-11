@@ -1103,42 +1103,74 @@ const SCENARIOS = [
   { id: 'adverso', label: 'Adverso', icon: '⚠️', description: 'Concorrencia acirrada + perda de aliados + desgaste', multiplier: 0.90, color: '#dc2626' },
 ]
 
-function TabProjecoes({ electionId }: { electionId: string }) {
+function TabProjecoes({ electionId, electionType }: { electionId: string; electionType?: string }) {
+  const isStateLevel = electionType === 'estadual_federal'
   const [selectedCandidate, setSelectedCandidate] = useState<string>('')
   const [activeScenario, setActiveScenario] = useState<string>('moderado')
-  const [zoneMultipliers, setZoneMultipliers] = useState<Record<string, number>>({})
+  const [itemMultipliers, setItemMultipliers] = useState<Record<string, number>>({})
   const { data: candidates } = useElection<any[]>(electionId, 'candidates')
   const { data, isLoading } = useElection<any>(
     electionId,
     'projections',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
   )
+  // Municipal: candidate-by-section | Estadual/Federal: candidate-by-city
   const { data: candidateByZone } = useElection<any[]>(
-    electionId,
+    !isStateLevel ? electionId : undefined,
     'candidate-by-zone',
+    selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+  )
+  const { data: candidateBySection } = useElection<any[]>(
+    !isStateLevel && selectedCandidate ? electionId : undefined,
+    'candidate-by-section',
+    selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+  )
+  const { data: candidateByCity } = useElection<any[]>(
+    isStateLevel && selectedCandidate ? electionId : undefined,
+    'candidate-by-city',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
   )
 
   const scenario = SCENARIOS.find(s => s.id === activeScenario)!
-  const zones = (candidateByZone ?? []).sort((a: any, b: any) => b.votes - a.votes)
+
+  // Normalizar items conforme nivel
+  type AdjustItem = { key: string; label: string; votes: number }
+  const items: AdjustItem[] = isStateLevel
+    ? (candidateByCity ?? []).sort((a: any, b: any) => b.votes - a.votes).map((c: any) => ({
+        key: c.cityName, label: c.cityName, votes: c.votes,
+      }))
+    : (candidateBySection ?? []).sort((a: any, b: any) => b.votes - a.votes).map((s: any) => ({
+        key: `${s.zone}-${s.section}`, label: `Zona ${s.zone} / Secao ${s.section}`, votes: s.votes,
+      }))
+
+  // Fallback para zonas se section/city ainda nao carregou
+  const fallbackZones: AdjustItem[] = (!isStateLevel && (!candidateBySection || candidateBySection.length === 0))
+    ? (candidateByZone ?? []).sort((a: any, b: any) => b.votes - a.votes).map((z: any) => ({
+        key: String(z.zone), label: `Zona ${z.zone}`, votes: z.votes,
+      }))
+    : []
+  const adjustItems = items.length > 0 ? items : fallbackZones
+
+  const entityLabel = isStateLevel ? 'Municipio' : 'Secao'
+  const entityLabelPlural = isStateLevel ? 'Municipios' : 'Secoes'
 
   // Apply scenario when changed
   const applyScenario = (scenarioId: string) => {
     setActiveScenario(scenarioId)
     const sc = SCENARIOS.find(s => s.id === scenarioId)!
     const newMultipliers: Record<string, number> = {}
-    zones.forEach((z: any) => { newMultipliers[z.zone] = sc.multiplier })
-    setZoneMultipliers(newMultipliers)
+    adjustItems.forEach((item) => { newMultipliers[item.key] = sc.multiplier })
+    setItemMultipliers(newMultipliers)
   }
 
   // Calculate projections from multipliers
-  const projectedByZone = zones.map((z: any) => {
-    const mult = zoneMultipliers[z.zone] ?? scenario.multiplier
-    const projected = Math.round(z.votes * mult)
-    return { ...z, projected, diff: projected - z.votes, multiplier: mult }
+  const projectedItems = adjustItems.map((item) => {
+    const mult = itemMultipliers[item.key] ?? scenario.multiplier
+    const projected = Math.round(item.votes * mult)
+    return { ...item, projected, diff: projected - item.votes, multiplier: mult }
   })
-  const currentTotal = zones.reduce((s: number, z: any) => s + z.votes, 0)
-  const projectedTotal = projectedByZone.reduce((s: number, z: any) => s + z.projected, 0)
+  const currentTotal = adjustItems.reduce((s, item) => s + item.votes, 0)
+  const projectedTotal = projectedItems.reduce((s, item) => s + item.projected, 0)
   const totalDiff = projectedTotal - currentTotal
   const pctChange = currentTotal > 0 ? ((totalDiff / currentTotal) * 100).toFixed(1) : '0'
 
@@ -1151,8 +1183,8 @@ function TabProjecoes({ electionId }: { electionId: string }) {
   const projectedRank = allCands.findIndex(c => c.name === selectedCandidate) + 1
   const rankChange = currentRank - projectedRank
 
-  const updateZoneMultiplier = (zone: string, value: number) => {
-    setZoneMultipliers(prev => ({ ...prev, [zone]: Math.round(value * 100) / 100 }))
+  const updateItemMultiplier = (key: string, value: number) => {
+    setItemMultipliers(prev => ({ ...prev, [key]: Math.round(value * 100) / 100 }))
   }
 
   return (
@@ -1163,7 +1195,7 @@ function TabProjecoes({ electionId }: { electionId: string }) {
           <CardDescription>Selecione um candidato e ajuste os cenarios para simular projecoes</CardDescription>
         </CardHeader>
         <CardContent>
-          <Select value={selectedCandidate} onChange={e => { setSelectedCandidate(e.target.value); setZoneMultipliers({}) }}>
+          <Select value={selectedCandidate} onChange={e => { setSelectedCandidate(e.target.value); setItemMultipliers({}) }}>
             <option value="">Selecionar candidato...</option>
             {(candidates ?? []).map(c => (
               <option key={c.candidateName} value={c.candidateName}>
@@ -1209,11 +1241,11 @@ function TabProjecoes({ electionId }: { electionId: string }) {
 
           {/* Backend Scenarios Reference */}
           <Card>
-            <CardHeader><CardTitle>Cenarios Base (Zonas Fracas)</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Cenarios Base ({entityLabelPlural} Fracos)</CardTitle></CardHeader>
             <CardContent>
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-medium">Zonas fracas:</span> {data.weakZonesCount} (abaixo da media)
+                  <span className="font-medium">{entityLabelPlural} fracos:</span> {data.weakZonesCount} (abaixo da media)
                 </div>
                 {(data.scenarios ?? []).map((s: any, i: number) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
@@ -1228,25 +1260,25 @@ function TabProjecoes({ electionId }: { electionId: string }) {
             </CardContent>
           </Card>
 
-          {/* Zone-by-Zone Adjustments */}
+          {/* Item-by-Item Adjustments */}
           <Card>
             <CardHeader>
-              <CardTitle>Ajuste por Zona</CardTitle>
-              <CardDescription>Ajuste o multiplicador de cada zona para simular cenarios personalizados</CardDescription>
+              <CardTitle>Ajuste por {entityLabel}</CardTitle>
+              <CardDescription>Ajuste o multiplicador de cada {entityLabel.toLowerCase()} para simular cenarios personalizados</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {projectedByZone.map((z: any) => (
-                  <div key={z.zone} className="grid grid-cols-[60px_1fr_100px_100px_80px] gap-3 items-center">
-                    <span className="text-sm font-medium">Zona {z.zone}</span>
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                {projectedItems.map((item) => (
+                  <div key={item.key} className="grid grid-cols-[200px_1fr_60px_120px_80px] gap-3 items-center">
+                    <span className="text-sm font-medium truncate" title={item.label}>{item.label}</span>
                     <input type="range" min={50} max={200} step={1}
-                      value={Math.round((z.multiplier) * 100)}
-                      onChange={e => updateZoneMultiplier(z.zone, parseInt(e.target.value) / 100)}
+                      value={Math.round((item.multiplier) * 100)}
+                      onChange={e => updateItemMultiplier(item.key, parseInt(e.target.value) / 100)}
                       className="w-full accent-primary" />
-                    <span className="text-xs text-center font-medium">{(z.multiplier).toFixed(2)}x</span>
-                    <span className="text-xs text-right">{fmt(z.votes)} → {fmt(z.projected)}</span>
-                    <span className={`text-xs text-right font-semibold ${z.diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {z.diff >= 0 ? '+' : ''}{fmt(z.diff)}
+                    <span className="text-xs text-center font-medium">{(item.multiplier).toFixed(2)}x</span>
+                    <span className="text-xs text-right">{fmt(item.votes)} → {fmt(item.projected)}</span>
+                    <span className={`text-xs text-right font-semibold ${item.diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {item.diff >= 0 ? '+' : ''}{fmt(item.diff)}
                     </span>
                   </div>
                 ))}
@@ -1392,7 +1424,7 @@ export function ElectionResultsPage() {
           {selectedElectionId ? <TabComparar electionId={selectedElectionId} /> : <NoElection />}
         </TabsContent>
         <TabsContent value="projecoes">
-          {selectedElectionId ? <TabProjecoes electionId={selectedElectionId} /> : <NoElection />}
+          {selectedElectionId ? <TabProjecoes electionId={selectedElectionId} electionType={selectedElection?.type} /> : <NoElection />}
         </TabsContent>
       </Tabs>
     </div>
