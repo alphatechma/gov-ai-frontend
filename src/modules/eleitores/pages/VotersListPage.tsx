@@ -8,25 +8,40 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Search, Pencil, Upload, Download, Loader2, CheckCircle, AlertTriangle, X, Users, Headphones, ClipboardList, Clock, CheckCircle2, MapPin, Phone } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Upload, Download, Loader2, CheckCircle, AlertTriangle, X, Users, Headphones, ClipboardList, Clock, CheckCircle2, MapPin, Phone } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import type { Voter, HelpType, Leader } from '@/types/entities'
 
-/* ─── Voters columns ─── */
-const voterColumns: Column<Voter>[] = [
-  { key: 'name', label: 'Nome' },
-  { key: 'phone', label: 'Telefone' },
-  { key: 'neighborhood', label: 'Bairro' },
-  {
-    key: 'id',
-    label: 'Acoes',
-    render: (v) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/eleitores/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+/* ─── Voters columns (built inside component to access delete handler) ─── */
+function buildVoterColumns(onDelete: (id: string) => void): Column<Voter>[] {
+  return [
+    { key: 'name', label: 'Nome' },
+    { key: 'phone', label: 'Telefone' },
+    { key: 'neighborhood', label: 'Bairro' },
+    {
+      key: 'id',
+      label: 'Acoes',
+      render: (v) => (
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/eleitores/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (window.confirm('Tem certeza que deseja excluir este eleitor?')) {
+                onDelete(v.id)
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+}
 
 /* ─── Status config ─── */
 const statusColors: Record<string, 'warning' | 'default' | 'success' | 'secondary'> = {
@@ -257,6 +272,16 @@ export function VotersListPage() {
       if (fileRef.current) fileRef.current.value = ''
     },
   })
+
+  const deleteVoter = useMutation({
+    mutationFn: (id: string) => api.delete(`/voters/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['voters'] })
+      qc.invalidateQueries({ queryKey: ['voters-stats'] })
+    },
+  })
+
+  const voterColumns = buildVoterColumns((id) => deleteVoter.mutate(id))
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
