@@ -160,7 +160,7 @@ export function CeapPage() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground sm:text-sm">Total Receitas</p>
-              <p className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.totalReceitas ?? 0)}</p>
+              <div className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.totalReceitas ?? 0)}</div>
             </div>
           </CardContent>
         </Card>
@@ -172,7 +172,7 @@ export function CeapPage() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground sm:text-sm">Total Despesas</p>
-              <p className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.totalDespesas ?? 0)}</p>
+              <div className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.totalDespesas ?? 0)}</div>
             </div>
           </CardContent>
         </Card>
@@ -184,9 +184,9 @@ export function CeapPage() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground sm:text-sm">Saldo</p>
-              <p className={`truncate text-lg font-bold sm:text-2xl ${(s?.saldo ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              <div className={`truncate text-lg font-bold sm:text-2xl ${(s?.saldo ?? 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {summary.isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(s?.saldo ?? 0)}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -198,7 +198,7 @@ export function CeapPage() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground sm:text-sm">Pendentes</p>
-              <p className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : s?.pendentes ?? 0}</p>
+              <div className="truncate text-lg font-bold sm:text-2xl">{summary.isLoading ? <Skeleton className="h-8 w-28" /> : s?.pendentes ?? 0}</div>
             </div>
           </CardContent>
         </Card>
