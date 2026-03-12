@@ -451,7 +451,7 @@ export function WhatsappCrmPage() {
     queryKey: ['whatsapp', 'chats'],
     queryFn: () => api.get<WaChat[]>('/whatsapp/chats').then(r => r.data),
     enabled: connQuery.data?.liveStatus === 'CONNECTED' || connQuery.data?.status === 'CONNECTED',
-    refetchInterval: 30000,
+    refetchInterval: 15000, // Fallback polling; WebSocket handles real-time
   })
 
   const msgQuery = useQuery({
