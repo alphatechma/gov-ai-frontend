@@ -764,8 +764,8 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                 <Card>
                   <CardHeader><CardTitle>Evolucao por Zona</CardTitle></CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={Math.max(300, ev.byZone.length * 40)}>
-                      <BarChart data={ev.byZone} layout="vertical">
+                    <ResponsiveContainer width="100%" height={Math.max(300, (ev.byZone ?? []).length * 40)}>
+                      <BarChart data={ev.byZone ?? []} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" tickFormatter={(v) => fmt(v)} />
                         <YAxis type="category" dataKey="zone" tick={{ fontSize: 12 }} width={50}
@@ -794,7 +794,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                           </tr>
                         </thead>
                         <tbody>
-                          {ev.byZone.map((z: any, i: number) => (
+                          {(ev.byZone ?? []).map((z: any, i: number) => (
                             <tr key={z.zone} className={`border-b ${i % 2 === 0 ? 'bg-muted/20' : ''}`}>
                               <td className="p-3 font-medium">Zona {z.zone}</td>
                               <td className="p-3 text-right text-muted-foreground">{fmt(z.compareVotes)}</td>
@@ -814,25 +814,25 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                 </Card>
 
                 {/* Zonas ganhas/perdidas */}
-                {(ev.zonesGained.length > 0 || ev.zonesLost.length > 0) && (
+                {((ev.zonesGained ?? []).length > 0 || (ev.zonesLost ?? []).length > 0) && (
                   <div className="grid gap-4 md:grid-cols-2">
-                    {ev.zonesGained.length > 0 && (
+                    {(ev.zonesGained ?? []).length > 0 && (
                       <Card className="border-l-4 border-l-green-500">
                         <CardHeader className="pb-2"><CardTitle className="text-green-600 text-base">Zonas Conquistadas</CardTitle></CardHeader>
                         <CardContent>
                           <p className="text-sm">
-                            {ev.zonesGained.map((z: number) => `Zona ${z}`).join(', ')}
+                            {(ev.zonesGained ?? []).map((z: number) => `Zona ${z}`).join(', ')}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">Zonas onde nao havia votos em {compareEl.year}</p>
                         </CardContent>
                       </Card>
                     )}
-                    {ev.zonesLost.length > 0 && (
+                    {(ev.zonesLost ?? []).length > 0 && (
                       <Card className="border-l-4 border-l-red-500">
                         <CardHeader className="pb-2"><CardTitle className="text-red-600 text-base">Zonas Perdidas</CardTitle></CardHeader>
                         <CardContent>
                           <p className="text-sm">
-                            {ev.zonesLost.map((z: number) => `Zona ${z}`).join(', ')}
+                            {(ev.zonesLost ?? []).map((z: number) => `Zona ${z}`).join(', ')}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">Zonas onde nao ha votos em {currentEl.year}</p>
                         </CardContent>
@@ -854,7 +854,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                 <p className="text-sm text-muted-foreground mb-3">
                   "{crossData.candidateName}" nao participou desta eleicao{crossData.compareElection ? ` (${crossData.compareElection.cargo} ${crossData.compareElection.year})` : ''}.
                 </p>
-                {crossData.suggestions && crossData.suggestions.length > 0 && (
+                {Array.isArray(crossData.suggestions) && crossData.suggestions.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-2">Nomes similares encontrados:</p>
                     <div className="flex flex-wrap gap-2">
@@ -1314,10 +1314,11 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
 export function ElectionResultsPage() {
   const [selectedElectionId, setSelectedElectionId] = useState<string>('')
 
-  const { data: elections = [], isLoading: loadingElections } = useQuery<any[]>({
+  const { data: rawElections, isLoading: loadingElections } = useQuery<any>({
     queryKey: ['election-list'],
     queryFn: () => api.get('/election-results/elections').then(r => r.data),
   })
+  const elections = Array.isArray(rawElections) ? rawElections : []
 
   // Auto-select first election
   useEffect(() => {

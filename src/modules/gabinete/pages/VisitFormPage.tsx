@@ -32,7 +32,10 @@ export function VisitFormPage() {
 
   const voters = useQuery({
     queryKey: ['voters'],
-    queryFn: () => api.get<Voter[]>('/voters').then((r) => r.data),
+    queryFn: () => api.get<{ data: Voter[] } | Voter[]>('/voters').then((r) => {
+      const body = r.data
+      return Array.isArray(body) ? body : body.data ?? []
+    }),
   })
 
   const leaders = useQuery({
