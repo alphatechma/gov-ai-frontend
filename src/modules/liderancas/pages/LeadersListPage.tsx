@@ -125,7 +125,7 @@ export function LeadersListPage() {
                     )
                   }}
                 />
-                <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={28} label={{ position: 'right', fontSize: 12, formatter: (v: number) => `${v % 1 === 0 ? v : v.toFixed(1)}pts` }}>
+                <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={28} label={{ position: 'right', fontSize: 12, formatter: (v) => { const n = Number(v); return `${n % 1 === 0 ? n : n.toFixed(1)}pts` } }}>
                   {leaderRanking.map((_, i) => (
                     <Cell key={i} fill={['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fef3c7'][i] ?? '#fef3c7'} />
                   ))}
