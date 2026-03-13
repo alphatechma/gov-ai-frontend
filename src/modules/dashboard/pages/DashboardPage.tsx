@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { StatCard } from '../components/StatCard'
+import { DashboardBanner } from '../components/DashboardBanner'
 import { QuickActions } from '../components/QuickActions'
 import { ModuleCards } from '../components/ModuleCards'
 import { EvolutionChart } from '../components/EvolutionChart'
@@ -46,6 +47,9 @@ export function DashboardPage() {
         title={`Olá, ${user?.name?.split(' ')[0] ?? 'Usuário'}!`}
         description="Aqui está o resumo do seu mandato"
       />
+
+      {/* Dashboard Banner */}
+      <DashboardBanner />
 
       {/* Quick Action Chips */}
       <QuickActions />

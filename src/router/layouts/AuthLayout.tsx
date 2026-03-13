@@ -1,24 +1,55 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useSearchParams } from 'react-router-dom'
 import officeBg from '@/assets/office-gvai.svg'
+import { useTenantBrandingPublic } from '@/modules/auth/hooks/useTenantBrandingPublic'
 
 export function AuthLayout() {
+  const [searchParams] = useSearchParams()
+  const tenantSlug = searchParams.get('t')
+  const { data: branding } = useTenantBrandingPublic(tenantSlug)
+
+  const bgFrom = branding?.loginBgColor || '#0f3285'
+  const bgTo = branding?.loginBgColorEnd || '#0a2460'
+  const logoUrl = branding?.logoUrl
+  const appName = branding?.appName || 'GoverneAI'
+  const bannerUrl = branding?.bannerUrl
+
   return (
     <div className="flex min-h-screen">
       {/* Left — Image panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0f3285]">
-        <img
-          src={officeBg}
-          alt=""
-          className="absolute inset-10 h-[calc(100%-5rem)] w-[calc(100%-5rem)] object-contain opacity-40"
+      <div
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
+        style={{ backgroundColor: bgFrom }}
+      >
+        {bannerUrl ? (
+          <img
+            src={bannerUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-40"
+          />
+        ) : (
+          <img
+            src={officeBg}
+            alt=""
+            className="absolute inset-10 h-[calc(100%-5rem)] w-[calc(100%-5rem)] object-contain opacity-40"
+          />
+        )}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to bottom, ${bgFrom}99, ${bgTo}d9)`,
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0f3285]/60 to-[#0a2460]/85" />
 
         <div className="relative z-10 flex flex-col justify-between p-10 w-full">
           {/* Logo + Name */}
           <div className="flex items-center gap-3">
-            <img src="/icon-governe-branco.png" alt="GoverneAI" className="h-10 w-10" />
+            <img
+              src={logoUrl || '/icon-governe-branco.png'}
+              alt={appName}
+              className="h-10 w-10 object-contain"
+            />
             <span className="text-xl font-semibold text-white tracking-tight">
-              GoverneAI
+              {appName}
             </span>
           </div>
 
@@ -43,9 +74,13 @@ export function AuthLayout() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <img src="/icon-governe.png" alt="GoverneAI" className="h-10 w-10 rounded-lg" />
+            <img
+              src={logoUrl || '/icon-governe.png'}
+              alt={appName}
+              className="h-10 w-10 rounded-lg object-contain"
+            />
             <span className="text-xl font-semibold tracking-tight">
-              GoverneAI
+              {appName}
             </span>
           </div>
 

@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useTenantStore } from '@/stores/tenantStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useBrandingStore } from '@/stores/brandingStore'
 import { navigation } from '@/config/navigation'
 import { UserRole } from '@/types/enums'
 import { X, ChevronDown, ChevronLeft, ChevronRight, Settings, LogOut } from 'lucide-react'
@@ -18,6 +19,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { hasModule } = useTenantStore()
   const userRole = useAuthStore((s) => s.user?.role)
   const isSuperAdmin = userRole === UserRole.SUPER_ADMIN
+  const brandingLogo = useBrandingStore((s) => s.logoUrl)
+  const brandingAppName = useBrandingStore((s) => s.appName)
+  const dashboardBannerUrl = useBrandingStore((s) => s.dashboardBannerUrl)
+  const showBannerInSidebar = useBrandingStore((s) => s.showBannerInSidebar)
+  const sidebarBannerPosition = useBrandingStore((s) => s.sidebarBannerPosition) ?? 'bottom'
   const [collapsed, setCollapsed] = useState(false)
 
   // Auto-expand groups that contain the active route
@@ -33,6 +39,38 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const toggle = (label: string) => {
     setExpanded((prev) => ({ ...prev, [label]: !prev[label] }))
   }
+
+  const showBanner = dashboardBannerUrl && showBannerInSidebar && !collapsed
+  const bannerOnTop = sidebarBannerPosition === 'top'
+
+  const bannerElement = showBanner ? (
+    <div className="px-3 py-3 border-b">
+      <img
+        src={dashboardBannerUrl}
+        alt="Banner"
+        className="w-full rounded-lg object-cover shadow-sm"
+        style={{ maxHeight: '100px' }}
+      />
+    </div>
+  ) : null
+
+  const logoHeader = (
+    <div className={cn('flex h-16 items-center border-b', collapsed ? 'justify-center px-2' : 'justify-between px-6')}>
+      <Link to="/dashboard" className="flex items-center gap-2">
+        <img src={brandingLogo || '/icon-governe.png'} alt={brandingAppName || 'GoverneAI'} className="h-8 w-8 flex-shrink-0 rounded-lg object-contain" />
+        {!collapsed && (
+          <span className="text-lg font-bold text-sidebar-foreground">
+            {brandingAppName || 'GoverneAI'}
+          </span>
+        )}
+      </Link>
+      {!collapsed && (
+        <button onClick={onClose} className="lg:hidden text-sidebar-foreground">
+          <X className="h-5 w-5" />
+        </button>
+      )}
+    </div>
+  )
 
   return (
     <>
@@ -50,22 +88,15 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        {/* Header */}
-        <div className={cn('flex h-16 items-center border-b', collapsed ? 'justify-center px-2' : 'justify-between px-6')}>
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <img src="/icon-governe.png" alt="GoverneAI" className="h-8 w-8 flex-shrink-0 rounded-lg" />
-            {!collapsed && (
-              <span className="text-lg font-bold text-sidebar-foreground">
-                GoverneAI
-              </span>
-            )}
-          </Link>
-          {!collapsed && (
-            <button onClick={onClose} className="lg:hidden text-sidebar-foreground">
-              <X className="h-5 w-5" />
-            </button>
-          )}
-        </div>
+        {/* Top: banner on top → banner first, logo second | otherwise logo first */}
+        {bannerOnTop && showBanner ? (
+          <>
+            {bannerElement}
+            {logoHeader}
+          </>
+        ) : (
+          logoHeader
+        )}
 
         {/* Navigation */}
         <ScrollArea className="flex-1 py-4 overflow-y-auto">
@@ -225,6 +256,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </Link>
           <button
             onClick={() => {
+              useBrandingStore.getState().clear()
               useAuthStore.getState().logout()
               onClose()
             }}
@@ -252,6 +284,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             )}
           </button>
         </div>
+
+        {/* Bottom banner (when position is bottom) */}
+        {!bannerOnTop && showBanner && (
+          <div className="px-3 pb-3">
+            <img
+              src={dashboardBannerUrl}
+              alt="Banner"
+              className="w-full rounded-lg object-cover shadow-sm"
+              style={{ maxHeight: '100px' }}
+            />
+          </div>
+        )}
       </aside>
     </>
   )

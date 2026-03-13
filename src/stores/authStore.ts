@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types/entities'
+import { useBrandingStore } from './brandingStore'
+import { clearBranding } from '@/lib/applyBranding'
+import { queryClient } from '@/lib/queryClient'
 
 interface AuthState {
   user: User | null
@@ -23,13 +26,17 @@ export const useAuthStore = create<AuthState>()(
         set({ user, accessToken, refreshToken, isAuthenticated: true }),
       setTokens: (accessToken, refreshToken) =>
         set({ accessToken, refreshToken }),
-      logout: () =>
+      logout: () => {
+        useBrandingStore.getState().clear()
+        clearBranding()
+        queryClient.clear()
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
-        }),
+        })
+      },
     }),
     { name: 'governeai-auth' },
   ),

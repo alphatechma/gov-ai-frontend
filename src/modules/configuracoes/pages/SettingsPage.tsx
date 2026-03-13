@@ -9,11 +9,13 @@ import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { cn } from '@/lib/utils'
 import {
-  Settings, UserPen, HelpCircle, Contact,
+  Settings, UserPen, HelpCircle, Contact, Palette,
   Moon, Sun, User, Lock, Loader2, Save,
   ChevronDown, Zap, BookOpen, Shield, Users, BarChart3,
   Mail, Phone, MapPin, Clock, MessageCircle, Headphones, Instagram,
 } from 'lucide-react'
+import { UserRole } from '@/types/enums'
+import { AparenciaTab } from '../components/AparenciaTab'
 
 /* ─── types ─── */
 interface Profile {
@@ -31,14 +33,15 @@ interface Profile {
 interface FaqItem { question: string; answer: string }
 
 /* ─── tabs ─── */
-const tabs = [
-  { key: 'geral', label: 'Geral', icon: Settings },
-  { key: 'perfil', label: 'Meu Perfil', icon: UserPen },
-  { key: 'ajuda', label: 'Ajuda', icon: HelpCircle },
-  { key: 'contato', label: 'Contato', icon: Contact },
+const allTabs = [
+  { key: 'geral', label: 'Geral', icon: Settings, adminOnly: false },
+  { key: 'aparencia', label: 'Aparencia', icon: Palette, adminOnly: true },
+  { key: 'perfil', label: 'Meu Perfil', icon: UserPen, adminOnly: false },
+  { key: 'ajuda', label: 'Ajuda', icon: HelpCircle, adminOnly: false },
+  { key: 'contato', label: 'Contato', icon: Contact, adminOnly: false },
 ] as const
 
-type TabKey = (typeof tabs)[number]['key']
+type TabKey = (typeof allTabs)[number]['key']
 
 /* ─── FAQ data ─── */
 const faqSections = [
@@ -380,6 +383,10 @@ function ContatoTab() {
 /* ─── Main ─── */
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('geral')
+  const userRole = useAuthStore((s) => s.user?.role)
+  const isAdmin = userRole === UserRole.SUPER_ADMIN || userRole === UserRole.TENANT_ADMIN
+
+  const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin)
 
   return (
     <div className="space-y-6">
@@ -412,6 +419,7 @@ export function SettingsPage() {
         {/* Tab content */}
         <div className="flex-1 min-w-0">
           {activeTab === 'geral' && <GeralTab />}
+          {activeTab === 'aparencia' && <AparenciaTab />}
           {activeTab === 'perfil' && <PerfilTab />}
           {activeTab === 'ajuda' && <AjudaTab />}
           {activeTab === 'contato' && <ContatoTab />}
