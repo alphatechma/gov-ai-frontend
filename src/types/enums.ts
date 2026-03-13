@@ -29,6 +29,13 @@ export const SupportLevel = {
 } as const
 export type SupportLevel = (typeof SupportLevel)[keyof typeof SupportLevel]
 
+export const ConfidenceLevel = {
+  ALTO: 'ALTO',
+  NEUTRO: 'NEUTRO',
+  BAIXO: 'BAIXO',
+} as const
+export type ConfidenceLevel = (typeof ConfidenceLevel)[keyof typeof ConfidenceLevel]
+
 export const HelpCategory = {
   SAUDE: 'SAUDE',
   EDUCACAO: 'EDUCACAO',

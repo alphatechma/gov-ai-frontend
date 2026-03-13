@@ -75,6 +75,7 @@ export function VoterFormPage() {
     votingZone: '',
     votingSection: '',
     leaderId: '',
+    confidenceLevel: 'NEUTRO',
     tags: '',
     notes: '',
   })
@@ -123,6 +124,7 @@ export function VoterFormPage() {
         votingZone: v.votingZone ?? '',
         votingSection: v.votingSection ?? '',
         leaderId: v.leaderId ?? '',
+        confidenceLevel: v.confidenceLevel ?? 'NEUTRO',
         tags: v.tags?.join(', ') ?? '',
         notes: v.notes ?? '',
       })
@@ -152,6 +154,7 @@ export function VoterFormPage() {
       if (form.votingZone) payload.votingZone = form.votingZone
       if (form.votingSection) payload.votingSection = form.votingSection
       if (form.leaderId) payload.leaderId = form.leaderId
+      if (form.confidenceLevel) payload.confidenceLevel = form.confidenceLevel
       if (form.notes) payload.notes = form.notes
       if (form.tags.trim()) {
         payload.tags = form.tags.split(',').map((t) => t.trim()).filter(Boolean)
@@ -335,6 +338,14 @@ export function VoterFormPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Secao Eleitoral</label>
               <Input value={form.votingSection} onChange={(e) => set('votingSection', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nivel de Confianca</label>
+              <Select value={form.confidenceLevel} onChange={(e) => set('confidenceLevel', e.target.value)}>
+                <option value="NEUTRO">Neutro</option>
+                <option value="ALTO">Alto</option>
+                <option value="BAIXO">Baixo</option>
+              </Select>
             </div>
             <div className="space-y-2 relative" ref={leaderRef}>
               <label className="text-sm font-medium">Lideranca</label>

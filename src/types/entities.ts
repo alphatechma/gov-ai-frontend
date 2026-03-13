@@ -1,4 +1,4 @@
-import type { PoliticalProfile, UserRole, SupportLevel, HelpStatus, TaskStatus, TaskPriority, AppointmentStatus, ProjectStatus, RequestType, RequestStatus } from './enums'
+import type { PoliticalProfile, UserRole, SupportLevel, ConfidenceLevel, HelpStatus, TaskStatus, TaskPriority, AppointmentStatus, ProjectStatus, RequestType, RequestStatus } from './enums'
 
 export interface Tenant {
   id: string
@@ -87,6 +87,7 @@ export interface Voter {
   votingSection: string | null
   leaderId: string | null
   supportLevel: SupportLevel
+  confidenceLevel: ConfidenceLevel
   tags: string[]
   notes: string | null
   createdAt: string

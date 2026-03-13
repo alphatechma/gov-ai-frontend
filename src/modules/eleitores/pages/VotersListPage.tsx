@@ -12,12 +12,34 @@ import { Plus, Search, Pencil, Trash2, Upload, Download, Loader2, CheckCircle, A
 import { cn, formatDate } from '@/lib/utils'
 import type { Voter, HelpType, Leader } from '@/types/entities'
 
+/* ─── Confidence level config ─── */
+const confidenceLevelColors: Record<string, 'success' | 'secondary' | 'warning'> = {
+  ALTO: 'success',
+  NEUTRO: 'secondary',
+  BAIXO: 'warning',
+}
+
+const confidenceLevelLabels: Record<string, string> = {
+  ALTO: 'Alto',
+  NEUTRO: 'Neutro',
+  BAIXO: 'Baixo',
+}
+
 /* ─── Voters columns (built inside component to access delete handler) ─── */
 function buildVoterColumns(onDelete: (id: string) => void): Column<Voter>[] {
   return [
     { key: 'name', label: 'Nome' },
     { key: 'phone', label: 'Telefone' },
     { key: 'neighborhood', label: 'Bairro' },
+    {
+      key: 'confidenceLevel',
+      label: 'Confianca',
+      render: (v) => (
+        <Badge variant={confidenceLevelColors[v.confidenceLevel] ?? 'secondary'}>
+          {confidenceLevelLabels[v.confidenceLevel] ?? 'Neutro'}
+        </Badge>
+      ),
+    },
     {
       key: 'id',
       label: 'Acoes',
@@ -137,6 +159,7 @@ export function VotersListPage() {
   const [voterFilterBairro, setVoterFilterBairro] = useState('')
   const [voterFilterLeader, setVoterFilterLeader] = useState('')
   const [voterFilterGender, setVoterFilterGender] = useState('')
+  const [voterFilterConfidence, setVoterFilterConfidence] = useState('')
   const [voterPage, setVoterPage] = useState(1)
   const debouncedVoterSearch = useDebounce(voterSearch)
 
@@ -151,7 +174,7 @@ export function VotersListPage() {
   const debouncedHelpSearch = useDebounce(helpSearch)
 
   // Reset page when filters change
-  useEffect(() => { setVoterPage(1) }, [debouncedVoterSearch, voterFilterBairro, voterFilterLeader, voterFilterGender])
+  useEffect(() => { setVoterPage(1) }, [debouncedVoterSearch, voterFilterBairro, voterFilterLeader, voterFilterGender, voterFilterConfidence])
   useEffect(() => { setHelpPage(1) }, [debouncedHelpSearch, filterType, filterStatus, filterBairro, filterDateFrom, filterDateTo])
 
   // ── Build query params ──
@@ -162,6 +185,7 @@ export function VotersListPage() {
     ...(voterFilterBairro && { neighborhood: voterFilterBairro }),
     ...(voterFilterLeader && { leaderId: voterFilterLeader }),
     ...(voterFilterGender && { gender: voterFilterGender }),
+    ...(voterFilterConfidence && { confidenceLevel: voterFilterConfidence }),
   }
 
   const voterFilterParams = {
@@ -169,6 +193,7 @@ export function VotersListPage() {
     ...(voterFilterBairro && { neighborhood: voterFilterBairro }),
     ...(voterFilterLeader && { leaderId: voterFilterLeader }),
     ...(voterFilterGender && { gender: voterFilterGender }),
+    ...(voterFilterConfidence && { confidenceLevel: voterFilterConfidence }),
   }
 
   const helpParams = {
@@ -241,13 +266,14 @@ export function VotersListPage() {
   const top5Types = (helpStats?.types ?? []).slice(0, 5)
   const top5Max = top5Types.length > 0 ? top5Types[0].count : 0
 
-  const hasVoterFilters = voterFilterBairro || voterFilterLeader || voterFilterGender
+  const hasVoterFilters = voterFilterBairro || voterFilterLeader || voterFilterGender || voterFilterConfidence
   const hasActiveFilters = filterType || filterStatus || filterBairro || filterDateFrom || filterDateTo
 
   const clearVoterFilters = () => {
     setVoterFilterBairro('')
     setVoterFilterLeader('')
     setVoterFilterGender('')
+    setVoterFilterConfidence('')
   }
 
   const clearFilters = () => {
@@ -344,6 +370,7 @@ export function VotersListPage() {
     if (voterFilterBairro) params.set('neighborhood', voterFilterBairro)
     if (voterFilterLeader) params.set('leaderId', voterFilterLeader)
     if (voterFilterGender) params.set('gender', voterFilterGender)
+    if (voterFilterConfidence) params.set('confidenceLevel', voterFilterConfidence)
     const qs = params.toString()
     api.get(`/voters/export${qs ? `?${qs}` : ''}`, { responseType: 'blob' }).then((res) => {
       const url = window.URL.createObjectURL(new Blob([res.data]))
@@ -594,7 +621,7 @@ export function VotersListPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Select value={voterFilterBairro} onChange={(e) => setVoterFilterBairro(e.target.value)}>
                   <option value="">Todos os bairros</option>
                   {(stats?.bairros ?? []).map((b) => (
@@ -614,6 +641,13 @@ export function VotersListPage() {
                   {(stats?.genders ?? []).map((g) => (
                     <option key={g} value={g}>{g}</option>
                   ))}
+                </Select>
+
+                <Select value={voterFilterConfidence} onChange={(e) => setVoterFilterConfidence(e.target.value)}>
+                  <option value="">Todas as confiancas</option>
+                  <option value="ALTO">Alto</option>
+                  <option value="NEUTRO">Neutro</option>
+                  <option value="BAIXO">Baixo</option>
                 </Select>
               </div>
 
