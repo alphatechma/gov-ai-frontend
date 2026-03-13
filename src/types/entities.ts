@@ -16,6 +16,13 @@ export interface Tenant {
   primaryColorDark: string | null
   loginBgColor: string | null
   loginBgColorEnd: string | null
+  dashboardBannerUrl: string | null
+  sidebarColor: string | null
+  headerColor: string | null
+  fontFamily: string | null
+  borderRadius: string | null
+  showBannerInSidebar: boolean
+  sidebarBannerPosition: string | null
   active: boolean
   planId: string | null
   createdAt: string
