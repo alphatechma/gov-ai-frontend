@@ -9,6 +9,8 @@ import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Search, Pencil, Trash2, Upload, Download, Loader2, CheckCircle, AlertTriangle, X, Users, Headphones, ClipboardList, Clock, CheckCircle2, MapPin, Phone } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { cn, formatDate } from '@/lib/utils'
 import type { Voter, HelpType, Leader } from '@/types/entities'
 
@@ -362,15 +364,61 @@ export function VotersListPage() {
 
   // ── Export ──
   const [exporting, setExporting] = useState(false)
+  const [showExportDialog, setShowExportDialog] = useState(false)
+
+  const EXPORT_FIELDS = [
+    { key: 'lideranca', label: 'Liderança' },
+    { key: 'nome', label: 'Nome' },
+    { key: 'telefone', label: 'Telefone' },
+    { key: 'email', label: 'Email' },
+    { key: 'genero', label: 'Gênero' },
+    { key: 'dataNascimento', label: 'Data de Nascimento' },
+    { key: 'endereco', label: 'Endereço' },
+    { key: 'bairro', label: 'Bairro' },
+    { key: 'cidade', label: 'Cidade' },
+    { key: 'estado', label: 'Estado' },
+    { key: 'cep', label: 'CEP' },
+    { key: 'tituloEleitor', label: 'Título de Eleitor' },
+    { key: 'zona', label: 'Zona' },
+    { key: 'secao', label: 'Seção' },
+    { key: 'nivelConfianca', label: 'Nível de Confiança' },
+    { key: 'tags', label: 'Tags' },
+    { key: 'observacoes', label: 'Observações' },
+  ] as const
+
+  const [selectedExportFields, setSelectedExportFields] = useState<Set<string>>(
+    () => new Set(EXPORT_FIELDS.map((f) => f.key)),
+  )
+
+  const toggleExportField = (key: string) => {
+    setSelectedExportFields((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const toggleAllExportFields = () => {
+    if (selectedExportFields.size === EXPORT_FIELDS.length) {
+      setSelectedExportFields(new Set())
+    } else {
+      setSelectedExportFields(new Set(EXPORT_FIELDS.map((f) => f.key)))
+    }
+  }
 
   const exportVoters = () => {
     setExporting(true)
+    setShowExportDialog(false)
     const params = new URLSearchParams()
     if (voterSearch) params.set('search', voterSearch)
     if (voterFilterBairro) params.set('neighborhood', voterFilterBairro)
     if (voterFilterLeader) params.set('leaderId', voterFilterLeader)
     if (voterFilterGender) params.set('gender', voterFilterGender)
     if (voterFilterConfidence) params.set('confidenceLevel', voterFilterConfidence)
+    if (selectedExportFields.size < EXPORT_FIELDS.length) {
+      params.set('fields', Array.from(selectedExportFields).join(','))
+    }
     const qs = params.toString()
     api.get(`/voters/export${qs ? `?${qs}` : ''}`, { responseType: 'blob' }).then((res) => {
       const url = window.URL.createObjectURL(new Blob([res.data]))
@@ -441,7 +489,7 @@ export function VotersListPage() {
         {/* ─── Actions ─── */}
         {tab === 'eleitores' ? (
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={exportVoters} disabled={exporting}>
+            <Button variant="outline" onClick={() => setShowExportDialog(true)} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Exportar
             </Button>
@@ -892,6 +940,45 @@ export function VotersListPage() {
           />
         </>
       )}
+      {/* ─── Export fields dialog ─── */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Eleitores</DialogTitle>
+            <DialogDescription>Selecione os campos que deseja incluir na exportação.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 max-h-80 overflow-y-auto py-2">
+            <label className="flex items-center gap-3 cursor-pointer px-1">
+              <Checkbox
+                checked={selectedExportFields.size === EXPORT_FIELDS.length}
+                onCheckedChange={toggleAllExportFields}
+              />
+              <span className="text-sm font-medium">Selecionar todos</span>
+            </label>
+            <div className="border-t" />
+            {EXPORT_FIELDS.map((field) => (
+              <label key={field.key} className="flex items-center gap-3 cursor-pointer px-1">
+                <Checkbox
+                  checked={selectedExportFields.has(field.key)}
+                  onCheckedChange={() => toggleExportField(field.key)}
+                />
+                <span className="text-sm">{field.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExportDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={exportVoters} disabled={selectedExportFields.size === 0}>
+              <Download className="h-4 w-4" />
+              Exportar ({selectedExportFields.size})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
