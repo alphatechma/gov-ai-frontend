@@ -33,11 +33,12 @@ const periodLabels: Record<Period, string> = {
 }
 
 function formatDate(dateStr: string) {
-  const date = new Date(dateStr + 'T00:00:00')
+  const date = new Date(dateStr)
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+    timeZone: 'UTC',
   })
 }
 
