@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { DataTable, type Column } from '@/components/DataTable'
@@ -148,7 +148,11 @@ function useDebounce(value: string, delay = 400) {
 }
 
 export function VotersListPage() {
-  const [tab, setTab] = useState<Tab>('eleitores')
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = searchParams.get('tab')
+    return t === 'atendimentos' ? 'atendimentos' : 'eleitores'
+  })
   const [showImport, setShowImport] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [showHelpImport, setShowHelpImport] = useState(false)

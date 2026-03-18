@@ -38,7 +38,7 @@ export function QuickActions() {
       label: `${data.pendingHelpRecords} atendimento${data.pendingHelpRecords > 1 ? 's' : ''} pendente${data.pendingHelpRecords > 1 ? 's' : ''}`,
       icon: Headphones,
       color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-      path: '/atendimentos',
+      path: '/eleitores?tab=atendimentos',
     },
   ].filter((c) => c.show)
 
