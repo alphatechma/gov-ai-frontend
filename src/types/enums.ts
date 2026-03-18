@@ -18,6 +18,7 @@ export const UserRole = {
   ADVISOR: 'ADVISOR',
   LEADER: 'LEADER',
   VIEWER: 'VIEWER',
+  ATTENDANT: 'ATTENDANT',
 } as const
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
@@ -149,6 +150,14 @@ export const RequestStatus = {
   NEGADO: 'NEGADO',
 } as const
 export type RequestStatus = (typeof RequestStatus)[keyof typeof RequestStatus]
+
+export const VisitStatus = {
+  AGENDADA: 'AGENDADA',
+  EM_ATENDIMENTO: 'EM_ATENDIMENTO',
+  CONCLUIDA: 'CONCLUIDA',
+  CANCELADA: 'CANCELADA',
+} as const
+export type VisitStatus = (typeof VisitStatus)[keyof typeof VisitStatus]
 
 export const VoteChoice = {
   FAVORAVEL: 'FAVORAVEL',

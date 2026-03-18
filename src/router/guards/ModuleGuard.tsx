@@ -9,14 +9,20 @@ interface ModuleGuardProps {
 
 export function ModuleGuard({ moduleKey }: ModuleGuardProps) {
   const hasModule = useTenantStore((s) => s.hasModule)
-  const userRole = useAuthStore((s) => s.user?.role)
+  const user = useAuthStore((s) => s.user)
 
-  if (userRole === UserRole.SUPER_ADMIN) {
+  if (user?.role === UserRole.SUPER_ADMIN) {
     return <Outlet />
   }
 
   if (!hasModule(moduleKey)) {
     return <Navigate to="/" replace />
+  }
+
+  if (user?.allowedModules && user.allowedModules.length > 0) {
+    if (!user.allowedModules.includes(moduleKey)) {
+      return <Navigate to="/" replace />
+    }
   }
 
   return <Outlet />

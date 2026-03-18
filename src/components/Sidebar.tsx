@@ -17,8 +17,10 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const location = useLocation()
   const { hasModule } = useTenantStore()
-  const userRole = useAuthStore((s) => s.user?.role)
+  const user = useAuthStore((s) => s.user)
+  const userRole = user?.role
   const isSuperAdmin = userRole === UserRole.SUPER_ADMIN
+  const allowedModules = user?.allowedModules
   const brandingLogo = useBrandingStore((s) => s.logoUrl)
   const brandingAppName = useBrandingStore((s) => s.appName)
   const dashboardBannerUrl = useBrandingStore((s) => s.dashboardBannerUrl)
@@ -106,7 +108,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <nav className={cn('space-y-1', collapsed ? 'px-2' : 'px-3')}>
             {navigation.map((group) => {
               const visibleItems = group.items.filter(
-                (item) => isSuperAdmin || !item.moduleKey || hasModule(item.moduleKey),
+                (item) => {
+                  if (isSuperAdmin) return true
+                  if (item.moduleKey && !hasModule(item.moduleKey)) return false
+                  if (allowedModules && allowedModules.length > 0 && item.moduleKey) {
+                    return allowedModules.includes(item.moduleKey)
+                  }
+                  return true
+                },
               )
               if (visibleItems.length === 0) return null
 

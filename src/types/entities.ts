@@ -1,4 +1,4 @@
-import type { PoliticalProfile, UserRole, SupportLevel, ConfidenceLevel, HelpStatus, TaskStatus, TaskPriority, AppointmentStatus, ProjectStatus, RequestType, RequestStatus } from './enums'
+import type { PoliticalProfile, UserRole, SupportLevel, ConfidenceLevel, HelpStatus, TaskStatus, TaskPriority, AppointmentStatus, ProjectStatus, RequestType, RequestStatus, VisitStatus } from './enums'
 
 export interface Tenant {
   id: string
@@ -40,6 +40,7 @@ export interface User {
   cpf: string | null
   avatarUrl: string | null
   active: boolean
+  allowedModules?: string[] | null
   lastLoginAt: string | null
   createdAt: string
   updatedAt: string
@@ -142,9 +143,19 @@ export interface Visit {
   voterId: string | null
   leaderId: string | null
   userId: string | null
+  visitorName: string | null
   date: string
+  visitorAddress: string | null
+  areaType: string | null
+  district: string | null
+  neighborhood: string | null
+  requestType: string | null
+  requestTypeOther: string | null
   objective: string
   result: string | null
+  status: VisitStatus
+  appointmentId: string | null
+  requestDescription: string | null
   photos: string[]
   latitude: number | null
   longitude: number | null

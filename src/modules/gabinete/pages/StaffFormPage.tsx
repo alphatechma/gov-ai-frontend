@@ -4,9 +4,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Loader2, Save, Trash2, UserPlus } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Trash2, UserPlus, Shield } from 'lucide-react'
 import type { StaffMember } from '@/types/entities'
+import { UserRole } from '@/types/enums'
+
+const accessRoles = [
+  { value: UserRole.ADVISOR, label: 'Assessor', description: 'Acesso completo aos modulos habilitados' },
+  { value: UserRole.MANAGER, label: 'Gerente', description: 'Acesso completo aos modulos habilitados' },
+  { value: UserRole.LEADER, label: 'Lideranca', description: 'Acesso completo aos modulos habilitados' },
+  { value: UserRole.VIEWER, label: 'Visualizador', description: 'Apenas visualizacao dos dados' },
+  { value: UserRole.ATTENDANT, label: 'Atendente', description: 'Acesso restrito ao modulo de visitas' },
+] as const
 
 export function StaffFormPage() {
   const { id } = useParams()
@@ -25,7 +35,17 @@ export function StaffFormPage() {
   })
 
   const [createAccess, setCreateAccess] = useState(false)
+  const [accessRole, setAccessRole] = useState<string>(UserRole.ADVISOR)
   const [password, setPassword] = useState('')
+
+  const isAttendant = accessRole === UserRole.ATTENDANT
+
+  // When ATTENDANT is selected, force createAccess on
+  useEffect(() => {
+    if (isAttendant) {
+      setCreateAccess(true)
+    }
+  }, [isAttendant])
 
   const member = useQuery({
     queryKey: ['staff-member', id],
@@ -63,6 +83,10 @@ export function StaffFormPage() {
       if (!isEdit && createAccess) {
         payload.createAccess = true
         payload.password = password
+        payload.accessRole = accessRole
+        if (isAttendant) {
+          payload.allowedModules = ['visits']
+        }
       }
 
       return isEdit ? api.patch(`/staff/${id}`, payload) : api.post('/staff', payload)
@@ -84,6 +108,8 @@ export function StaffFormPage() {
   })
 
   const set = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }))
+
+  const needsAccess = createAccess || isAttendant
 
   if (isEdit && member.isLoading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -121,8 +147,8 @@ export function StaffFormPage() {
               <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="(00) 00000-0000" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">E-mail {createAccess && '*'}</label>
-              <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required={createAccess} />
+              <label className="text-sm font-medium">E-mail {needsAccess && '*'}</label>
+              <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required={needsAccess} />
             </div>
           </CardContent>
         </Card>
@@ -158,23 +184,58 @@ export function StaffFormPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={createAccess}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Perfil de Acesso</label>
+                <Select
+                  value={accessRole}
                   onChange={(e) => {
-                    setCreateAccess(e.target.checked)
-                    if (!e.target.checked) setPassword('')
+                    const role = e.target.value
+                    setAccessRole(role)
+                    if (role === UserRole.ATTENDANT) {
+                      setCreateAccess(true)
+                    }
                   }}
-                  className="h-4 w-4 rounded border-input"
-                />
-                <span className="text-sm font-medium">Criar acesso na aplicacao para este membro</span>
-              </label>
-              <p className="text-xs text-muted-foreground">
-                O membro podera acessar a plataforma com o e-mail informado e a senha definida abaixo. Perfil: Assessor
-              </p>
+                >
+                  <option value="">Sem acesso a plataforma</option>
+                  {accessRoles.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </Select>
+                {accessRole && (
+                  <p className="text-xs text-muted-foreground">
+                    {accessRoles.find((r) => r.value === accessRole)?.description}
+                  </p>
+                )}
+              </div>
 
-              {createAccess && (
+              {!isAttendant && accessRole && (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={createAccess}
+                    onChange={(e) => {
+                      setCreateAccess(e.target.checked)
+                      if (!e.target.checked) setPassword('')
+                    }}
+                    className="h-4 w-4 rounded border-input"
+                  />
+                  <span className="text-sm font-medium">Criar acesso agora (definir senha)</span>
+                </label>
+              )}
+
+              {isAttendant && (
+                <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
+                  <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900 dark:text-blue-200">Perfil Atendente</p>
+                    <p className="text-blue-700 dark:text-blue-300 mt-0.5">
+                      Este perfil tera acesso restrito apenas ao modulo de Visitas, com layout simplificado. E obrigatorio definir uma senha.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {needsAccess && (
                 <div className="grid gap-4 sm:grid-cols-2 pt-2">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">E-mail de acesso</label>
@@ -187,7 +248,7 @@ export function StaffFormPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimo 6 caracteres"
-                      required={createAccess}
+                      required={needsAccess}
                       minLength={6}
                     />
                   </div>

@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AuthLayout } from './layouts/AuthLayout'
-import { AppLayout } from './layouts/AppLayout'
+import { RoleBasedLayout } from './layouts/RoleBasedLayout'
 import { AuthGuard } from './guards/AuthGuard'
 import { ModuleGuard } from './guards/ModuleGuard'
 
@@ -81,7 +81,7 @@ export const router = createBrowserRouter([
     element: <AuthGuard />,
     children: [
       {
-        element: <AppLayout />,
+        element: <RoleBasedLayout />,
         children: [
           // Dashboard
           moduleRoute('dashboard', '/dashboard', <DashboardPage />),
