@@ -24,9 +24,9 @@ export function useQuickActions() {
   })
 }
 
-export function useBirthdays() {
+export function useBirthdays(period: number = 7) {
   return useQuery({
-    queryKey: ['dashboard', 'birthdays'],
+    queryKey: ['dashboard', 'birthdays', period],
     queryFn: () =>
       api
         .get<
@@ -42,7 +42,7 @@ export function useBirthdays() {
             daysUntil: number
             age: number
           }>
-        >('/dashboard/birthdays')
+        >(`/dashboard/birthdays?period=${period}`)
         .then((r) => r.data),
   })
 }
