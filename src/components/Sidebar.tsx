@@ -56,7 +56,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   const logoHeader = (
     <div className={cn('flex h-16 items-center border-b', collapsed ? 'justify-center px-2' : 'justify-between px-6')}>
-      <Link to="/dashboard" className="flex items-center gap-2">
+      <Link to="/" className="flex items-center gap-2">
         <img src={brandingLogo || '/icon-governe.png'} alt={brandingAppName || 'GoverneAI'} className="h-8 w-8 flex-shrink-0 rounded-lg object-contain" />
         {!collapsed && (
           <span className="text-lg font-bold text-sidebar-foreground">

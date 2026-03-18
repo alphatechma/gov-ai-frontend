@@ -53,7 +53,7 @@ export function useLogin() {
         // modules will be empty, sidebar will show only non-module items
       }
 
-      navigate('/dashboard')
+      navigate('/')
     },
   })
 }

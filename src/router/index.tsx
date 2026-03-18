@@ -8,6 +8,7 @@ import { ModuleGuard } from './guards/ModuleGuard'
 import { LoginPage } from '@/modules/auth/pages/LoginPage'
 
 // Dashboard
+import { QuickAccessPage } from '@/modules/dashboard/pages/QuickAccessPage'
 import { DashboardPage } from '@/modules/dashboard/pages/DashboardPage'
 
 // Eleitoral
@@ -151,8 +152,8 @@ export const router = createBrowserRouter([
           // Config (sem module guard)
           { path: '/configuracoes', element: <SettingsPage /> },
 
-          // Redirect root to dashboard
-          { path: '/', element: <DashboardPage /> },
+          // Quick Access (home)
+          { path: '/', element: <QuickAccessPage /> },
         ],
       },
     ],
