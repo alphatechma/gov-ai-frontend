@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Loader2, Save, Trash2, Plus } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Trash2, Plus, Search, UserRound } from 'lucide-react'
 import { HelpStatus } from '@/types/enums'
 import type { HelpRecord, HelpType, Voter, Leader } from '@/types/entities'
 
@@ -38,6 +38,10 @@ export function HelpRecordFormPage() {
   const [typeSearch, setTypeSearch] = useState('')
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const typeRef = useRef<HTMLDivElement>(null)
+
+  const [voterSearch, setVoterSearch] = useState('')
+  const [showVoterDropdown, setShowVoterDropdown] = useState(false)
+  const voterRef = useRef<HTMLDivElement>(null)
 
   const [leaderSearch, setLeaderSearch] = useState('')
   const [showLeaderDropdown, setShowLeaderDropdown] = useState(false)
@@ -105,17 +109,25 @@ export function HelpRecordFormPage() {
         date: r.date ?? new Date().toISOString().slice(0, 10),
       })
       setTypeSearch(r.type ?? '')
+      // Populate voter search with the voter name
+      if (r.voterId && voters.data) {
+        const voter = voters.data.find((v) => v.id === r.voterId)
+        if (voter) setVoterSearch(voter.name)
+      }
       // Populate leader search with the leader name
       if (r.leaderId && leaders.data) {
         const leader = leaders.data.find((l) => l.id === r.leaderId)
         if (leader) setLeaderSearch(leader.name)
       }
     }
-  }, [record.data, leaders.data])
+  }, [record.data, leaders.data, voters.data])
 
   // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      if (voterRef.current && !voterRef.current.contains(e.target as Node)) {
+        setShowVoterDropdown(false)
+      }
       if (typeRef.current && !typeRef.current.contains(e.target as Node)) {
         setShowTypeDropdown(false)
       }
@@ -162,6 +174,11 @@ export function HelpRecordFormPage() {
 
   const set = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }))
 
+  // Filter voters based on search
+  const filteredVoters = (voters.data ?? []).filter((v) =>
+    v.name.toLowerCase().includes(voterSearch.toLowerCase()),
+  ).slice(0, 50)
+
   // Filter types based on search
   const filteredTypes = (helpTypes.data ?? []).filter((t) =>
     t.name.toLowerCase().includes(typeSearch.toLowerCase()),
@@ -202,7 +219,49 @@ export function HelpRecordFormPage() {
       <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} className="space-y-6">
         <Card>
           <CardHeader><CardTitle>Dados do Atendimento</CardTitle></CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
+          <CardContent className="space-y-4">
+            <div className="relative" ref={voterRef}>
+              <label className="text-sm font-medium mb-2 block">Eleitor</label>
+              <div className="relative">
+                <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={voterSearch}
+                  onChange={(e) => {
+                    setVoterSearch(e.target.value)
+                    if (!e.target.value) setForm((p) => ({ ...p, voterId: '' }))
+                    setShowVoterDropdown(true)
+                  }}
+                  onFocus={() => setShowVoterDropdown(true)}
+                  placeholder="Pesquisar eleitor pelo nome..."
+                  className="pl-10 pr-10"
+                />
+              </div>
+              {showVoterDropdown && voterSearch.length > 0 && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                  {filteredVoters.length === 0 && (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum eleitor encontrado</p>
+                  )}
+                  {filteredVoters.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        setForm((p) => ({ ...p, voterId: v.id }))
+                        setVoterSearch(v.name)
+                        setShowVoterDropdown(false)
+                      }}
+                    >
+                      <UserRound className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      {v.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Data *</label>
               <Input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required />
@@ -331,12 +390,6 @@ export function HelpRecordFormPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Eleitor</label>
-              <Select value={form.voterId} onChange={(e) => set('voterId', e.target.value)}>
-                <option value="">Nenhum</option>
-                {(voters.data ?? []).map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-              </Select>
             </div>
           </CardContent>
         </Card>
