@@ -103,6 +103,7 @@ const helpColumns: Column<any>[] = [
 /* ─── Import types ─── */
 interface ImportResult {
   imported: number
+  updated?: number
   skipped: number
   total: number
   errors: string[]
@@ -773,6 +774,9 @@ export function VotersListPage() {
                       <CheckCircle className="h-4 w-4 flex-shrink-0 text-green-600" />
                       <span>
                         <strong>{helpImportResult.imported}</strong> importados de <strong>{helpImportResult.total}</strong>
+                        {(helpImportResult.updated ?? 0) > 0 && (
+                          <> · <strong>{helpImportResult.updated}</strong> atualizados</>
+                        )}
                         {helpImportResult.skipped > 0 && (
                           <> · <strong>{helpImportResult.skipped}</strong> ignorados</>
                         )}
