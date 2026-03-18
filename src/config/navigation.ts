@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  LayoutGrid,
   Users,
   Crown,
   MapPin,
@@ -40,6 +41,7 @@ export const navigation: NavGroup[] = [
     label: 'Principal',
     icon: LayoutDashboard,
     items: [
+      { label: 'Acesso Rapido', path: '/', icon: LayoutGrid },
       { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, moduleKey: 'dashboard' },
     ],
   },

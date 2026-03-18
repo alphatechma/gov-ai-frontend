@@ -26,11 +26,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const sidebarBannerPosition = useBrandingStore((s) => s.sidebarBannerPosition) ?? 'bottom'
   const [collapsed, setCollapsed] = useState(false)
 
+  const isPathActive = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
+
   // Auto-expand groups that contain the active route
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
     for (const group of navigation) {
-      const hasActive = group.items.some((item) => location.pathname.startsWith(item.path))
+      const hasActive = group.items.some((item) => isPathActive(item.path))
       if (hasActive) initial[group.label] = true
     }
     return initial
@@ -109,13 +112,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
               const isSingle = visibleItems.length === 1
               const isOpen = expanded[group.label] ?? false
-              const groupHasActive = visibleItems.some((item) => location.pathname.startsWith(item.path))
+              const groupHasActive = visibleItems.some((item) => isPathActive(item.path))
 
               // Collapsed mode: show only icons for all items flat
               if (collapsed) {
                 if (isSingle) {
                   const item = visibleItems[0]
-                  const isActive = location.pathname.startsWith(item.path)
+                  const isActive = isPathActive(item.path)
                   return (
                     <Link
                       key={item.path}
@@ -137,7 +140,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 return (
                   <div key={group.label} className="space-y-1">
                     {visibleItems.map((item) => {
-                      const isActive = location.pathname.startsWith(item.path)
+                      const isActive = isPathActive(item.path)
                       return (
                         <Link
                           key={item.path}
@@ -162,7 +165,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               // Expanded mode: original behavior
               if (isSingle) {
                 const item = visibleItems[0]
-                const isActive = location.pathname.startsWith(item.path)
+                const isActive = isPathActive(item.path)
                 return (
                   <Link
                     key={item.path}
@@ -211,7 +214,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   >
                     <div className="ml-2 space-y-0.5 border-l border-border pl-2 mt-0.5 mb-1">
                       {visibleItems.map((item) => {
-                        const isActive = location.pathname.startsWith(item.path)
+                        const isActive = isPathActive(item.path)
                         return (
                           <Link
                             key={item.path}
