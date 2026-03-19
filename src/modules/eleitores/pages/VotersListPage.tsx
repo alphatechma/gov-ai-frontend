@@ -105,6 +105,7 @@ interface ImportResult {
   imported: number
   updated?: number
   skipped: number
+  duplicates?: number
   total: number
   errors: string[]
 }
@@ -579,6 +580,9 @@ export function VotersListPage() {
                       <CheckCircle className="h-4 w-4 flex-shrink-0 text-green-600" />
                       <span>
                         <strong>{importResult.imported}</strong> importados de <strong>{importResult.total}</strong>
+                        {(importResult.duplicates ?? 0) > 0 && (
+                          <> · <strong>{importResult.duplicates}</strong> duplicados</>
+                        )}
                         {importResult.skipped > 0 && (
                           <> · <strong>{importResult.skipped}</strong> ignorados</>
                         )}
