@@ -16,6 +16,7 @@ const accessRoles = [
   { value: UserRole.LEADER, label: 'Lideranca', description: 'Acesso completo aos modulos habilitados' },
   { value: UserRole.VIEWER, label: 'Visualizador', description: 'Apenas visualizacao dos dados' },
   { value: UserRole.ATTENDANT, label: 'Atendente', description: 'Acesso restrito ao modulo de visitas' },
+  { value: UserRole.RECEPTIONIST, label: 'Recepcionista', description: 'Acesso restrito a recepcao do gabinete' },
 ] as const
 
 export function StaffFormPage() {
@@ -39,13 +40,15 @@ export function StaffFormPage() {
   const [password, setPassword] = useState('')
 
   const isAttendant = accessRole === UserRole.ATTENDANT
+  const isReceptionist = accessRole === UserRole.RECEPTIONIST
+  const isRestrictedRole = isAttendant || isReceptionist
 
-  // When ATTENDANT is selected, force createAccess on
+  // When ATTENDANT or RECEPTIONIST is selected, force createAccess on
   useEffect(() => {
-    if (isAttendant) {
+    if (isRestrictedRole) {
       setCreateAccess(true)
     }
-  }, [isAttendant])
+  }, [isRestrictedRole])
 
   const member = useQuery({
     queryKey: ['staff-member', id],
@@ -87,6 +90,9 @@ export function StaffFormPage() {
         if (isAttendant) {
           payload.allowedModules = ['visits']
         }
+        if (isReceptionist) {
+          payload.allowedModules = ['cabinet-visits']
+        }
       }
 
       return isEdit ? api.patch(`/staff/${id}`, payload) : api.post('/staff', payload)
@@ -109,7 +115,7 @@ export function StaffFormPage() {
 
   const set = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }))
 
-  const needsAccess = createAccess || isAttendant
+  const needsAccess = createAccess || isRestrictedRole
 
   if (isEdit && member.isLoading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -191,7 +197,7 @@ export function StaffFormPage() {
                   onChange={(e) => {
                     const role = e.target.value
                     setAccessRole(role)
-                    if (role === UserRole.ATTENDANT) {
+                    if (role === UserRole.ATTENDANT || role === UserRole.RECEPTIONIST) {
                       setCreateAccess(true)
                     }
                   }}
@@ -208,7 +214,7 @@ export function StaffFormPage() {
                 )}
               </div>
 
-              {!isAttendant && accessRole && (
+              {!isRestrictedRole && accessRole && (
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -230,6 +236,18 @@ export function StaffFormPage() {
                     <p className="font-medium text-blue-900 dark:text-blue-200">Perfil Atendente</p>
                     <p className="text-blue-700 dark:text-blue-300 mt-0.5">
                       Este perfil tera acesso restrito apenas ao modulo de Visitas, com layout simplificado. E obrigatorio definir uma senha.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {isReceptionist && (
+                <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
+                  <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900 dark:text-blue-200">Perfil Recepcionista</p>
+                    <p className="text-blue-700 dark:text-blue-300 mt-0.5">
+                      Este perfil tera acesso restrito a Recepcao do Gabinete, com layout simplificado. E obrigatorio definir uma senha.
                     </p>
                   </div>
                 </div>

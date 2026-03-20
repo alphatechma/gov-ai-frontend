@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Search, Pencil, Trash2, Upload, Download, Loader2, CheckCircle, AlertTriangle, X, Users, Headphones, ClipboardList, Clock, CheckCircle2, MapPin, Phone } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Upload, Download, Loader2, CheckCircle, AlertTriangle, X, Users, Headphones, ClipboardList, Clock, CheckCircle2, MapPin, Phone, DoorOpen, UserCheck, Contact } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn, formatDate } from '@/lib/utils'
-import type { Voter, HelpType, Leader } from '@/types/entities'
+import type { Voter, HelpType, Leader, CabinetVisit, Visitor } from '@/types/entities'
+import { fetchCabinetVisits, deleteCabinetVisit, fetchVisitors, deleteVisitor } from '@/modules/recepcao/services/cabinetVisitsApi'
 
 /* ─── Confidence level config ─── */
 const confidenceLevelColors: Record<string, 'success' | 'secondary' | 'warning'> = {
@@ -136,7 +137,15 @@ interface HelpStats {
   bairros: string[]
 }
 
-type Tab = 'eleitores' | 'atendimentos'
+type Tab = 'eleitores' | 'atendimentos' | 'recepcao' | 'visitantes'
+
+/* ─── Cabinet visit date formatter ─── */
+function formatDateTime(dateStr: string) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+    ' ' +
+    d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
 
 /* ─── Debounce hook ─── */
 function useDebounce(value: string, delay = 400) {
@@ -152,7 +161,8 @@ export function VotersListPage() {
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState<Tab>(() => {
     const t = searchParams.get('tab')
-    return t === 'atendimentos' ? 'atendimentos' : 'eleitores'
+    if (t === 'atendimentos' || t === 'recepcao' || t === 'visitantes') return t
+    return 'eleitores'
   })
   const [showImport, setShowImport] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
@@ -180,6 +190,14 @@ export function VotersListPage() {
   const [filterDateTo, setFilterDateTo] = useState('')
   const [helpPage, setHelpPage] = useState(1)
   const debouncedHelpSearch = useDebounce(helpSearch)
+
+  // ── Recepcao state ──
+  const [recepcaoSearch, setRecepcaoSearch] = useState('')
+  const [recepcaoPage, setRecepcaoPage] = useState(1)
+
+  // ── Visitantes state ──
+  const [visitanteSearch, setVisitanteSearch] = useState('')
+  const [visitantePage, setVisitantePage] = useState(1)
 
   // Reset page when filters change
   useEffect(() => { setVoterPage(1) }, [debouncedVoterSearch, voterFilterBairro, voterFilterLeader, voterFilterGender, voterFilterConfidence])
@@ -256,6 +274,32 @@ export function VotersListPage() {
     queryFn: () => api.get<HelpType[]>('/help-records/types').then(r => r.data),
   })
 
+  // ── Queries: Recepcao ──
+  const cabinetVisitsQuery = useQuery({
+    queryKey: ['cabinet-visits', recepcaoPage, recepcaoSearch],
+    queryFn: () => fetchCabinetVisits({ page: recepcaoPage, limit: 50, search: recepcaoSearch || undefined }),
+    enabled: tab === 'recepcao',
+  })
+
+  const removeCabinetVisit = useMutation({
+    mutationFn: deleteCabinetVisit,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cabinet-visits'] })
+    },
+  })
+
+  // ── Queries: Visitantes ──
+  const visitorsQuery = useQuery({
+    queryKey: ['cabinet-visitors', visitantePage, visitanteSearch],
+    queryFn: () => fetchVisitors({ page: visitantePage, limit: 50, search: visitanteSearch || undefined }),
+    enabled: tab === 'visitantes',
+  })
+
+  const removeVisitor = useMutation({
+    mutationFn: deleteVisitor,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cabinet-visitors'] }),
+  })
+
   // ── Derived data ──
   const voters = votersQuery.data?.data ?? []
   const voterTotal = votersQuery.data?.total ?? 0
@@ -273,6 +317,91 @@ export function VotersListPage() {
 
   const top5Types = (helpStats?.types ?? []).slice(0, 5)
   const top5Max = top5Types.length > 0 ? top5Types[0].count : 0
+
+  // ── Recepcao derived ──
+  const cabinetVisits = cabinetVisitsQuery.data?.data ?? []
+  const cabinetVisitsTotal = cabinetVisitsQuery.data?.total ?? 0
+  const cabinetVisitsTotalPages = Math.ceil(cabinetVisitsTotal / 50)
+
+  const cabinetVisitColumns: Column<CabinetVisit>[] = [
+    {
+      key: 'checkInAt',
+      label: 'Data/Hora',
+      render: (v) => formatDateTime(v.checkInAt),
+    },
+    {
+      key: 'visitorId',
+      label: 'Pessoa',
+      render: (v) => {
+        if (v.voterId && v.voterName) {
+          return (
+            <div className="flex items-center gap-1.5">
+              <span>{v.voterName}</span>
+              <span className={cn(
+                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+              )}>
+                <UserCheck className="h-3 w-3" /> Eleitor
+              </span>
+            </div>
+          )
+        }
+        return v.visitor?.name || '-'
+      },
+    },
+    { key: 'purpose', label: 'Motivo', render: (v) => <span className="line-clamp-1 max-w-xs">{v.purpose || '-'}</span> },
+    { key: 'attendedBy', label: 'Atendido por', render: (v) => v.attendedBy || '-' },
+    {
+      key: 'id',
+      label: 'Acoes',
+      render: (v) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (confirm('Excluir esta visita?')) removeCabinetVisit.mutate(v.id)
+          }}
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      ),
+    },
+  ]
+
+  // ── Visitantes derived ──
+  const visitantes = visitorsQuery.data?.data ?? []
+  const visitantesTotal = visitorsQuery.data?.total ?? 0
+  const visitantesTotalPages = Math.ceil(visitantesTotal / 50)
+
+  const visitanteColumns: Column<Visitor>[] = [
+    { key: 'name', label: 'Nome', render: (v) => v.name },
+    { key: 'phone', label: 'Telefone', render: (v) => v.phone || '-' },
+    { key: 'email', label: 'E-mail', render: (v) => v.email || '-' },
+    { key: 'organization', label: 'Organizacao', render: (v) => v.organization || '-' },
+    { key: 'createdAt', label: 'Cadastrado em', render: (v) => formatDate(v.createdAt) },
+    {
+      key: 'id',
+      label: 'Acoes',
+      render: (v) => (
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/recepcao/visitantes/${v.id}/editar`}>
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (confirm('Excluir este visitante?')) removeVisitor.mutate(v.id)
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
   const hasVoterFilters = voterFilterBairro || voterFilterLeader || voterFilterGender || voterFilterConfidence
   const hasActiveFilters = filterType || filterStatus || filterBairro || filterDateFrom || filterDateTo
@@ -486,14 +615,41 @@ export function VotersListPage() {
               <Headphones className="h-4 w-4" />
               Atendimentos
             </button>
+            <button
+              onClick={() => setTab('recepcao')}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                tab === 'recepcao'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <DoorOpen className="h-4 w-4" />
+              Recepcao
+            </button>
+            <button
+              onClick={() => setTab('visitantes')}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                tab === 'visitantes'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Contact className="h-4 w-4" />
+              Visitantes
+            </button>
           </div>
           <p className="text-sm text-muted-foreground">
-            {tab === 'eleitores' ? 'Gerencie sua base de eleitores' : 'Gerencie os atendimentos do gabinete'}
+            {tab === 'eleitores' && 'Gerencie sua base de eleitores'}
+            {tab === 'atendimentos' && 'Gerencie os atendimentos do gabinete'}
+            {tab === 'recepcao' && 'Registro de visitas presenciais ao gabinete'}
+            {tab === 'visitantes' && 'Cadastro de visitantes do gabinete'}
           </p>
         </div>
 
         {/* ─── Actions ─── */}
-        {tab === 'eleitores' ? (
+        {tab === 'eleitores' && (
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={() => setShowExportDialog(true)} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -510,7 +666,8 @@ export function VotersListPage() {
               </Link>
             </Button>
           </div>
-        ) : (
+        )}
+        {tab === 'atendimentos' && (
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={exportHelp} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -524,6 +681,26 @@ export function VotersListPage() {
               <Link to="/atendimentos/novo">
                 <Plus className="h-4 w-4" />
                 Novo Atendimento
+              </Link>
+            </Button>
+          </div>
+        )}
+        {tab === 'recepcao' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild>
+              <Link to="/recepcao/visitas/nova">
+                <Plus className="h-4 w-4" />
+                Nova Visita
+              </Link>
+            </Button>
+          </div>
+        )}
+        {tab === 'visitantes' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild>
+              <Link to="/recepcao/visitantes/novo">
+                <Plus className="h-4 w-4" />
+                Novo Visitante
               </Link>
             </Button>
           </div>
@@ -952,6 +1129,70 @@ export function VotersListPage() {
           />
         </>
       )}
+      {/* ─── Recepcao tab ─── */}
+      {tab === 'recepcao' && (
+        <>
+          <Card>
+            <CardContent className="p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, motivo ou atendente..."
+                  value={recepcaoSearch}
+                  onChange={(e) => {
+                    setRecepcaoSearch(e.target.value)
+                    setRecepcaoPage(1)
+                  }}
+                  className="pl-9"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <DataTable
+            columns={cabinetVisitColumns}
+            data={cabinetVisits}
+            isLoading={cabinetVisitsQuery.isLoading}
+            page={recepcaoPage}
+            totalPages={cabinetVisitsTotalPages}
+            total={cabinetVisitsTotal}
+            onPageChange={setRecepcaoPage}
+          />
+        </>
+      )}
+
+      {/* ─── Visitantes tab ─── */}
+      {tab === 'visitantes' && (
+        <>
+          <Card>
+            <CardContent className="p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, telefone ou organizacao..."
+                  value={visitanteSearch}
+                  onChange={(e) => {
+                    setVisitanteSearch(e.target.value)
+                    setVisitantePage(1)
+                  }}
+                  className="pl-9"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <DataTable
+            columns={visitanteColumns}
+            data={visitantes}
+            isLoading={visitorsQuery.isLoading}
+            page={visitantePage}
+            totalPages={visitantesTotalPages}
+            total={visitantesTotal}
+            onPageChange={setVisitantePage}
+          />
+        </>
+      )}
+
       {/* ─── Export fields dialog ─── */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
         <DialogContent className="sm:max-w-md">

@@ -300,6 +300,47 @@ export interface PoliticalContact {
   updatedAt: string
 }
 
+export interface Visitor {
+  id: string
+  tenantId: string
+  name: string
+  phone: string | null
+  email: string | null
+  cpf: string | null
+  organization: string | null
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CabinetVisit {
+  id: string
+  tenantId: string
+  visitorId: string | null
+  visitor?: Visitor | null
+  voterId: string | null
+  voterName?: string | null
+  voterSupportLevel?: string | null
+  helpRecordId: string | null
+  purpose: string | null
+  attendedBy: string | null
+  checkInAt: string
+  observations: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CabinetVisitDashboard {
+  today: number
+  last7Days: number
+  last30Days: number
+  totalVisitors: number
+  voterVisitsLast30: number
+  nonVoterVisitsLast30: number
+  topVisitors: { name: string; count: number; isVoter: boolean }[]
+  dailyVisits: { date: string; count: number }[]
+}
+
 export interface DashboardStats {
   totals: Record<string, number>
   enabledModules: string[]

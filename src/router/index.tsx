@@ -60,6 +60,11 @@ import { WhatsappCrmPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappCr
 import { AiAssistantPage } from '@/modules/inteligencia/pages/AiAssistantPage'
 import { ReportsPage } from '@/modules/inteligencia/pages/ReportsPage'
 
+// Recepcao
+import { ReceptionDashboardPage } from '@/modules/recepcao/pages/ReceptionDashboardPage'
+import { CabinetVisitFormPage } from '@/modules/recepcao/pages/CabinetVisitFormPage'
+import { VisitorFormPage } from '@/modules/recepcao/pages/VisitorFormPage'
+
 // Config
 import { SettingsPage } from '@/modules/configuracoes/pages/SettingsPage'
 
@@ -148,6 +153,12 @@ export const router = createBrowserRouter([
           // Inteligência
           moduleRoute('ai', '/ia', <AiAssistantPage />),
           moduleRoute('reports', '/relatorios', <ReportsPage />),
+
+          // Recepcao (forms only - listings are now tabs in VotersListPage)
+          moduleRoute('cabinet-visits', '/recepcao', <ReceptionDashboardPage />),
+          moduleRoute('cabinet-visits', '/recepcao/visitas/nova', <CabinetVisitFormPage />),
+          moduleRoute('cabinet-visits', '/recepcao/visitantes/novo', <VisitorFormPage />),
+          moduleRoute('cabinet-visits', '/recepcao/visitantes/:id/editar', <VisitorFormPage />),
 
           // Config (sem module guard)
           { path: '/configuracoes', element: <SettingsPage /> },

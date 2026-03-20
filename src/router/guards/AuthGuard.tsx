@@ -15,5 +15,9 @@ export function AuthGuard() {
     return <Navigate to="/visitas" replace />
   }
 
+  if (userRole === UserRole.RECEPTIONIST && !location.pathname.startsWith('/recepcao')) {
+    return <Navigate to="/recepcao" replace />
+  }
+
   return <Outlet />
 }
