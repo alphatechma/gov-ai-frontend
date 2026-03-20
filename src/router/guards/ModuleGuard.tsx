@@ -15,6 +15,11 @@ export function ModuleGuard({ moduleKey }: ModuleGuardProps) {
     return <Outlet />
   }
 
+  // ATTENDANT and RECEPTIONIST are already restricted by AuthGuard
+  if (user?.role === UserRole.ATTENDANT || user?.role === UserRole.RECEPTIONIST) {
+    return <Outlet />
+  }
+
   if (!hasModule(moduleKey)) {
     return <Navigate to="/" replace />
   }

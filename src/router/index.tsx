@@ -62,6 +62,8 @@ import { ReportsPage } from '@/modules/inteligencia/pages/ReportsPage'
 
 // Recepcao
 import { ReceptionDashboardPage } from '@/modules/recepcao/pages/ReceptionDashboardPage'
+import { CabinetVisitsPage } from '@/modules/recepcao/pages/CabinetVisitsPage'
+import { VisitorsPage } from '@/modules/recepcao/pages/VisitorsPage'
 import { CabinetVisitFormPage } from '@/modules/recepcao/pages/CabinetVisitFormPage'
 import { VisitorFormPage } from '@/modules/recepcao/pages/VisitorFormPage'
 
@@ -154,9 +156,11 @@ export const router = createBrowserRouter([
           moduleRoute('ai', '/ia', <AiAssistantPage />),
           moduleRoute('reports', '/relatorios', <ReportsPage />),
 
-          // Recepcao (forms only - listings are now tabs in VotersListPage)
+          // Recepcao
           moduleRoute('cabinet-visits', '/recepcao', <ReceptionDashboardPage />),
+          moduleRoute('cabinet-visits', '/recepcao/visitas', <CabinetVisitsPage />),
           moduleRoute('cabinet-visits', '/recepcao/visitas/nova', <CabinetVisitFormPage />),
+          moduleRoute('cabinet-visits', '/recepcao/visitantes', <VisitorsPage />),
           moduleRoute('cabinet-visits', '/recepcao/visitantes/novo', <VisitorFormPage />),
           moduleRoute('cabinet-visits', '/recepcao/visitantes/:id/editar', <VisitorFormPage />),
 
