@@ -349,6 +349,20 @@ export function VotersListPage() {
         return v.visitor?.name || '-'
       },
     },
+    {
+      key: 'visitor',
+      label: 'Telefone',
+      render: (v) => {
+        const phone = v.visitor?.phone
+        if (!phone) return '-'
+        return (
+          <span className="flex items-center gap-1.5 text-sm">
+            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+            {phone}
+          </span>
+        )
+      },
+    },
     { key: 'purpose', label: 'Motivo', render: (v) => <span className="line-clamp-1 max-w-xs">{v.purpose || '-'}</span> },
     { key: 'attendedBy', label: 'Atendido por', render: (v) => v.attendedBy || '-' },
     {

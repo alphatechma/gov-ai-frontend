@@ -20,6 +20,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const user = useAuthStore((s) => s.user)
   const userRole = user?.role
   const isSuperAdmin = userRole === UserRole.SUPER_ADMIN
+  const isTenantAdmin = userRole === UserRole.TENANT_ADMIN
+  const isAdmin = isSuperAdmin || isTenantAdmin
   const allowedModules = user?.allowedModules
   const brandingLogo = useBrandingStore((s) => s.logoUrl)
   const brandingAppName = useBrandingStore((s) => s.appName)
@@ -109,6 +111,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             {navigation.map((group) => {
               const visibleItems = group.items.filter(
                 (item) => {
+                  if (item.adminOnly && !isAdmin) return false
                   if (isSuperAdmin) return true
                   if (item.moduleKey && !hasModule(item.moduleKey)) return false
                   if (allowedModules && allowedModules.length > 0 && item.moduleKey) {

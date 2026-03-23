@@ -28,6 +28,7 @@ export interface NavItem {
   path: string
   icon: LucideIcon
   moduleKey?: string
+  adminOnly?: boolean
 }
 
 export interface NavGroup {
@@ -62,7 +63,7 @@ export const navigation: NavGroup[] = [
       { label: 'Visitas', path: '/visitas', icon: MapPin, moduleKey: 'visits' },
       { label: 'Tarefas', path: '/tarefas', icon: ListTodo, moduleKey: 'tasks' },
       { label: 'Compromissos', path: '/agenda', icon: CalendarDays, moduleKey: 'agenda' },
-      { label: 'Equipe', path: '/equipe', icon: UserCog, moduleKey: 'staff' },
+      { label: 'Equipe', path: '/equipe', icon: UserCog, adminOnly: true },
     ],
   },
   {

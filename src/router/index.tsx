@@ -3,6 +3,7 @@ import { AuthLayout } from './layouts/AuthLayout'
 import { RoleBasedLayout } from './layouts/RoleBasedLayout'
 import { AuthGuard } from './guards/AuthGuard'
 import { ModuleGuard } from './guards/ModuleGuard'
+import { AdminGuard } from './guards/AdminGuard'
 
 // Auth
 import { LoginPage } from '@/modules/auth/pages/LoginPage'
@@ -112,9 +113,14 @@ export const router = createBrowserRouter([
           moduleRoute('tasks', '/tarefas', <TasksPage />),
           moduleRoute('tasks', '/tarefas/nova', <TaskFormPage />),
           moduleRoute('tasks', '/tarefas/:id/editar', <TaskFormPage />),
-          moduleRoute('staff', '/equipe', <StaffPage />),
-          moduleRoute('staff', '/equipe/novo', <StaffFormPage />),
-          moduleRoute('staff', '/equipe/:id/editar', <StaffFormPage />),
+          {
+            element: <AdminGuard />,
+            children: [
+              { path: '/equipe', element: <StaffPage /> },
+              { path: '/equipe/novo', element: <StaffFormPage /> },
+              { path: '/equipe/:id/editar', element: <StaffFormPage /> },
+            ],
+          },
 
           // Agenda
           moduleRoute('agenda', '/agenda', <AppointmentsPage />),
