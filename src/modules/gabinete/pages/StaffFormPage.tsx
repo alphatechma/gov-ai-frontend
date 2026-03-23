@@ -43,7 +43,6 @@ export function StaffFormPage() {
 
   const isAttendant = form.role === UserRole.ATTENDANT
   const isReceptionist = form.role === UserRole.RECEPTIONIST
-  const _isRestrictedRole = isAttendant || isReceptionist
 
   const userQuery = useQuery({
     queryKey: ['tenant-user', id],
