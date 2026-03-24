@@ -604,53 +604,53 @@ export function VotersListPage() {
       {/* ─── Tab toggle + header ─── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="inline-flex items-center rounded-lg border bg-muted p-1 mb-2">
+          <div className="flex overflow-x-auto items-center rounded-lg border bg-muted p-1 mb-2 max-w-full scrollbar-hide">
             <button
               onClick={() => setTab('eleitores')}
               className={cn(
-                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
                 tab === 'eleitores'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Users className="h-4 w-4" />
+              <Users className="h-4 w-4 shrink-0" />
               Eleitores
             </button>
             <button
               onClick={() => setTab('atendimentos')}
               className={cn(
-                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
                 tab === 'atendimentos'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Headphones className="h-4 w-4" />
+              <Headphones className="h-4 w-4 shrink-0" />
               Atendimentos
             </button>
             <button
               onClick={() => setTab('recepcao')}
               className={cn(
-                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
                 tab === 'recepcao'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <DoorOpen className="h-4 w-4" />
+              <DoorOpen className="h-4 w-4 shrink-0" />
               Recepcao
             </button>
             <button
               onClick={() => setTab('visitantes')}
               className={cn(
-                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
                 tab === 'visitantes'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Contact className="h-4 w-4" />
+              <Contact className="h-4 w-4 shrink-0" />
               Visitantes
             </button>
           </div>
