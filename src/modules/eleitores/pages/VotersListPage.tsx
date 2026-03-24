@@ -6,6 +6,7 @@ import { DataTable, type Column } from '@/components/DataTable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { MultiSelect } from '@/components/ui/multi-select'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Search, Pencil, Trash2, Upload, Download, Loader2, CheckCircle, AlertTriangle, X, Users, Headphones, ClipboardList, Clock, CheckCircle2, MapPin, Phone, DoorOpen, UserCheck, Contact } from 'lucide-react'
@@ -174,8 +175,8 @@ export function VotersListPage() {
 
   // ── Eleitores state ──
   const [voterSearch, setVoterSearch] = useState('')
-  const [voterFilterBairro, setVoterFilterBairro] = useState('')
-  const [voterFilterLeader, setVoterFilterLeader] = useState('')
+  const [voterFilterBairro, setVoterFilterBairro] = useState<string[]>([])
+  const [voterFilterLeader, setVoterFilterLeader] = useState<string[]>([])
   const [voterFilterGender, setVoterFilterGender] = useState('')
   const [voterFilterConfidence, setVoterFilterConfidence] = useState('')
   const [voterPage, setVoterPage] = useState(1)
@@ -204,23 +205,21 @@ export function VotersListPage() {
   useEffect(() => { setHelpPage(1) }, [debouncedHelpSearch, filterType, filterStatus, filterBairro, filterDateFrom, filterDateTo])
 
   // ── Build query params ──
-  const voterParams = {
-    page: String(voterPage),
-    limit: '50',
-    ...(debouncedVoterSearch && { search: debouncedVoterSearch }),
-    ...(voterFilterBairro && { neighborhood: voterFilterBairro }),
-    ...(voterFilterLeader && { leaderId: voterFilterLeader }),
-    ...(voterFilterGender && { gender: voterFilterGender }),
-    ...(voterFilterConfidence && { confidenceLevel: voterFilterConfidence }),
+  const buildVoterParams = (extra?: Record<string, string>) => {
+    const sp = new URLSearchParams(extra)
+    if (debouncedVoterSearch) sp.set('search', debouncedVoterSearch)
+    voterFilterBairro.forEach((b) => sp.append('neighborhood', b))
+    voterFilterLeader.forEach((l) => sp.append('leaderId', l))
+    if (voterFilterGender) sp.set('gender', voterFilterGender)
+    if (voterFilterConfidence) sp.set('confidenceLevel', voterFilterConfidence)
+    return sp.toString()
   }
 
-  const voterFilterParams = {
-    ...(debouncedVoterSearch && { search: debouncedVoterSearch }),
-    ...(voterFilterBairro && { neighborhood: voterFilterBairro }),
-    ...(voterFilterLeader && { leaderId: voterFilterLeader }),
-    ...(voterFilterGender && { gender: voterFilterGender }),
-    ...(voterFilterConfidence && { confidenceLevel: voterFilterConfidence }),
-  }
+  const voterQs = buildVoterParams({ page: String(voterPage), limit: '50' })
+  const voterFilterQs = buildVoterParams()
+
+  // stable key for TanStack Query cache
+  const voterKey = [debouncedVoterSearch, voterFilterBairro, voterFilterLeader, voterFilterGender, voterFilterConfidence]
 
   const helpParams = {
     page: String(helpPage),
@@ -244,13 +243,18 @@ export function VotersListPage() {
 
   // ── Queries: Voters ──
   const votersQuery = useQuery<PaginatedResponse<Voter>>({
-    queryKey: ['voters', voterParams],
-    queryFn: () => api.get('/voters', { params: voterParams }).then(r => r.data),
+    queryKey: ['voters', voterPage, voterKey],
+    queryFn: () => api.get(`/voters?${voterQs}`).then(r => r.data),
   })
 
   const voterStatsQuery = useQuery<VoterStats>({
-    queryKey: ['voters-stats', voterFilterParams],
-    queryFn: () => api.get('/voters/list-stats', { params: voterFilterParams }).then(r => r.data),
+    queryKey: ['voters-stats', voterKey],
+    queryFn: () => api.get(`/voters/list-stats${voterFilterQs ? `?${voterFilterQs}` : ''}`).then(r => r.data),
+  })
+
+  const neighborhoodsQuery = useQuery<string[]>({
+    queryKey: ['voters-neighborhoods'],
+    queryFn: () => api.get('/voters/neighborhoods').then(r => r.data),
   })
 
   const leaders = useQuery({
@@ -417,12 +421,12 @@ export function VotersListPage() {
     },
   ]
 
-  const hasVoterFilters = voterFilterBairro || voterFilterLeader || voterFilterGender || voterFilterConfidence
+  const hasVoterFilters = voterFilterBairro.length > 0 || voterFilterLeader.length > 0 || voterFilterGender || voterFilterConfidence
   const hasActiveFilters = filterType || filterStatus || filterBairro || filterDateFrom || filterDateTo
 
   const clearVoterFilters = () => {
-    setVoterFilterBairro('')
-    setVoterFilterLeader('')
+    setVoterFilterBairro([])
+    setVoterFilterLeader([])
     setVoterFilterGender('')
     setVoterFilterConfidence('')
   }
@@ -561,8 +565,9 @@ export function VotersListPage() {
     setShowExportDialog(false)
     const params = new URLSearchParams()
     if (voterSearch) params.set('search', voterSearch)
-    if (voterFilterBairro) params.set('neighborhood', voterFilterBairro)
-    if (voterFilterLeader) params.set('leaderId', voterFilterLeader)
+    voterFilterBairro.forEach((b) => params.append('neighborhood', b))
+
+    voterFilterLeader.forEach((l) => params.append('leaderId', l))
     if (voterFilterGender) params.set('gender', voterFilterGender)
     if (voterFilterConfidence) params.set('confidenceLevel', voterFilterConfidence)
     if (selectedExportFields.size < EXPORT_FIELDS.length) {
@@ -870,19 +875,19 @@ export function VotersListPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Select value={voterFilterBairro} onChange={(e) => setVoterFilterBairro(e.target.value)}>
-                  <option value="">Todos os bairros</option>
-                  {(stats?.bairros ?? []).map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
-                </Select>
+                <MultiSelect
+                  options={neighborhoodsQuery.data ?? []}
+                  value={voterFilterBairro}
+                  onChange={setVoterFilterBairro}
+                  placeholder="Todos os bairros"
+                />
 
-                <Select value={voterFilterLeader} onChange={(e) => setVoterFilterLeader(e.target.value)}>
-                  <option value="">Todas as liderancas</option>
-                  {(leaders.data ?? []).filter((l) => l.active).map((l) => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
-                  ))}
-                </Select>
+                <MultiSelect
+                  options={(leaders.data ?? []).filter((l) => l.active).map((l) => ({ value: l.id, label: l.name }))}
+                  value={voterFilterLeader}
+                  onChange={setVoterFilterLeader}
+                  placeholder="Todas as liderancas"
+                />
 
                 <Select value={voterFilterGender} onChange={(e) => setVoterFilterGender(e.target.value)}>
                   <option value="">Todos os generos</option>
