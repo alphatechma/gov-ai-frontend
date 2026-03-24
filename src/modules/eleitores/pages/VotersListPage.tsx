@@ -87,6 +87,7 @@ const statusLabels: Record<string, string> = {
 /* ─── Help columns (with server-joined voter data) ─── */
 const helpColumns: Column<any>[] = [
   { key: 'date', label: 'Data', render: (h: any) => h.date ? formatDate(h.date) : formatDate(h.createdAt) },
+  { key: 'voterName', label: 'Eleitor', render: (h: any) => h.voterName ?? '-' },
   { key: 'type', label: 'Tipo', render: (h: any) => h.type ?? '-' },
   { key: 'voterNeighborhood', label: 'Bairro', render: (h: any) => h.voterNeighborhood ?? '-' },
   { key: 'observations', label: 'Observacoes', render: (h: any) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
@@ -1080,7 +1081,7 @@ export function VotersListPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por tipo ou observacoes..."
+                  placeholder="Buscar por eleitor, tipo ou observacoes..."
                   value={helpSearch}
                   onChange={(e) => setHelpSearch(e.target.value)}
                   className="pl-9"
