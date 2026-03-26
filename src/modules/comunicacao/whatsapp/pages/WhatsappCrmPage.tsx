@@ -490,6 +490,10 @@ export function WhatsappCrmPage() {
       qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', selectedPhone] })
       qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
     },
+    onSettled: () => {
+      // Always clear media state after send attempt (success or failure)
+      clearMedia()
+    },
   })
 
   /* ─── socket events ─── */
@@ -534,10 +538,7 @@ export function WhatsappCrmPage() {
   const handleSend = () => {
     if (!selectedPhone) return
     if (mediaFile) {
-      sendMediaMsg.mutate(
-        { phone: selectedPhone, file: mediaFile, caption: input.trim() || undefined },
-        { onSuccess: clearMedia },
-      )
+      sendMediaMsg.mutate({ phone: selectedPhone, file: mediaFile, caption: input.trim() || undefined })
       setInput('')
       return
     }
