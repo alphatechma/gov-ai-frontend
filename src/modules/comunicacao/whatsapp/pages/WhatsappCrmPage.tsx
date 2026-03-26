@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import {
   MessageCircle, Send, Search, Wifi, WifiOff, QrCode,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
@@ -93,6 +94,90 @@ function StatusIcon({ status }: { status: string }) {
     case 'FAILED': return <AlertCircle className="h-3.5 w-3.5 text-red-500" />
     default: return <Clock className="h-3.5 w-3.5 text-muted-foreground" />
   }
+}
+
+/* ─── Authenticated media loader ─── */
+function useMediaUrl(messageId: string | null) {
+  const [url, setUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!messageId) return
+    let revoke: string | null = null
+
+    api.get(`/whatsapp/media/${messageId}`, { responseType: 'blob' })
+      .then(res => {
+        const blobUrl = URL.createObjectURL(res.data)
+        revoke = blobUrl
+        setUrl(blobUrl)
+      })
+      .catch(() => setUrl(null))
+
+    return () => { if (revoke) URL.revokeObjectURL(revoke) }
+  }, [messageId])
+
+  return url
+}
+
+function MediaImage({ messageId, className }: { messageId: string; className?: string }) {
+  const src = useMediaUrl(messageId)
+  const [open, setOpen] = useState(false)
+
+  if (!src) return <div className={cn('flex items-center justify-center bg-muted/50 rounded-lg h-32', className)}><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+
+  return (
+    <>
+      <img
+        src={src}
+        alt="imagem"
+        className={cn('max-w-full rounded-lg max-h-60 object-cover cursor-pointer', className)}
+        onClick={() => setOpen(true)}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-1 sm:p-2">
+          <img src={src} alt="imagem" className="w-full h-auto max-h-[85vh] object-contain rounded" />
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+function MediaAudio({ messageId }: { messageId: string }) {
+  const src = useMediaUrl(messageId)
+  if (!src) return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+  return <audio src={src} controls className="max-w-full" preload="metadata" />
+}
+
+function MediaVideo({ messageId, className }: { messageId: string; className?: string }) {
+  const src = useMediaUrl(messageId)
+  if (!src) return <div className={cn('flex items-center justify-center bg-muted/50 rounded-lg h-32', className)}><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+  return <video src={src} controls className={cn('max-w-full rounded-lg max-h-60', className)} preload="metadata" />
+}
+
+function DocumentLink({ messageId, label, isMine }: { messageId: string; label: string; isMine: boolean }) {
+  const handleClick = useCallback(() => {
+    api.get(`/whatsapp/media/${messageId}`, { responseType: 'blob' })
+      .then(res => {
+        const blobUrl = URL.createObjectURL(res.data)
+        const a = document.createElement('a')
+        a.href = blobUrl
+        a.download = label || 'documento'
+        a.click()
+        URL.revokeObjectURL(blobUrl)
+      })
+  }, [messageId, label])
+
+  return (
+    <button
+      onClick={handleClick}
+      className={cn(
+        'flex items-center gap-2 underline text-xs',
+        isMine ? 'text-white' : 'text-foreground',
+      )}
+    >
+      <Paperclip className="h-3.5 w-3.5" />
+      {label}
+    </button>
+  )
 }
 
 /* ═══════════════════════════════════════════════
@@ -729,48 +814,25 @@ export function WhatsappCrmPage() {
                           )}>
                             {msg.type === 'image' && msg.mediaUrl ? (
                               <div className="mb-1">
-                                <a href={`/api/whatsapp/media/${msg.id}`} target="_blank" rel="noopener noreferrer">
-                                  <img
-                                    src={`/api/whatsapp/media/${msg.id}`}
-                                    alt="imagem"
-                                    className="max-w-full rounded-lg max-h-60 object-cover cursor-pointer"
-                                    loading="lazy"
-                                  />
-                                </a>
+                                <MediaImage messageId={msg.id} />
                                 {msg.content && msg.content !== '[imagem]' && (
                                   <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
                                 )}
                               </div>
                             ) : msg.type === 'video' && msg.mediaUrl ? (
                               <div className="mb-1">
-                                <video
-                                  src={`/api/whatsapp/media/${msg.id}`}
-                                  controls
-                                  className="max-w-full rounded-lg max-h-60"
-                                  preload="metadata"
-                                />
+                                <MediaVideo messageId={msg.id} />
                                 {msg.content && msg.content !== '[video]' && (
                                   <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
                                 )}
                               </div>
                             ) : msg.type === 'audio' && msg.mediaUrl ? (
                               <div className="mb-1">
-                                <audio src={`/api/whatsapp/media/${msg.id}`} controls className="max-w-full" preload="metadata" />
+                                <MediaAudio messageId={msg.id} />
                               </div>
                             ) : msg.type === 'document' && msg.mediaUrl ? (
                               <div className="mb-1">
-                                <a
-                                  href={`/api/whatsapp/media/${msg.id}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={cn(
-                                    'flex items-center gap-2 underline text-xs',
-                                    isMine ? 'text-white' : 'text-foreground',
-                                  )}
-                                >
-                                  <Paperclip className="h-3.5 w-3.5" />
-                                  {msg.content && msg.content !== '[documento]' ? msg.content : 'Documento'}
-                                </a>
+                                <DocumentLink messageId={msg.id} label={msg.content && msg.content !== '[documento]' ? msg.content : 'Documento'} isMine={isMine} />
                               </div>
                             ) : (
                               <>
