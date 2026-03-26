@@ -728,9 +728,9 @@ export function WhatsappCrmPage() {
                           )}>
                             {msg.type === 'image' && msg.mediaUrl ? (
                               <div className="mb-1">
-                                <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer">
+                                <a href={`/api/whatsapp/media/${msg.id}`} target="_blank" rel="noopener noreferrer">
                                   <img
-                                    src={msg.mediaUrl}
+                                    src={`/api/whatsapp/media/${msg.id}`}
                                     alt="imagem"
                                     className="max-w-full rounded-lg max-h-60 object-cover cursor-pointer"
                                     loading="lazy"
@@ -743,7 +743,7 @@ export function WhatsappCrmPage() {
                             ) : msg.type === 'video' && msg.mediaUrl ? (
                               <div className="mb-1">
                                 <video
-                                  src={msg.mediaUrl}
+                                  src={`/api/whatsapp/media/${msg.id}`}
                                   controls
                                   className="max-w-full rounded-lg max-h-60"
                                   preload="metadata"
@@ -754,12 +754,12 @@ export function WhatsappCrmPage() {
                               </div>
                             ) : msg.type === 'audio' && msg.mediaUrl ? (
                               <div className="mb-1">
-                                <audio src={msg.mediaUrl} controls className="max-w-full" preload="metadata" />
+                                <audio src={`/api/whatsapp/media/${msg.id}`} controls className="max-w-full" preload="metadata" />
                               </div>
                             ) : msg.type === 'document' && msg.mediaUrl ? (
                               <div className="mb-1">
                                 <a
-                                  href={msg.mediaUrl}
+                                  href={`/api/whatsapp/media/${msg.id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className={cn(
