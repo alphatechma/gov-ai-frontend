@@ -593,6 +593,13 @@ export function WhatsappCrmPage() {
       }
     }))
 
+    offs.push(on('whatsapp:message:status', () => {
+      // Refetch messages to reflect updated status (sent → delivered → read)
+      if (selectedPhone) {
+        qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', selectedPhone] })
+      }
+    }))
+
     return () => offs.forEach(off => off())
   }, [on, selectedPhone, qc])
 
