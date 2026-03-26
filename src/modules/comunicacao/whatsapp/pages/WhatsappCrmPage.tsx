@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   MessageCircle, Send, Search, Wifi, WifiOff, QrCode,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
-  AlertCircle, Megaphone, ArrowLeft,
+  AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -47,6 +47,7 @@ interface WaMessage {
   type: string
   direction: 'INBOUND' | 'OUTBOUND'
   status: string
+  mediaUrl: string | null
   createdAt: string
 }
 
@@ -439,7 +440,10 @@ export function WhatsappCrmPage() {
   const [searchChat, setSearchChat] = useState('')
   const [showBroadcast, setShowBroadcast] = useState(false)
   const [chatPage, setChatPage] = useState(1)
+  const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   /* ─── queries ─── */
   const connQuery = useQuery({
@@ -474,6 +478,20 @@ export function WhatsappCrmPage() {
     },
   })
 
+  const sendMediaMsg = useMutation({
+    mutationFn: (data: { phone: string; file: File; caption?: string }) => {
+      const fd = new FormData()
+      fd.append('phone', data.phone)
+      fd.append('file', data.file)
+      if (data.caption) fd.append('caption', data.caption)
+      return api.post('/whatsapp/send-media', fd).then(r => r.data)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', selectedPhone] })
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
+    },
+  })
+
   /* ─── socket events ─── */
   useEffect(() => {
     const offs: (() => void)[] = []
@@ -494,8 +512,36 @@ export function WhatsappCrmPage() {
   }, [msgQuery.data])
 
   /* ─── handlers ─── */
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setMediaFile(file)
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file)
+      setMediaPreview(url)
+    } else {
+      setMediaPreview(null)
+    }
+  }
+
+  const clearMedia = () => {
+    setMediaFile(null)
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview)
+    setMediaPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   const handleSend = () => {
-    if (!input.trim() || !selectedPhone) return
+    if (!selectedPhone) return
+    if (mediaFile) {
+      sendMediaMsg.mutate(
+        { phone: selectedPhone, file: mediaFile, caption: input.trim() || undefined },
+        { onSuccess: clearMedia },
+      )
+      setInput('')
+      return
+    }
+    if (!input.trim()) return
     sendMsg.mutate({ phone: selectedPhone, content: input.trim() })
     setInput('')
   }
@@ -680,15 +726,64 @@ export function WhatsappCrmPage() {
                               ? 'bg-green-500 text-white rounded-br-sm'
                               : 'bg-muted rounded-bl-sm',
                           )}>
-                            {msg.type !== 'text' && (
-                              <p className={cn(
-                                'text-[10px] mb-1 italic',
-                                isMine ? 'text-white/70' : 'text-muted-foreground',
-                              )}>
-                                [{msg.type}]
-                              </p>
+                            {msg.type === 'image' && msg.mediaUrl ? (
+                              <div className="mb-1">
+                                <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={msg.mediaUrl}
+                                    alt="imagem"
+                                    className="max-w-full rounded-lg max-h-60 object-cover cursor-pointer"
+                                    loading="lazy"
+                                  />
+                                </a>
+                                {msg.content && msg.content !== '[imagem]' && (
+                                  <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
+                                )}
+                              </div>
+                            ) : msg.type === 'video' && msg.mediaUrl ? (
+                              <div className="mb-1">
+                                <video
+                                  src={msg.mediaUrl}
+                                  controls
+                                  className="max-w-full rounded-lg max-h-60"
+                                  preload="metadata"
+                                />
+                                {msg.content && msg.content !== '[video]' && (
+                                  <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
+                                )}
+                              </div>
+                            ) : msg.type === 'audio' && msg.mediaUrl ? (
+                              <div className="mb-1">
+                                <audio src={msg.mediaUrl} controls className="max-w-full" preload="metadata" />
+                              </div>
+                            ) : msg.type === 'document' && msg.mediaUrl ? (
+                              <div className="mb-1">
+                                <a
+                                  href={msg.mediaUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={cn(
+                                    'flex items-center gap-2 underline text-xs',
+                                    isMine ? 'text-white' : 'text-foreground',
+                                  )}
+                                >
+                                  <Paperclip className="h-3.5 w-3.5" />
+                                  {msg.content && msg.content !== '[documento]' ? msg.content : 'Documento'}
+                                </a>
+                              </div>
+                            ) : (
+                              <>
+                                {msg.type !== 'text' && (
+                                  <p className={cn(
+                                    'text-[10px] mb-1 italic',
+                                    isMine ? 'text-white/70' : 'text-muted-foreground',
+                                  )}>
+                                    [{msg.type}]
+                                  </p>
+                                )}
+                                <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                              </>
                             )}
-                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                             <div className={cn(
                               'flex items-center justify-end gap-1 mt-1',
                               isMine ? 'text-white/60' : 'text-muted-foreground',
@@ -706,15 +801,57 @@ export function WhatsappCrmPage() {
 
                 {/* Input */}
                 <CardContent className="border-t p-3">
+                  {/* Media preview */}
+                  {mediaFile && (
+                    <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted p-2">
+                      {mediaPreview ? (
+                        <img src={mediaPreview} alt="preview" className="h-16 w-16 rounded object-cover" />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded bg-muted-foreground/10">
+                          <Paperclip className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{mediaFile.name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {(mediaFile.size / 1024).toFixed(0)} KB
+                        </p>
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={clearMedia}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
                   <form onSubmit={e => { e.preventDefault(); handleSend() }} className="flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImagePlus className="h-4 w-4" />
+                    </Button>
                     <Input
-                      placeholder="Digite uma mensagem..."
+                      placeholder={mediaFile ? 'Legenda (opcional)...' : 'Digite uma mensagem...'}
                       value={input}
                       onChange={e => setInput(e.target.value)}
                       className="flex-1"
                     />
-                    <Button type="submit" size="icon" disabled={!input.trim() || sendMsg.isPending} className="bg-green-500 hover:bg-green-600">
-                      <Send className="h-4 w-4" />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={(!input.trim() && !mediaFile) || sendMsg.isPending || sendMediaMsg.isPending}
+                      className="bg-green-500 hover:bg-green-600"
+                    >
+                      {sendMediaMsg.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
                   </form>
                 </CardContent>
