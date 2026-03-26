@@ -89,11 +89,11 @@ function getInitials(name: string | null | undefined) {
 
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
-    case 'SENT': return <Check className="h-3.5 w-3.5 text-muted-foreground" />
-    case 'DELIVERED': return <CheckCheck className="h-3.5 w-3.5 text-muted-foreground" />
-    case 'READ': return <CheckCheck className="h-3.5 w-3.5 text-blue-500" />
-    case 'FAILED': return <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-    default: return <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+    case 'SENT': return <Check className="h-3.5 w-3.5 text-white/70" />
+    case 'DELIVERED': return <CheckCheck className="h-3.5 w-3.5 text-white/70" />
+    case 'READ': return <CheckCheck className="h-3.5 w-3.5 text-blue-200" />
+    case 'FAILED': return <AlertCircle className="h-3.5 w-3.5 text-red-300" />
+    default: return <Clock className="h-3.5 w-3.5 text-white/50" />
   }
 }
 
