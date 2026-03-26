@@ -49,6 +49,7 @@ interface WaMessage {
   direction: 'INBOUND' | 'OUTBOUND'
   status: string
   mediaUrl: string | null
+  reactions: { emoji: string; from: string }[]
   createdAt: string
 }
 
@@ -855,6 +856,22 @@ export function WhatsappCrmPage() {
                               {isMine && <StatusIcon status={msg.status} />}
                             </div>
                           </div>
+                          {msg.reactions?.length > 0 && (
+                            <div className={cn('flex gap-0.5 -mt-1.5', isMine ? 'justify-end' : 'justify-start')}>
+                              <div className="flex items-center gap-0.5 rounded-full bg-background border shadow-sm px-1.5 py-0.5">
+                                {Object.entries(
+                                  msg.reactions.reduce<Record<string, number>>((acc, r) => {
+                                    acc[r.emoji] = (acc[r.emoji] || 0) + 1
+                                    return acc
+                                  }, {})
+                                ).map(([emoji, count]) => (
+                                  <span key={emoji} className="text-xs" title={`${count}`}>
+                                    {emoji}{count > 1 && <span className="text-[10px] text-muted-foreground ml-0.5">{count}</span>}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
