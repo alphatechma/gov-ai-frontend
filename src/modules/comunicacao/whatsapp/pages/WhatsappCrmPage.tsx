@@ -11,7 +11,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import {
   MessageCircle, Send, Search, Wifi, WifiOff, QrCode,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
-  AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2,
+  AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2, Plus,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -187,12 +187,10 @@ function ConnectionHeader({
   connection,
   onRefresh,
   onNewChat,
-  onBroadcast,
 }: {
   connection: WaConnection | null
   onRefresh: () => void
   onNewChat: () => void
-  onBroadcast: () => void
 }) {
   const qc = useQueryClient()
   const { on } = useWhatsappSocket()
@@ -304,14 +302,14 @@ function ConnectionHeader({
 
         <div className="flex items-center gap-2 shrink-0">
           {isConnected ? (
-            <>
-              <Button variant="outline" size="sm" onClick={onNewChat}>
-                <Phone className="h-4 w-4" /> <span className="hidden sm:inline">Nova Conversa</span>
-              </Button>
-              <Button size="sm" onClick={onBroadcast}>
-                <Megaphone className="h-4 w-4" /> <span className="hidden sm:inline">Broadcast</span>
-              </Button>
-            </>
+            <Button
+              size="icon"
+              onClick={onNewChat}
+              className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white"
+              title="Nova conversa"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           ) : !isPending ? (
             <Button
               size="sm"
@@ -665,7 +663,6 @@ export function WhatsappCrmPage() {
         connection={connQuery.data || null}
         onRefresh={() => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })}
         onNewChat={handleNewChat}
-        onBroadcast={() => setShowBroadcast(true)}
       />
 
       {/* Chat area - only when connected */}
