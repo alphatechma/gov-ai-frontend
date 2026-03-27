@@ -656,7 +656,7 @@ export function WhatsappCrmPage() {
       className={cn(
         'flex flex-col bg-background',
         isConnected
-          ? 'fixed inset-0 z-40'
+          ? '-m-4 lg:-m-6 h-[calc(100vh-4rem)]'
           : 'h-[calc(100vh-8rem)]',
       )}
     >
