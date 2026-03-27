@@ -186,13 +186,11 @@ function DocumentLink({ messageId, label, isMine }: { messageId: string; label: 
 function ConnectionHeader({
   connection,
   onRefresh,
-  isConnected: isConnectedProp,
   onNewChat,
   onBroadcast,
 }: {
   connection: WaConnection | null
   onRefresh: () => void
-  isConnected: boolean
   onNewChat: () => void
   onBroadcast: () => void
 }) {
@@ -665,7 +663,6 @@ export function WhatsappCrmPage() {
       {/* Unified connection header */}
       <ConnectionHeader
         connection={connQuery.data || null}
-        isConnected={!!isConnected}
         onRefresh={() => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })}
         onNewChat={handleNewChat}
         onBroadcast={() => setShowBroadcast(true)}
