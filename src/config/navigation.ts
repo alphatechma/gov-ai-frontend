@@ -89,6 +89,7 @@ export const navigation: NavGroup[] = [
     items: [
       { label: 'Chat', path: '/chat', icon: MessageSquare, moduleKey: 'chat' },
       { label: 'WhatsApp CRM', path: '/whatsapp', icon: MessageCircle, moduleKey: 'whatsapp' },
+      { label: 'WhatsApp Analytics', path: '/whatsapp-analytics', icon: BarChart3, moduleKey: 'whatsapp' },
       { label: 'Assistente IA', path: '/ia', icon: Brain, moduleKey: 'ai' },
       { label: 'Relatorios', path: '/relatorios', icon: BarChart3, moduleKey: 'reports' },
     ],
