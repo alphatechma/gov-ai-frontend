@@ -13,6 +13,7 @@ import {
   Moon, Sun, User, Lock, Loader2, Save,
   ChevronDown, Zap, BookOpen, Shield, Users, BarChart3,
   Mail, Phone, MapPin, Clock, MessageCircle, Headphones, Instagram,
+  Wifi, WifiOff,
 } from 'lucide-react'
 import { UserRole } from '@/types/enums'
 import { AparenciaTab } from '../components/AparenciaTab'
@@ -36,6 +37,7 @@ interface FaqItem { question: string; answer: string }
 const allTabs = [
   { key: 'geral', label: 'Geral', icon: Settings, adminOnly: false },
   { key: 'aparencia', label: 'Aparencia', icon: Palette, adminOnly: true },
+  { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, adminOnly: false },
   { key: 'perfil', label: 'Meu Perfil', icon: UserPen, adminOnly: false },
   { key: 'ajuda', label: 'Ajuda', icon: HelpCircle, adminOnly: false },
   { key: 'contato', label: 'Contato', icon: Contact, adminOnly: false },
@@ -380,6 +382,107 @@ function ContatoTab() {
   )
 }
 
+/* ─── Tab: WhatsApp ─── */
+interface WaConnection {
+  id: string
+  tenantId: string
+  phoneNumber: string | null
+  pushName: string | null
+  status: string
+  liveStatus: string
+  qrCode: string | null
+  createdAt: string
+}
+
+function WhatsappTab() {
+  const qc = useQueryClient()
+
+  const connQuery = useQuery({
+    queryKey: ['whatsapp', 'connection'],
+    queryFn: () => api.get<WaConnection>('/whatsapp/connection').then(r => r.data),
+  })
+
+  const disconnect = useMutation({
+    mutationFn: () => api.delete('/whatsapp/connection'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'connection'] })
+    },
+  })
+
+  const conn = connQuery.data
+  const isConnected = conn?.liveStatus === 'CONNECTED' || conn?.status === 'CONNECTED'
+
+  const formatPhone = (phone: string) => {
+    const clean = phone.replace(/\D/g, '')
+    if (clean.length > 13) return `ID: ${clean.slice(-6)}`
+    if (clean.length === 13 && clean.startsWith('55')) {
+      const local = clean.slice(2)
+      return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
+    }
+    if (clean.length === 12 && clean.startsWith('55')) {
+      const local = clean.slice(2)
+      return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
+    }
+    if (clean.length === 11) return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`
+    return phone
+  }
+
+  if (connQuery.isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="h-5 w-5" /> Conexao WhatsApp
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              'flex h-12 w-12 items-center justify-center rounded-full',
+              isConnected ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground',
+            )}>
+              {isConnected ? <Wifi className="h-6 w-6" /> : <WifiOff className="h-6 w-6" />}
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">{isConnected ? 'Conectado' : 'Desconectado'}</p>
+              {isConnected && conn?.phoneNumber && (
+                <p className="text-sm text-muted-foreground">
+                  {formatPhone(conn.phoneNumber)}
+                  {conn.pushName ? ` - ${conn.pushName}` : ''}
+                </p>
+              )}
+              {!isConnected && (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum dispositivo conectado. Conecte pela pagina do WhatsApp CRM.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {isConnected && (
+            <div className="pt-2 border-t">
+              <p className="text-sm text-muted-foreground mb-3">
+                Ao desconectar, todas as conversas em tempo real serao interrompidas. Voce precisara escanear o QR Code novamente para reconectar.
+              </p>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => disconnect.mutate()}
+                disabled={disconnect.isPending}
+              >
+                {disconnect.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <WifiOff className="h-4 w-4" />}
+                Desconectar WhatsApp
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 /* ─── Main ─── */
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('geral')
@@ -420,6 +523,7 @@ export function SettingsPage() {
         <div className="flex-1 min-w-0">
           {activeTab === 'geral' && <GeralTab />}
           {activeTab === 'aparencia' && <AparenciaTab />}
+          {activeTab === 'whatsapp' && <WhatsappTab />}
           {activeTab === 'perfil' && <PerfilTab />}
           {activeTab === 'ajuda' && <AjudaTab />}
           {activeTab === 'contato' && <ContatoTab />}

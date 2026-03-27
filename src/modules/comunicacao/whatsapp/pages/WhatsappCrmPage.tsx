@@ -57,7 +57,6 @@ interface WaMessage {
 function formatPhone(phone: string) {
   if (!phone) return ''
   const clean = phone.replace(/\D/g, '')
-  // LID numbers (>13 digits) - not a real phone, just show short ID
   if (clean.length > 13) return `ID: ${clean.slice(-6)}`
   if (clean.length === 13 && clean.startsWith('55')) {
     const local = clean.slice(2)
@@ -182,9 +181,21 @@ function DocumentLink({ messageId, label, isMine }: { messageId: string; label: 
 }
 
 /* ═══════════════════════════════════════════════
-   CONNECTION SETUP
+   CONNECTION HEADER (unified)
    ═══════════════════════════════════════════════ */
-function ConnectionSetup({ connection, onRefresh }: { connection: WaConnection | null; onRefresh: () => void }) {
+function ConnectionHeader({
+  connection,
+  onRefresh,
+  isConnected: isConnectedProp,
+  onNewChat,
+  onBroadcast,
+}: {
+  connection: WaConnection | null
+  onRefresh: () => void
+  isConnected: boolean
+  onNewChat: () => void
+  onBroadcast: () => void
+}) {
   const qc = useQueryClient()
   const { on } = useWhatsappSocket()
   const [qrCode, setQrCode] = useState<string | null>(connection?.qrCode || null)
@@ -201,17 +212,7 @@ function ConnectionSetup({ connection, onRefresh }: { connection: WaConnection |
     },
   })
 
-  const disconnect = useMutation({
-    mutationFn: () => api.delete('/whatsapp/connection'),
-    onSuccess: () => {
-      setQrCode(null)
-      setLiveStatus('DISCONNECTED')
-      setPolling(false)
-      qc.invalidateQueries({ queryKey: ['whatsapp', 'connection'] })
-    },
-  })
-
-  // Polling fallback: poll connection status every 3s while pending
+  // Polling fallback
   useEffect(() => {
     if (!polling) return
     const interval = setInterval(async () => {
@@ -233,7 +234,7 @@ function ConnectionSetup({ connection, onRefresh }: { connection: WaConnection |
     return () => clearInterval(interval)
   }, [polling, qc, onRefresh])
 
-  // Listen for socket events (bonus: faster than polling if socket works)
+  // Socket events
   useEffect(() => {
     const offs: (() => void)[] = []
 
@@ -274,69 +275,71 @@ function ConnectionSetup({ connection, onRefresh }: { connection: WaConnection |
   const isPending = liveStatus === 'PENDING'
 
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-              isConnected ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground',
-            )}>
-              {isConnected ? <Wifi className="h-5 w-5" /> : <WifiOff className="h-5 w-5" />}
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold">
-                  {isConnected ? 'Conectado' : isPending ? 'Aguardando QR Code...' : 'Desconectado'}
-                </p>
-                <Badge variant={isConnected ? 'default' : 'secondary'} className="text-[10px]">
-                  {liveStatus}
-                </Badge>
-              </div>
-              {isConnected && connection?.phoneNumber && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {formatPhone(connection.phoneNumber)}
-                  {connection.pushName ? ` - ${connection.pushName}` : ''}
-                </p>
-              )}
-            </div>
+    <div className="shrink-0">
+      {/* Unified header bar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-background">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+            isConnected ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground',
+          )}>
+            {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
           </div>
-
-          <div className="flex shrink-0 gap-2">
-            {isConnected ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => disconnect.mutate()}
-                disabled={disconnect.isPending}
-                className="text-red-500 hover:text-red-600"
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-semibold">WhatsApp CRM</h1>
+              <Badge
+                variant={isConnected ? 'default' : 'secondary'}
+                className={cn('text-[10px]', isConnected && 'bg-green-500 hover:bg-green-500')}
               >
-                <WifiOff className="h-4 w-4" /> Desconectar
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => startConnection.mutate()}
-                disabled={startConnection.isPending || isPending}
-              >
-                {isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
-                {isPending ? 'Aguardando...' : 'Conectar'}
-              </Button>
+                {isConnected ? 'Conectado' : isPending ? 'Aguardando...' : 'Desconectado'}
+              </Badge>
+            </div>
+            {isConnected && connection?.phoneNumber && (
+              <p className="text-xs text-muted-foreground truncate">
+                {formatPhone(connection.phoneNumber)}
+                {connection.pushName ? ` - ${connection.pushName}` : ''}
+              </p>
             )}
           </div>
         </div>
 
-        {/* QR Code display */}
-        {isPending && qrCode && (
-          <div className="mt-4 flex flex-col items-center gap-3 p-6 border rounded-lg bg-white dark:bg-zinc-950">
-            <img src={qrCode} alt="QR Code WhatsApp" className="w-64 h-64" />
-            <p className="text-sm text-muted-foreground text-center max-w-xs">
-              Abra o WhatsApp no celular, va em <strong>Dispositivos conectados</strong> e escaneie o QR Code
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        <div className="flex items-center gap-2 shrink-0">
+          {isConnected ? (
+            <>
+              <Button variant="outline" size="sm" onClick={onNewChat}>
+                <Phone className="h-4 w-4" /> <span className="hidden sm:inline">Nova Conversa</span>
+              </Button>
+              <Button size="sm" onClick={onBroadcast}>
+                <Megaphone className="h-4 w-4" /> <span className="hidden sm:inline">Broadcast</span>
+              </Button>
+            </>
+          ) : !isPending ? (
+            <Button
+              size="sm"
+              onClick={() => startConnection.mutate()}
+              disabled={startConnection.isPending}
+            >
+              <QrCode className="h-4 w-4" /> Conectar
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" disabled>
+              <RefreshCw className="h-4 w-4 animate-spin" /> Aguardando...
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* QR Code display */}
+      {isPending && qrCode && (
+        <div className="flex flex-col items-center gap-3 p-6 border-b bg-background">
+          <img src={qrCode} alt="QR Code WhatsApp" className="w-64 h-64" />
+          <p className="text-sm text-muted-foreground text-center max-w-xs">
+            Abra o WhatsApp no celular, va em <strong>Dispositivos conectados</strong> e escaneie o QR Code
+          </p>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -387,7 +390,6 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
   }
 
   const handleSend = () => {
-    // Combine manual phones + selected voters
     const manualPhones = phones.split('\n').map(p => p.trim()).filter(Boolean)
     const voterPhones = voters
       .filter((v: any) => selectedVoterIds.has(v.id))
@@ -416,7 +418,6 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
           <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
         </CardHeader>
         <CardContent className="space-y-4 overflow-auto">
-          {/* Voter selection */}
           {voters.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -468,7 +469,6 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
-          {/* Manual phones */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Numeros adicionais (um por linha)</label>
             <Textarea
@@ -480,7 +480,6 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
             />
           </div>
 
-          {/* Message */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Mensagem *</label>
             <Textarea
@@ -541,7 +540,7 @@ export function WhatsappCrmPage() {
     queryKey: ['whatsapp', 'chats'],
     queryFn: () => api.get<WaChat[]>('/whatsapp/chats').then(r => r.data),
     enabled: connQuery.data?.liveStatus === 'CONNECTED' || connQuery.data?.status === 'CONNECTED',
-    refetchInterval: 15000, // Fallback polling; WebSocket handles real-time
+    refetchInterval: 15000,
   })
 
   const msgQuery = useQuery({
@@ -577,7 +576,6 @@ export function WhatsappCrmPage() {
       qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
     },
     onSettled: () => {
-      // Always clear media state after send attempt (success or failure)
       clearMedia()
     },
   })
@@ -594,7 +592,6 @@ export function WhatsappCrmPage() {
     }))
 
     offs.push(on('whatsapp:message:status', () => {
-      // Refetch messages to reflect updated status (sent → delivered → read)
       if (selectedPhone) {
         qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', selectedPhone] })
       }
@@ -657,37 +654,27 @@ export function WhatsappCrmPage() {
 
   /* ─── render ─── */
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col gap-4">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">WhatsApp CRM</h1>
-          <p className="text-sm text-muted-foreground">Gerencie conversas e disparos via WhatsApp</p>
-        </div>
-        {isConnected && (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={handleNewChat}>
-              <Phone className="h-4 w-4" /> <span className="hidden sm:inline">Nova Conversa</span><span className="sm:hidden">Conversa</span>
-            </Button>
-            <Button size="sm" onClick={() => setShowBroadcast(true)}>
-              <Megaphone className="h-4 w-4" /> Broadcast
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Connection bar */}
-      <ConnectionSetup
+    <div
+      className={cn(
+        'flex flex-col bg-background',
+        isConnected
+          ? 'fixed inset-0 z-40'
+          : 'h-[calc(100vh-8rem)]',
+      )}
+    >
+      {/* Unified connection header */}
+      <ConnectionHeader
         connection={connQuery.data || null}
-        onRefresh={() => {
-          qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
-        }}
+        isConnected={!!isConnected}
+        onRefresh={() => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })}
+        onNewChat={handleNewChat}
+        onBroadcast={() => setShowBroadcast(true)}
       />
 
       {/* Chat area - only when connected */}
       {isConnected && (() => {
         const ChatSidebar = (
-          <Card className="flex flex-col overflow-hidden h-full">
+          <div className="flex flex-col overflow-hidden h-full border-r">
             <div className="p-3 border-b">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -755,11 +742,11 @@ export function WhatsappCrmPage() {
                 ))}
               </div>
             </ScrollArea>
-          </Card>
+          </div>
         )
 
         const ChatArea = (
-          <Card className="flex flex-1 flex-col overflow-hidden h-full">
+          <div className="flex flex-1 flex-col overflow-hidden h-full">
             {selectedPhone ? (
               <>
                 {/* Chat header */}
@@ -887,7 +874,7 @@ export function WhatsappCrmPage() {
                 </ScrollArea>
 
                 {/* Input */}
-                <CardContent className="border-t p-3">
+                <div className="border-t p-3">
                   {/* Media preview */}
                   {mediaFile && (
                     <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted p-2">
@@ -941,7 +928,7 @@ export function WhatsappCrmPage() {
                       {sendMediaMsg.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
                   </form>
-                </CardContent>
+                </div>
               </>
             ) : (
               <div className="flex flex-1 items-center justify-center">
@@ -954,13 +941,13 @@ export function WhatsappCrmPage() {
                 </div>
               </div>
             )}
-          </Card>
+          </div>
         )
 
         return (
           <>
             {/* Desktop: side-by-side */}
-            <div className="hidden lg:flex flex-1 gap-4 overflow-hidden">
+            <div className="hidden lg:flex flex-1 overflow-hidden">
               <div className="w-80 shrink-0">{ChatSidebar}</div>
               {ChatArea}
             </div>
@@ -975,17 +962,17 @@ export function WhatsappCrmPage() {
 
       {/* Empty state when not connected */}
       {!isConnected && !connQuery.isLoading && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
               <MessageCircle className="h-8 w-8 text-green-500" />
             </div>
             <h2 className="text-lg font-semibold">Conecte seu WhatsApp</h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
               Clique em "Conectar" acima e escaneie o QR Code com seu celular para comecar a gerenciar suas conversas.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Broadcast Modal */}
