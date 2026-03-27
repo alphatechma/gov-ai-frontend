@@ -12,6 +12,7 @@ import {
   MessageCircle, Send, Search, Wifi, WifiOff, QrCode,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
   AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2, Plus,
+  MailOpen, MailX, Timer,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -37,7 +38,10 @@ interface WaChat {
   lastMessageAt: string
   messageCount: number
   unreadCount: number
+  replyLater: boolean
 }
+
+type ChatFilter = 'all' | 'unread' | 'reply-later'
 
 interface WaMessage {
   id: string
@@ -521,8 +525,10 @@ export function WhatsappCrmPage() {
   const [searchChat, setSearchChat] = useState('')
   const [showBroadcast, setShowBroadcast] = useState(false)
   const [chatPage, setChatPage] = useState(1)
+  const [chatFilter, setChatFilter] = useState<ChatFilter>('all')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [mediaPreview, setMediaPreview] = useState<string | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; chat: WaChat } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -533,8 +539,8 @@ export function WhatsappCrmPage() {
   })
 
   const chatsQuery = useQuery({
-    queryKey: ['whatsapp', 'chats'],
-    queryFn: () => api.get<WaChat[]>('/whatsapp/chats').then(r => r.data),
+    queryKey: ['whatsapp', 'chats', chatFilter],
+    queryFn: () => api.get<WaChat[]>(`/whatsapp/chats?filter=${chatFilter}`).then(r => r.data),
     enabled: connQuery.data?.liveStatus === 'CONNECTED' || connQuery.data?.status === 'CONNECTED',
     refetchInterval: 15000,
   })
@@ -576,6 +582,21 @@ export function WhatsappCrmPage() {
     },
   })
 
+  const markRead = useMutation({
+    mutationFn: (phone: string) => api.patch(`/whatsapp/chats/${phone}/read`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] }),
+  })
+
+  const markUnread = useMutation({
+    mutationFn: (phone: string) => api.patch(`/whatsapp/chats/${phone}/unread`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] }),
+  })
+
+  const toggleReplyLater = useMutation({
+    mutationFn: (phone: string) => api.patch(`/whatsapp/chats/${phone}/reply-later`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] }),
+  })
+
   /* ─── socket events ─── */
   useEffect(() => {
     const offs: (() => void)[] = []
@@ -600,6 +621,14 @@ export function WhatsappCrmPage() {
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [msgQuery.data])
+
+  // Close context menu on click outside
+  useEffect(() => {
+    if (!contextMenu) return
+    const handler = () => setContextMenu(null)
+    window.addEventListener('click', handler)
+    return () => window.removeEventListener('click', handler)
+  }, [contextMenu])
 
   /* ─── handlers ─── */
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -631,6 +660,14 @@ export function WhatsappCrmPage() {
     if (!input.trim()) return
     sendMsg.mutate({ phone: selectedPhone, content: input.trim() })
     setInput('')
+  }
+
+  const handleSelectChat = (phone: string) => {
+    setSelectedPhone(phone)
+    setChatPage(1)
+    setContextMenu(null)
+    // Auto-mark as read
+    markRead.mutate(phone)
   }
 
   const handleNewChat = () => {
@@ -667,8 +704,33 @@ export function WhatsappCrmPage() {
 
       {/* Chat area - only when connected */}
       {isConnected && (() => {
+        const filterTabs: { key: ChatFilter; label: string }[] = [
+          { key: 'all', label: 'Todas' },
+          { key: 'unread', label: 'Nao lidas' },
+          { key: 'reply-later', label: 'Responder depois' },
+        ]
+
         const ChatSidebar = (
-          <div className="flex flex-col overflow-hidden h-full border-r">
+          <div className="flex flex-col overflow-hidden h-full border-r relative">
+            {/* Filter tabs */}
+            <div className="flex border-b shrink-0">
+              {filterTabs.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setChatFilter(tab.key)}
+                  className={cn(
+                    'flex-1 py-2 text-xs font-medium transition-colors cursor-pointer',
+                    chatFilter === tab.key
+                      ? 'text-primary border-b-2 border-primary'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Search */}
             <div className="p-3 border-b">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -680,6 +742,8 @@ export function WhatsappCrmPage() {
                 />
               </div>
             </div>
+
+            {/* Chat list */}
             <ScrollArea className="flex-1">
               <div className="p-1.5 space-y-0.5">
                 {chatsQuery.isLoading ? (
@@ -695,36 +759,63 @@ export function WhatsappCrmPage() {
                 ) : chats.length === 0 ? (
                   <div className="flex flex-col items-center py-12 text-center">
                     <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
-                    <p className="mt-2 text-xs text-muted-foreground">Nenhuma conversa</p>
-                    <Button variant="outline" size="sm" className="mt-3" onClick={handleNewChat}>
-                      <Phone className="h-3 w-3" /> Iniciar conversa
-                    </Button>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {chatFilter === 'unread' ? 'Nenhuma conversa nao lida' :
+                       chatFilter === 'reply-later' ? 'Nenhuma conversa pendente' :
+                       'Nenhuma conversa'}
+                    </p>
+                    {chatFilter !== 'all' && (
+                      <Button variant="outline" size="sm" className="mt-3" onClick={() => setChatFilter('all')}>
+                        Ver todas
+                      </Button>
+                    )}
+                    {chatFilter === 'all' && (
+                      <Button variant="outline" size="sm" className="mt-3" onClick={handleNewChat}>
+                        <Phone className="h-3 w-3" /> Iniciar conversa
+                      </Button>
+                    )}
                   </div>
                 ) : chats.map(chat => (
                   <button
                     key={chat.remoteJid}
-                    onClick={() => { setSelectedPhone(chat.remotePhone); setChatPage(1) }}
+                    onClick={() => handleSelectChat(chat.remotePhone)}
+                    onContextMenu={e => {
+                      e.preventDefault()
+                      setContextMenu({ x: e.clientX, y: e.clientY, chat })
+                    }}
                     className={cn(
                       'w-full rounded-lg p-3 text-left transition-colors flex gap-3 items-center cursor-pointer',
                       selectedPhone === chat.remotePhone ? 'bg-accent' : 'hover:bg-accent/50',
                     )}
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
-                      {getInitials(chat.remoteName || chat.remotePhone.slice(-4))}
+                    <div className="relative shrink-0">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
+                        {getInitials(chat.remoteName || chat.remotePhone.slice(-4))}
+                      </div>
+                      {chat.replyLater && (
+                        <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white">
+                          <Timer className="h-2.5 w-2.5" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium truncate">
+                        <p className={cn('text-sm truncate', chat.unreadCount > 0 ? 'font-bold' : 'font-medium')}>
                           {chat.remoteName || formatPhone(chat.remotePhone)}
                         </p>
                         {chat.lastMessageAt && (
-                          <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                          <span className={cn(
+                            'text-[10px] shrink-0 ml-2',
+                            chat.unreadCount > 0 ? 'text-green-500 font-semibold' : 'text-muted-foreground',
+                          )}>
                             {formatTime(chat.lastMessageAt)}
                           </span>
                         )}
                       </div>
                       <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs text-muted-foreground truncate">{chat.lastMessage}</p>
+                        <p className={cn('text-xs truncate', chat.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground')}>
+                          {chat.lastMessage}
+                        </p>
                         {chat.unreadCount > 0 && (
                           <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5 text-[10px] shrink-0 bg-green-500">
                             {chat.unreadCount}
@@ -736,6 +827,47 @@ export function WhatsappCrmPage() {
                 ))}
               </div>
             </ScrollArea>
+
+            {/* Context menu */}
+            {contextMenu && (
+              <div
+                className="fixed z-50 min-w-48 rounded-lg border bg-popover p-1 shadow-lg"
+                style={{ top: contextMenu.y, left: contextMenu.x }}
+                onClick={e => e.stopPropagation()}
+              >
+                {contextMenu.chat.unreadCount > 0 ? (
+                  <button
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
+                    onClick={() => {
+                      markRead.mutate(contextMenu.chat.remotePhone)
+                      setContextMenu(null)
+                    }}
+                  >
+                    <MailOpen className="h-4 w-4" /> Marcar como lida
+                  </button>
+                ) : (
+                  <button
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
+                    onClick={() => {
+                      markUnread.mutate(contextMenu.chat.remotePhone)
+                      setContextMenu(null)
+                    }}
+                  >
+                    <MailX className="h-4 w-4" /> Marcar como nao lida
+                  </button>
+                )}
+                <button
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
+                  onClick={() => {
+                    toggleReplyLater.mutate(contextMenu.chat.remotePhone)
+                    setContextMenu(null)
+                  }}
+                >
+                  <Timer className="h-4 w-4" />
+                  {contextMenu.chat.replyLater ? 'Remover responder depois' : 'Responder mais tarde'}
+                </button>
+              </div>
+            )}
           </div>
         )
 
