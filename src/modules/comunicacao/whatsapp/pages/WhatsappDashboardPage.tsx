@@ -3,10 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { PageHeader } from '@/components/PageHeader'
 import {
   MessageCircle, ArrowDownLeft, ArrowUpRight, Users, MailX, Timer,
-  TrendingUp, Loader2,
+  TrendingUp, Loader2, Download, CalendarDays,
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -43,6 +44,16 @@ interface Analytics {
 }
 
 type Period = 7 | 30 | 90
+
+function defaultStartDate(days: number) {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return d.toISOString().slice(0, 10)
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
 
 /* ─── helpers ─── */
 function formatPhone(phone: string) {
@@ -114,11 +125,36 @@ function KpiCard({
 /* ─── Main ─── */
 export function WhatsappDashboardPage() {
   const [period, setPeriod] = useState<Period>(30)
+  const [startDate, setStartDate] = useState(defaultStartDate(30))
+  const [endDate, setEndDate] = useState(todayStr())
+  const [exporting, setExporting] = useState(false)
+
+  const queryParams = `startDate=${startDate}&endDate=${endDate}`
 
   const { data, isLoading } = useQuery({
-    queryKey: ['whatsapp', 'analytics', period],
-    queryFn: () => api.get<Analytics>(`/whatsapp/analytics?days=${period}`).then(r => r.data),
+    queryKey: ['whatsapp', 'analytics', startDate, endDate],
+    queryFn: () => api.get<Analytics>(`/whatsapp/analytics?${queryParams}`).then(r => r.data),
   })
+
+  function handlePeriod(p: Period) {
+    setPeriod(p)
+    setStartDate(defaultStartDate(p))
+    setEndDate(todayStr())
+  }
+
+  function handleExport() {
+    setExporting(true)
+    api.get(`/whatsapp/analytics/export?${queryParams}`, { responseType: 'blob' })
+      .then(res => {
+        const url = window.URL.createObjectURL(new Blob([res.data]))
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `whatsapp_analytics_${startDate}_${endDate}.xlsx`
+        a.click()
+        window.URL.revokeObjectURL(url)
+      })
+      .finally(() => setExporting(false))
+  }
 
   if (isLoading || !data) {
     return (
@@ -143,18 +179,51 @@ export function WhatsappDashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader title="WhatsApp Dashboard" description="Analise de mensagens e conversas" />
-        <div className="flex gap-1 border rounded-lg p-1">
-          {([7, 30, 90] as Period[]).map(p => (
-            <Button
-              key={p}
-              variant={period === p ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setPeriod(p)}
-              className="text-xs h-7"
-            >
-              {p}d
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Period shortcuts */}
+          <div className="flex gap-1 border rounded-lg p-1">
+            {([7, 30, 90] as Period[]).map(p => (
+              <Button
+                key={p}
+                variant={period === p ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handlePeriod(p)}
+                className="text-xs h-7"
+              >
+                {p}d
+              </Button>
+            ))}
+          </div>
+
+          {/* Date range */}
+          <div className="flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Input
+              type="date"
+              value={startDate}
+              onChange={e => { setStartDate(e.target.value); setPeriod(0 as Period) }}
+              className="h-7 text-xs w-[130px]"
+            />
+            <span className="text-xs text-muted-foreground">ate</span>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={e => { setEndDate(e.target.value); setPeriod(0 as Period) }}
+              className="h-7 text-xs w-[130px]"
+            />
+          </div>
+
+          {/* Export */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={handleExport}
+            disabled={exporting}
+          >
+            {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Download className="h-3.5 w-3.5 mr-1" />}
+            Exportar
+          </Button>
         </div>
       </div>
 
