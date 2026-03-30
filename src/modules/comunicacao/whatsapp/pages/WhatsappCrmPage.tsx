@@ -530,7 +530,7 @@ export function WhatsappCrmPage() {
   const [mediaPreview, setMediaPreview] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; chat: WaChat } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const chatListEndRef = useRef<HTMLDivElement>(null)
+  const chatListRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   /* ─── queries ─── */
@@ -638,20 +638,14 @@ export function WhatsappCrmPage() {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [msgQuery.data])
 
-  // Infinite scroll: load more chats when sentinel is visible
-  useEffect(() => {
-    const el = chatListEndRef.current
+  // Infinite scroll: load more chats when near bottom
+  const handleChatListScroll = useCallback(() => {
+    const el = chatListRef.current
     if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && chatsQuery.hasNextPage && !chatsQuery.isFetchingNextPage) {
-          chatsQuery.fetchNextPage()
-        }
-      },
-      { threshold: 0.1 },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
+    const { scrollTop, scrollHeight, clientHeight } = el
+    if (scrollHeight - scrollTop - clientHeight < 100 && chatsQuery.hasNextPage && !chatsQuery.isFetchingNextPage) {
+      chatsQuery.fetchNextPage()
+    }
   }, [chatsQuery.hasNextPage, chatsQuery.isFetchingNextPage, chatsQuery.fetchNextPage])
 
   // Close context menu on click outside
@@ -777,7 +771,7 @@ export function WhatsappCrmPage() {
             </div>
 
             {/* Chat list */}
-            <ScrollArea className="flex-1">
+            <div ref={chatListRef} onScroll={handleChatListScroll} className="flex-1 overflow-y-auto">
               <div className="p-1.5 space-y-0.5">
                 {chatsQuery.isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
@@ -858,15 +852,13 @@ export function WhatsappCrmPage() {
                     </div>
                   </button>
                 ))}
-                {/* Sentinel for infinite scroll */}
-                <div ref={chatListEndRef} className="h-1" />
                 {chatsQuery.isFetchingNextPage && (
                   <div className="flex justify-center py-3">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Context menu */}
             {contextMenu && (
