@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,7 @@ import {
   MessageCircle, Send, Search, Wifi, WifiOff, QrCode,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
   AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2, Plus,
-  MailOpen, MailX, Timer,
+  MailOpen, MailX, Timer, Trash2,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -530,6 +530,7 @@ export function WhatsappCrmPage() {
   const [mediaPreview, setMediaPreview] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; chat: WaChat } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const chatListEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   /* ─── queries ─── */
@@ -538,9 +539,14 @@ export function WhatsappCrmPage() {
     queryFn: () => api.get<WaConnection>('/whatsapp/connection').then(r => r.data),
   })
 
-  const chatsQuery = useQuery({
+  const chatsQuery = useInfiniteQuery({
     queryKey: ['whatsapp', 'chats', chatFilter],
-    queryFn: () => api.get<WaChat[]>(`/whatsapp/chats?filter=${chatFilter}`).then(r => r.data),
+    queryFn: ({ pageParam = 1 }) =>
+      api.get<{ chats: WaChat[]; hasMore: boolean; page: number }>(
+        `/whatsapp/chats?filter=${chatFilter}&page=${pageParam}&limit=20`,
+      ).then(r => r.data),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: connQuery.data?.liveStatus === 'CONNECTED' || connQuery.data?.status === 'CONNECTED',
     refetchInterval: 15000,
   })
@@ -597,6 +603,16 @@ export function WhatsappCrmPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] }),
   })
 
+  const deleteChat = useMutation({
+    mutationFn: (phone: string) => api.delete(`/whatsapp/chats/${phone}`),
+    onSuccess: (_, phone) => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
+      if (selectedPhone === phone) {
+        setSelectedPhone(null)
+      }
+    },
+  })
+
   /* ─── socket events ─── */
   useEffect(() => {
     const offs: (() => void)[] = []
@@ -621,6 +637,22 @@ export function WhatsappCrmPage() {
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [msgQuery.data])
+
+  // Infinite scroll: load more chats when sentinel is visible
+  useEffect(() => {
+    const el = chatListEndRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && chatsQuery.hasNextPage && !chatsQuery.isFetchingNextPage) {
+          chatsQuery.fetchNextPage()
+        }
+      },
+      { threshold: 0.1 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [chatsQuery.hasNextPage, chatsQuery.isFetchingNextPage, chatsQuery.fetchNextPage])
 
   // Close context menu on click outside
   useEffect(() => {
@@ -677,7 +709,8 @@ export function WhatsappCrmPage() {
   }
 
   /* ─── filtered chats ─── */
-  const chats = (chatsQuery.data ?? []).filter(c =>
+  const allChats = chatsQuery.data?.pages.flatMap(p => p.chats) ?? []
+  const chats = allChats.filter(c =>
     (c.remoteName || '').toLowerCase().includes(searchChat.toLowerCase()) ||
     c.remotePhone.includes(searchChat),
   )
@@ -825,6 +858,13 @@ export function WhatsappCrmPage() {
                     </div>
                   </button>
                 ))}
+                {/* Sentinel for infinite scroll */}
+                <div ref={chatListEndRef} className="h-1" />
+                {chatsQuery.isFetchingNextPage && (
+                  <div className="flex justify-center py-3">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                )}
               </div>
             </ScrollArea>
 
@@ -865,6 +905,18 @@ export function WhatsappCrmPage() {
                 >
                   <Timer className="h-4 w-4" />
                   {contextMenu.chat.replyLater ? 'Remover responder depois' : 'Responder mais tarde'}
+                </button>
+                <div className="my-1 border-t" />
+                <button
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10 cursor-pointer"
+                  onClick={() => {
+                    if (window.confirm('Tem certeza que deseja excluir esta conversa? Todas as mensagens serão apagadas.')) {
+                      deleteChat.mutate(contextMenu.chat.remotePhone)
+                    }
+                    setContextMenu(null)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" /> Excluir conversa
                 </button>
               </div>
             )}
