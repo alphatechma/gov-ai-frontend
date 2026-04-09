@@ -20,6 +20,7 @@ import {
   Briefcase,
   Scale,
   Handshake,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -38,6 +39,13 @@ export interface NavGroup {
 }
 
 export const navigation: NavGroup[] = [
+  {
+    label: 'Acesso Rapido',
+    icon: Zap,
+    items: [
+      { label: 'Acesso Rapido', path: '/', icon: Zap },
+    ],
+  },
   {
     label: 'Principal',
     icon: LayoutDashboard,

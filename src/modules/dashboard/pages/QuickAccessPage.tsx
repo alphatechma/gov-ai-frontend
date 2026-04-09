@@ -44,6 +44,7 @@ export function QuickAccessPage() {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN'
 
   const filteredGroups = navigation
+    .filter((group) => group.label !== 'Acesso Rapido')
     .map((group) => ({
       ...group,
       items: group.items.filter(
