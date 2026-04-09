@@ -109,6 +109,8 @@ interface ImportResult {
   updated?: number
   skipped: number
   duplicates?: number
+  helpRecordsCreated?: number
+  helpRecordsSkipped?: number
   total: number
   errors: string[]
 }
@@ -451,6 +453,11 @@ export function VotersListPage() {
       setImportResult(data)
       qc.invalidateQueries({ queryKey: ['voters'] })
       qc.invalidateQueries({ queryKey: ['voters-stats'] })
+      if ((data.helpRecordsCreated ?? 0) > 0) {
+        qc.invalidateQueries({ queryKey: ['help-records'] })
+        qc.invalidateQueries({ queryKey: ['help-stats'] })
+        qc.invalidateQueries({ queryKey: ['help-types'] })
+      }
       if (fileRef.current) fileRef.current.value = ''
     },
   })
@@ -740,7 +747,7 @@ export function VotersListPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Envie uma planilha Excel (.xlsx) com os dados dos eleitores. Baixe o modelo abaixo para preencher corretamente.
+                  Envie uma planilha Excel (.xlsx) com os dados dos eleitores. As colunas de atendimento sao opcionais — se preenchidas, um atendimento e criado junto com o eleitor. Baixe o modelo abaixo para preencher corretamente.
                 </p>
 
                 <div className="flex flex-wrap gap-3">
@@ -782,6 +789,12 @@ export function VotersListPage() {
                         )}
                         {importResult.skipped > 0 && (
                           <> · <strong>{importResult.skipped}</strong> ignorados</>
+                        )}
+                        {(importResult.helpRecordsCreated ?? 0) > 0 && (
+                          <> · <strong>{importResult.helpRecordsCreated}</strong> atendimentos criados</>
+                        )}
+                        {(importResult.helpRecordsSkipped ?? 0) > 0 && (
+                          <> · <strong>{importResult.helpRecordsSkipped}</strong> atendimentos falharam</>
                         )}
                       </span>
                     </div>
