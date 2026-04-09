@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { PageHeader } from '@/components/PageHeader'
 import {
   MessageCircle, ArrowDownLeft, ArrowUpRight, Users, MailX, Timer,
   TrendingUp, Loader2, Download, CalendarDays,
 } from 'lucide-react'
+import { useWhatsappConnections } from '../hooks/useWhatsappConnections'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
@@ -122,6 +124,12 @@ function KpiCard({
   )
 }
 
+function connectionLabelShort(conn: { label: string | null; phoneNumber: string | null }) {
+  if (conn.label) return conn.label
+  if (conn.phoneNumber) return formatPhone(conn.phoneNumber)
+  return 'Sem nome'
+}
+
 /* ─── Main ─── */
 export function WhatsappDashboardPage() {
   const [period, setPeriod] = useState<Period>(30)
@@ -129,10 +137,13 @@ export function WhatsappDashboardPage() {
   const [endDate, setEndDate] = useState(todayStr())
   const [exporting, setExporting] = useState(false)
 
-  const queryParams = `startDate=${startDate}&endDate=${endDate}`
+  const { connections, selectedId, setSelectedId, isAll } = useWhatsappConnections()
+
+  const connectionParam = isAll ? '' : `&connectionId=${selectedId}`
+  const queryParams = `startDate=${startDate}&endDate=${endDate}${connectionParam}`
 
   const { data, isLoading } = useQuery({
-    queryKey: ['whatsapp', 'analytics', startDate, endDate],
+    queryKey: ['whatsapp', 'analytics', selectedId ?? 'all', startDate, endDate],
     queryFn: () => api.get<Analytics>(`/whatsapp/analytics?${queryParams}`).then(r => r.data),
   })
 
@@ -144,7 +155,8 @@ export function WhatsappDashboardPage() {
 
   function handleExport() {
     setExporting(true)
-    api.get(`/whatsapp/analytics/export?${queryParams}`, { responseType: 'blob' })
+    const exportParams = `startDate=${startDate}&endDate=${endDate}${connectionParam}`
+    api.get(`/whatsapp/analytics/export?${exportParams}`, { responseType: 'blob' })
       .then(res => {
         const url = window.URL.createObjectURL(new Blob([res.data]))
         const a = document.createElement('a')
@@ -180,6 +192,25 @@ export function WhatsappDashboardPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader title="WhatsApp Dashboard" description="Analise de mensagens e conversas" />
         <div className="flex flex-wrap items-center gap-2">
+          {/* Connection selector */}
+          {connections.length > 0 && (
+            <Select
+              value={selectedId ?? '__all__'}
+              onChange={(e) => {
+                const v = e.target.value
+                setSelectedId(v === '__all__' ? null : v)
+              }}
+              className="h-7 w-[180px] text-xs"
+            >
+              <option value="__all__">Todas as conexoes</option>
+              {connections.map(c => (
+                <option key={c.id} value={c.id}>
+                  {connectionLabelShort(c)}
+                </option>
+              ))}
+            </Select>
+          )}
+
           {/* Period shortcuts */}
           <div className="flex gap-1 border rounded-lg p-1">
             {([7, 30, 90] as Period[]).map(p => (

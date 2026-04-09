@@ -1,36 +1,31 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Select } from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import {
-  MessageCircle, Send, Search, Wifi, WifiOff, QrCode,
+  MessageCircle, Send, Search, Wifi, WifiOff,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
   AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2, Plus,
-  MailOpen, MailX, Timer, Trash2,
+  MailOpen, MailX, Timer, Trash2, Settings,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useWhatsappSocket } from '../hooks/useWhatsappSocket'
+import { useWhatsappConnections } from '../hooks/useWhatsappConnections'
 
 /* ─── types ─── */
-interface WaConnection {
-  id: string
-  tenantId: string
-  phoneNumber: string | null
-  pushName: string | null
-  status: string
-  liveStatus: string
-  qrCode: string | null
-  createdAt: string
-}
-
 interface WaChat {
+  connectionId: string
+  connectionLabel: string | null
+  connectionPhoneNumber: string | null
   remoteJid: string
   remotePhone: string
   remoteName: string | null
@@ -45,6 +40,7 @@ type ChatFilter = 'all' | 'unread' | 'reply-later'
 
 interface WaMessage {
   id: string
+  connectionId: string
   remoteJid: string
   remotePhone: string
   remoteName: string | null
@@ -55,6 +51,12 @@ interface WaMessage {
   mediaUrl: string | null
   reactions: { emoji: string; from: string }[]
   createdAt: string
+}
+
+interface SelectedChat {
+  connectionId: string
+  phone: string
+  name?: string | null
 }
 
 /* ─── helpers ─── */
@@ -88,6 +90,12 @@ function formatTime(dateStr: string | null) {
 function getInitials(name: string | null | undefined) {
   if (!name) return '?'
   return name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+}
+
+function connectionShortLabel(conn: { label: string | null; phoneNumber: string | null }) {
+  if (conn.label) return conn.label
+  if (conn.phoneNumber) return formatPhone(conn.phoneNumber)
+  return 'Sem nome'
 }
 
 function StatusIcon({ status }: { status: string }) {
@@ -185,168 +193,15 @@ function DocumentLink({ messageId, label, isMine }: { messageId: string; label: 
 }
 
 /* ═══════════════════════════════════════════════
-   CONNECTION HEADER (unified)
+   BROADCAST MODAL (now per-connection)
    ═══════════════════════════════════════════════ */
-function ConnectionHeader({
-  connection,
-  onRefresh,
-  onNewChat,
+function BroadcastModal({
+  onClose,
+  connectionId,
 }: {
-  connection: WaConnection | null
-  onRefresh: () => void
-  onNewChat: () => void
+  onClose: () => void
+  connectionId: string
 }) {
-  const qc = useQueryClient()
-  const { on } = useWhatsappSocket()
-  const [qrCode, setQrCode] = useState<string | null>(connection?.qrCode || null)
-  const [liveStatus, setLiveStatus] = useState(connection?.liveStatus || 'DISCONNECTED')
-  const [polling, setPolling] = useState(false)
-
-  const startConnection = useMutation({
-    mutationFn: () => api.post('/whatsapp/connection/start').then(r => r.data),
-    onSuccess: (data: any) => {
-      if (data.qrCode) setQrCode(data.qrCode)
-      setLiveStatus(data.status)
-      setPolling(true)
-      qc.invalidateQueries({ queryKey: ['whatsapp', 'connection'] })
-    },
-  })
-
-  // Polling fallback
-  useEffect(() => {
-    if (!polling) return
-    const interval = setInterval(async () => {
-      try {
-        const { data } = await api.get<WaConnection>('/whatsapp/connection')
-        if (data) {
-          const status = data.liveStatus || data.status
-          setLiveStatus(status)
-          if (data.qrCode) setQrCode(data.qrCode)
-          if (status === 'CONNECTED') {
-            setQrCode(null)
-            setPolling(false)
-            qc.invalidateQueries({ queryKey: ['whatsapp', 'connection'] })
-            onRefresh()
-          }
-        }
-      } catch { /* ignore */ }
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [polling, qc, onRefresh])
-
-  // Socket events
-  useEffect(() => {
-    const offs: (() => void)[] = []
-
-    offs.push(on('whatsapp:qr', ({ qrCode: qr }: { qrCode: string }) => {
-      setQrCode(qr)
-      setLiveStatus('PENDING')
-    }))
-
-    offs.push(on('whatsapp:connected', () => {
-      setQrCode(null)
-      setLiveStatus('CONNECTED')
-      setPolling(false)
-      qc.invalidateQueries({ queryKey: ['whatsapp', 'connection'] })
-      onRefresh()
-    }))
-
-    offs.push(on('whatsapp:disconnected', () => {
-      setQrCode(null)
-      setLiveStatus('DISCONNECTED')
-      setPolling(false)
-      qc.invalidateQueries({ queryKey: ['whatsapp', 'connection'] })
-    }))
-
-    return () => offs.forEach(off => off())
-  }, [on, qc, onRefresh])
-
-  // Sync with prop changes
-  useEffect(() => {
-    if (connection) {
-      const status = connection.liveStatus || connection.status
-      setLiveStatus(status)
-      if (connection.qrCode) setQrCode(connection.qrCode)
-      if (status === 'CONNECTED') setPolling(false)
-    }
-  }, [connection])
-
-  const isConnected = liveStatus === 'CONNECTED'
-  const isPending = liveStatus === 'PENDING'
-
-  return (
-    <div className="shrink-0">
-      {/* Unified header bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-background">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
-            isConnected ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground',
-          )}>
-            {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold">WhatsApp CRM</h1>
-              <Badge
-                variant={isConnected ? 'default' : 'secondary'}
-                className={cn('text-[10px]', isConnected && 'bg-green-500 hover:bg-green-500')}
-              >
-                {isConnected ? 'Conectado' : isPending ? 'Aguardando...' : 'Desconectado'}
-              </Badge>
-            </div>
-            {isConnected && connection?.phoneNumber && (
-              <p className="text-xs text-muted-foreground truncate">
-                {formatPhone(connection.phoneNumber)}
-                {connection.pushName ? ` - ${connection.pushName}` : ''}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          {isConnected ? (
-            <Button
-              size="icon"
-              onClick={onNewChat}
-              className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white"
-              title="Nova conversa"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          ) : !isPending ? (
-            <Button
-              size="sm"
-              onClick={() => startConnection.mutate()}
-              disabled={startConnection.isPending}
-            >
-              <QrCode className="h-4 w-4" /> Conectar
-            </Button>
-          ) : (
-            <Button size="sm" variant="outline" disabled>
-              <RefreshCw className="h-4 w-4 animate-spin" /> Aguardando...
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* QR Code display */}
-      {isPending && qrCode && (
-        <div className="flex flex-col items-center gap-3 p-6 border-b bg-background">
-          <img src={qrCode} alt="QR Code WhatsApp" className="w-64 h-64" />
-          <p className="text-sm text-muted-foreground text-center max-w-xs">
-            Abra o WhatsApp no celular, va em <strong>Dispositivos conectados</strong> e escaneie o QR Code
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════════════
-   BROADCAST MODAL
-   ═══════════════════════════════════════════════ */
-function BroadcastModal({ onClose }: { onClose: () => void }) {
   const [phones, setPhones] = useState('')
   const [content, setContent] = useState('')
 
@@ -357,7 +212,7 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
 
   const broadcast = useMutation({
     mutationFn: (data: { phones: string[]; content: string }) =>
-      api.post('/whatsapp/broadcast', data).then(r => r.data),
+      api.post('/whatsapp/broadcast', { ...data, connectionId }).then(r => r.data),
     onSuccess: (result: any) => {
       alert(`Broadcast concluido: ${result.sent} enviadas, ${result.failed} falharam`)
       onClose()
@@ -519,8 +374,19 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
 export function WhatsappCrmPage() {
   const qc = useQueryClient()
   const { on } = useWhatsappSocket()
+  const {
+    connections,
+    connectedConnections,
+    selectedId,
+    selectedConnection,
+    setSelectedId,
+    isAll,
+    hasAnyConnection,
+    hasAnyConnected,
+    isLoading: connectionsLoading,
+  } = useWhatsappConnections()
 
-  const [selectedPhone, setSelectedPhone] = useState<string | null>(null)
+  const [selectedChat, setSelectedChat] = useState<SelectedChat | null>(null)
   const [input, setInput] = useState('')
   const [searchChat, setSearchChat] = useState('')
   const [showBroadcast, setShowBroadcast] = useState(false)
@@ -534,53 +400,49 @@ export function WhatsappCrmPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   /* ─── queries ─── */
-  const connQuery = useQuery({
-    queryKey: ['whatsapp', 'connection'],
-    queryFn: () => api.get<WaConnection>('/whatsapp/connection').then(r => r.data),
-  })
+  const connectionQueryParam = isAll ? '' : `&connectionId=${selectedId}`
 
   const chatsQuery = useInfiniteQuery({
-    queryKey: ['whatsapp', 'chats', chatFilter],
+    queryKey: ['whatsapp', 'chats', selectedId ?? 'all', chatFilter],
     queryFn: ({ pageParam = 1 }) =>
       api.get<{ chats: WaChat[]; hasMore: boolean; page: number }>(
-        `/whatsapp/chats?filter=${chatFilter}&page=${pageParam}&limit=20`,
+        `/whatsapp/chats?filter=${chatFilter}&page=${pageParam}&limit=20${connectionQueryParam}`,
       ).then(r => r.data),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.page + 1 : undefined,
-    enabled: connQuery.data?.liveStatus === 'CONNECTED' || connQuery.data?.status === 'CONNECTED',
+    enabled: hasAnyConnected,
     refetchInterval: 15000,
   })
 
   const msgQuery = useQuery({
-    queryKey: ['whatsapp', 'messages', selectedPhone, chatPage],
+    queryKey: ['whatsapp', 'messages', selectedChat?.connectionId, selectedChat?.phone, chatPage],
     queryFn: () => api.get<{ messages: WaMessage[]; total: number; totalPages: number }>(
-      `/whatsapp/chats/messages?phone=${selectedPhone}&page=${chatPage}`,
+      `/whatsapp/chats/messages?phone=${selectedChat!.phone}&connectionId=${selectedChat!.connectionId}&page=${chatPage}`,
     ).then(r => r.data),
-    enabled: !!selectedPhone,
+    enabled: !!selectedChat,
   })
-
-  const isConnected = connQuery.data?.liveStatus === 'CONNECTED' || connQuery.data?.status === 'CONNECTED'
 
   /* ─── mutations ─── */
   const sendMsg = useMutation({
-    mutationFn: (data: { phone: string; content: string }) =>
+    mutationFn: (data: { connectionId: string; phone: string; content: string }) =>
       api.post('/whatsapp/send', data).then(r => r.data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', selectedPhone] })
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', vars.connectionId, vars.phone] })
       qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
     },
   })
 
   const sendMediaMsg = useMutation({
-    mutationFn: (data: { phone: string; file: File; caption?: string }) => {
+    mutationFn: (data: { connectionId: string; phone: string; file: File; caption?: string }) => {
       const fd = new FormData()
+      fd.append('connectionId', data.connectionId)
       fd.append('phone', data.phone)
       fd.append('file', data.file)
       if (data.caption) fd.append('caption', data.caption)
       return api.post('/whatsapp/send-media', fd).then(r => r.data)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', selectedPhone] })
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', vars.connectionId, vars.phone] })
       qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
     },
     onSettled: () => {
@@ -589,26 +451,34 @@ export function WhatsappCrmPage() {
   })
 
   const markRead = useMutation({
-    mutationFn: (phone: string) => api.patch(`/whatsapp/chats/${phone}/read`),
+    mutationFn: ({ connectionId, phone }: { connectionId: string; phone: string }) =>
+      api.patch(`/whatsapp/chats/${phone}/read?connectionId=${connectionId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] }),
   })
 
   const markUnread = useMutation({
-    mutationFn: (phone: string) => api.patch(`/whatsapp/chats/${phone}/unread`),
+    mutationFn: ({ connectionId, phone }: { connectionId: string; phone: string }) =>
+      api.patch(`/whatsapp/chats/${phone}/unread?connectionId=${connectionId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] }),
   })
 
   const toggleReplyLater = useMutation({
-    mutationFn: (phone: string) => api.patch(`/whatsapp/chats/${phone}/reply-later`),
+    mutationFn: ({ connectionId, phone }: { connectionId: string; phone: string }) =>
+      api.patch(`/whatsapp/chats/${phone}/reply-later?connectionId=${connectionId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] }),
   })
 
   const deleteChat = useMutation({
-    mutationFn: (phone: string) => api.delete(`/whatsapp/chats/${phone}`),
-    onSuccess: (_, phone) => {
+    mutationFn: ({ connectionId, phone }: { connectionId: string; phone: string }) =>
+      api.delete(`/whatsapp/chats/${phone}?connectionId=${connectionId}`),
+    onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
-      if (selectedPhone === phone) {
-        setSelectedPhone(null)
+      if (
+        selectedChat &&
+        selectedChat.connectionId === vars.connectionId &&
+        selectedChat.phone === vars.phone
+      ) {
+        setSelectedChat(null)
       }
     },
   })
@@ -617,21 +487,38 @@ export function WhatsappCrmPage() {
   useEffect(() => {
     const offs: (() => void)[] = []
 
-    offs.push(on('whatsapp:message', (msg: WaMessage) => {
+    offs.push(on('whatsapp:message', (payload: { connectionId: string; message: WaMessage }) => {
       qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
-      if (msg.remotePhone === selectedPhone) {
-        qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', selectedPhone] })
+      if (
+        selectedChat &&
+        selectedChat.connectionId === payload.connectionId &&
+        payload.message?.remotePhone === selectedChat.phone
+      ) {
+        qc.invalidateQueries({
+          queryKey: ['whatsapp', 'messages', selectedChat.connectionId, selectedChat.phone],
+        })
       }
     }))
 
     offs.push(on('whatsapp:message:status', () => {
-      if (selectedPhone) {
-        qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', selectedPhone] })
+      if (selectedChat) {
+        qc.invalidateQueries({
+          queryKey: ['whatsapp', 'messages', selectedChat.connectionId, selectedChat.phone],
+        })
       }
     }))
 
+    offs.push(on('whatsapp:connected', () => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'connections'] })
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
+    }))
+
+    offs.push(on('whatsapp:disconnected', () => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'connections'] })
+    }))
+
     return () => offs.forEach(off => off())
-  }, [on, selectedPhone, qc])
+  }, [on, selectedChat, qc])
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -677,29 +564,54 @@ export function WhatsappCrmPage() {
   }
 
   const handleSend = () => {
-    if (!selectedPhone) return
+    if (!selectedChat) return
     if (mediaFile) {
-      sendMediaMsg.mutate({ phone: selectedPhone, file: mediaFile, caption: input.trim() || undefined })
+      sendMediaMsg.mutate({
+        connectionId: selectedChat.connectionId,
+        phone: selectedChat.phone,
+        file: mediaFile,
+        caption: input.trim() || undefined,
+      })
       setInput('')
       return
     }
     if (!input.trim()) return
-    sendMsg.mutate({ phone: selectedPhone, content: input.trim() })
+    sendMsg.mutate({
+      connectionId: selectedChat.connectionId,
+      phone: selectedChat.phone,
+      content: input.trim(),
+    })
     setInput('')
   }
 
-  const handleSelectChat = (phone: string) => {
-    setSelectedPhone(phone)
+  const handleSelectChat = (chat: WaChat) => {
+    setSelectedChat({
+      connectionId: chat.connectionId,
+      phone: chat.remotePhone,
+      name: chat.remoteName,
+    })
     setChatPage(1)
     setContextMenu(null)
     // Auto-mark as read
-    markRead.mutate(phone)
+    markRead.mutate({ connectionId: chat.connectionId, phone: chat.remotePhone })
   }
 
   const handleNewChat = () => {
+    // Require a specific connection to start a chat (can't start in "all" mode)
+    const targetConnId = !isAll
+      ? selectedId!
+      : connectedConnections[0]?.id
+    if (!targetConnId) {
+      alert('Nenhuma conexao disponivel. Conecte um numero em Configuracoes.')
+      return
+    }
     const phone = prompt('Digite o numero (com DDD, ex: 11999998888):')
     if (!phone) return
-    setSelectedPhone(phone.replace(/\D/g, ''))
+    setSelectedChat({
+      connectionId: targetConnId,
+      phone: phone.replace(/\D/g, ''),
+      name: null,
+    })
   }
 
   /* ─── filtered chats ─── */
@@ -709,444 +621,573 @@ export function WhatsappCrmPage() {
     c.remotePhone.includes(searchChat),
   )
 
-  const selectedChat = chats.find(c => c.remotePhone === selectedPhone)
   const messages = msgQuery.data?.messages ?? []
+  const activeConnForSelected = selectedChat
+    ? connections.find(c => c.id === selectedChat.connectionId) || null
+    : null
+
+  /* ─── selector options ─── */
+  const connectionSelector = (
+    <Select
+      value={selectedId ?? '__all__'}
+      onChange={(e) => {
+        const v = e.target.value
+        setSelectedId(v === '__all__' ? null : v)
+        setSelectedChat(null)
+        setChatPage(1)
+      }}
+      className="h-8 w-[200px] text-xs"
+    >
+      <option value="__all__">Todas as conexoes</option>
+      {connections.map(c => {
+        const status = c.liveStatus || c.status
+        const dot = status === 'CONNECTED' ? '●' : '○'
+        return (
+          <option key={c.id} value={c.id}>
+            {dot} {connectionShortLabel(c)}
+          </option>
+        )
+      })}
+    </Select>
+  )
 
   /* ─── render ─── */
-  return (
-    <div
-      className={cn(
-        'flex flex-col bg-background',
-        isConnected
-          ? '-m-4 lg:-m-6 h-[calc(100vh-4rem)]'
-          : 'h-[calc(100vh-8rem)]',
-      )}
-    >
-      {/* Unified connection header */}
-      <ConnectionHeader
-        connection={connQuery.data || null}
-        onRefresh={() => qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })}
-        onNewChat={handleNewChat}
-      />
 
-      {/* Chat area - only when connected */}
-      {isConnected && (() => {
-        const filterTabs: { key: ChatFilter; label: string }[] = [
-          { key: 'all', label: 'Todas' },
-          { key: 'unread', label: 'Nao lidas' },
-          { key: 'reply-later', label: 'Responder depois' },
-        ]
+  // Loading state for connection list
+  if (connectionsLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
-        const ChatSidebar = (
-          <div className="flex flex-col overflow-hidden h-full border-r relative">
-            {/* Filter tabs */}
-            <div className="flex border-b shrink-0">
-              {filterTabs.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setChatFilter(tab.key)}
-                  className={cn(
-                    'flex-1 py-2 text-xs font-medium transition-colors cursor-pointer',
-                    chatFilter === tab.key
-                      ? 'text-primary border-b-2 border-primary'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+  // No connections at all → CTA to settings
+  if (!hasAnyConnection) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] text-center px-4">
+        <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+          <MessageCircle className="h-8 w-8 text-green-500" />
+        </div>
+        <h2 className="text-lg font-semibold">Conecte seu WhatsApp</h2>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+          Voce ainda nao tem nenhum numero conectado. Va em Configuracoes para adicionar.
+        </p>
+        <Button asChild className="mt-4">
+          <Link to="/whatsapp-configuracoes">
+            <Settings className="h-4 w-4 mr-1" /> Gerenciar conexoes
+          </Link>
+        </Button>
+      </div>
+    )
+  }
 
-            {/* Search */}
-            <div className="p-3 border-b">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar conversa..."
-                  value={searchChat}
-                  onChange={e => setSearchChat(e.target.value)}
-                  className="pl-8 h-9 text-sm"
-                />
-              </div>
-            </div>
+  // Has connections but none connected → show warning + CTA
+  if (!hasAnyConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] text-center px-4">
+        <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+          <WifiOff className="h-8 w-8 text-amber-500" />
+        </div>
+        <h2 className="text-lg font-semibold">Nenhuma conexao ativa</h2>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+          Voce tem {connections.length} conexao(oes) cadastrada(s), mas nenhuma esta ativa no momento.
+        </p>
+        <Button asChild className="mt-4">
+          <Link to="/whatsapp-configuracoes">
+            <Settings className="h-4 w-4 mr-1" /> Abrir configuracoes
+          </Link>
+        </Button>
+      </div>
+    )
+  }
 
-            {/* Chat list */}
-            <div ref={chatListRef} onScroll={handleChatListScroll} className="flex-1 overflow-y-auto">
-              <div className="p-1.5 space-y-0.5">
-                {chatsQuery.isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex gap-3 p-3">
-                      <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-32" />
-                      </div>
-                    </div>
-                  ))
-                ) : chats.length === 0 ? (
-                  <div className="flex flex-col items-center py-12 text-center">
-                    <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {chatFilter === 'unread' ? 'Nenhuma conversa nao lida' :
-                       chatFilter === 'reply-later' ? 'Nenhuma conversa pendente' :
-                       'Nenhuma conversa'}
-                    </p>
-                    {chatFilter !== 'all' && (
-                      <Button variant="outline" size="sm" className="mt-3" onClick={() => setChatFilter('all')}>
-                        Ver todas
-                      </Button>
-                    )}
-                    {chatFilter === 'all' && (
-                      <Button variant="outline" size="sm" className="mt-3" onClick={handleNewChat}>
-                        <Phone className="h-3 w-3" /> Iniciar conversa
-                      </Button>
-                    )}
-                  </div>
-                ) : chats.map(chat => (
-                  <button
-                    key={chat.remoteJid}
-                    onClick={() => handleSelectChat(chat.remotePhone)}
-                    onContextMenu={e => {
-                      e.preventDefault()
-                      setContextMenu({ x: e.clientX, y: e.clientY, chat })
-                    }}
-                    className={cn(
-                      'w-full rounded-lg p-3 text-left transition-colors flex gap-3 items-center cursor-pointer',
-                      selectedPhone === chat.remotePhone ? 'bg-accent' : 'hover:bg-accent/50',
-                    )}
-                  >
-                    <div className="relative shrink-0">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
-                        {getInitials(chat.remoteName || chat.remotePhone.slice(-4))}
-                      </div>
-                      {chat.replyLater && (
-                        <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white">
-                          <Timer className="h-2.5 w-2.5" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className={cn('text-sm truncate', chat.unreadCount > 0 ? 'font-bold' : 'font-medium')}>
-                          {chat.remoteName || formatPhone(chat.remotePhone)}
-                        </p>
-                        {chat.lastMessageAt && (
-                          <span className={cn(
-                            'text-[10px] shrink-0 ml-2',
-                            chat.unreadCount > 0 ? 'text-green-500 font-semibold' : 'text-muted-foreground',
-                          )}>
-                            {formatTime(chat.lastMessageAt)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className={cn('text-xs truncate', chat.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground')}>
-                          {chat.lastMessage}
-                        </p>
-                        {chat.unreadCount > 0 && (
-                          <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5 text-[10px] shrink-0 bg-green-500">
-                            {chat.unreadCount}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-                {chatsQuery.isFetchingNextPage && (
-                  <div className="flex justify-center py-3">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-            </div>
+  const filterTabs: { key: ChatFilter; label: string }[] = [
+    { key: 'all', label: 'Todas' },
+    { key: 'unread', label: 'Nao lidas' },
+    { key: 'reply-later', label: 'Responder depois' },
+  ]
 
-            {/* Context menu */}
-            {contextMenu && (
-              <div
-                className="fixed z-50 min-w-48 rounded-lg border bg-popover p-1 shadow-lg"
-                style={{ top: contextMenu.y, left: contextMenu.x }}
-                onClick={e => e.stopPropagation()}
-              >
-                {contextMenu.chat.unreadCount > 0 ? (
-                  <button
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
-                    onClick={() => {
-                      markRead.mutate(contextMenu.chat.remotePhone)
-                      setContextMenu(null)
-                    }}
-                  >
-                    <MailOpen className="h-4 w-4" /> Marcar como lida
-                  </button>
-                ) : (
-                  <button
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
-                    onClick={() => {
-                      markUnread.mutate(contextMenu.chat.remotePhone)
-                      setContextMenu(null)
-                    }}
-                  >
-                    <MailX className="h-4 w-4" /> Marcar como nao lida
-                  </button>
-                )}
-                <button
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
-                  onClick={() => {
-                    toggleReplyLater.mutate(contextMenu.chat.remotePhone)
-                    setContextMenu(null)
-                  }}
-                >
-                  <Timer className="h-4 w-4" />
-                  {contextMenu.chat.replyLater ? 'Remover responder depois' : 'Responder mais tarde'}
-                </button>
-                <div className="my-1 border-t" />
-                <button
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10 cursor-pointer"
-                  onClick={() => {
-                    if (window.confirm('Tem certeza que deseja excluir esta conversa? Todas as mensagens serão apagadas.')) {
-                      deleteChat.mutate(contextMenu.chat.remotePhone)
-                    }
-                    setContextMenu(null)
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" /> Excluir conversa
-                </button>
-              </div>
+  const ChatSidebar = (
+    <div className="flex flex-col overflow-hidden h-full border-r relative">
+      {/* Filter tabs */}
+      <div className="flex border-b shrink-0">
+        {filterTabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setChatFilter(tab.key)}
+            className={cn(
+              'flex-1 py-2 text-xs font-medium transition-colors cursor-pointer',
+              chatFilter === tab.key
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground',
             )}
-          </div>
-        )
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        const ChatArea = (
-          <div className="flex flex-1 flex-col overflow-hidden h-full">
-            {selectedPhone ? (
-              <>
-                {/* Chat header */}
-                <div className="flex items-center justify-between border-b px-3 py-3 sm:px-4">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="lg:hidden shrink-0"
-                      onClick={() => setSelectedPhone(null)}
-                    >
-                      <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
-                      {getInitials(selectedChat?.remoteName || selectedPhone.slice(-4))}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">
-                        {selectedChat?.remoteName || formatPhone(selectedPhone)}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {formatPhone(selectedPhone)}
-                        {selectedChat ? ` - ${selectedChat.messageCount} mensagens` : ''}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSelectedPhone(null)}
-                    className="text-muted-foreground hidden lg:inline-flex"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+      {/* Search */}
+      <div className="p-3 border-b">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar conversa..."
+            value={searchChat}
+            onChange={e => setSearchChat(e.target.value)}
+            className="pl-8 h-9 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Chat list */}
+      <div ref={chatListRef} onScroll={handleChatListScroll} className="flex-1 overflow-y-auto">
+        <div className="p-1.5 space-y-0.5">
+          {chatsQuery.isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex gap-3 p-3">
+                <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-32" />
                 </div>
+              </div>
+            ))
+          ) : chats.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-center">
+              <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {chatFilter === 'unread' ? 'Nenhuma conversa nao lida' :
+                 chatFilter === 'reply-later' ? 'Nenhuma conversa pendente' :
+                 'Nenhuma conversa'}
+              </p>
+              {chatFilter !== 'all' && (
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => setChatFilter('all')}>
+                  Ver todas
+                </Button>
+              )}
+              {chatFilter === 'all' && (
+                <Button variant="outline" size="sm" className="mt-3" onClick={handleNewChat}>
+                  <Phone className="h-3 w-3" /> Iniciar conversa
+                </Button>
+              )}
+            </div>
+          ) : chats.map(chat => {
+            const isSelected = selectedChat?.connectionId === chat.connectionId &&
+              selectedChat?.phone === chat.remotePhone
+            return (
+              <button
+                key={`${chat.connectionId}:${chat.remoteJid}`}
+                onClick={() => handleSelectChat(chat)}
+                onContextMenu={e => {
+                  e.preventDefault()
+                  setContextMenu({ x: e.clientX, y: e.clientY, chat })
+                }}
+                className={cn(
+                  'w-full rounded-lg p-3 text-left transition-colors flex gap-3 items-center cursor-pointer',
+                  isSelected ? 'bg-accent' : 'hover:bg-accent/50',
+                )}
+              >
+                <div className="relative shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
+                    {getInitials(chat.remoteName || chat.remotePhone.slice(-4))}
+                  </div>
+                  {chat.replyLater && (
+                    <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white">
+                      <Timer className="h-2.5 w-2.5" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className={cn('text-sm truncate', chat.unreadCount > 0 ? 'font-bold' : 'font-medium')}>
+                      {chat.remoteName || formatPhone(chat.remotePhone)}
+                    </p>
+                    {chat.lastMessageAt && (
+                      <span className={cn(
+                        'text-[10px] shrink-0 ml-2',
+                        chat.unreadCount > 0 ? 'text-green-500 font-semibold' : 'text-muted-foreground',
+                      )}>
+                        {formatTime(chat.lastMessageAt)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <p className={cn('text-xs truncate', chat.unreadCount > 0 ? 'text-foreground' : 'text-muted-foreground')}>
+                      {chat.lastMessage}
+                    </p>
+                    {chat.unreadCount > 0 && (
+                      <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5 text-[10px] shrink-0 bg-green-500">
+                        {chat.unreadCount}
+                      </Badge>
+                    )}
+                  </div>
+                  {/* Connection badge (only in "Todas" mode) */}
+                  {isAll && (chat.connectionLabel || chat.connectionPhoneNumber) && (
+                    <div className="mt-1">
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-normal">
+                        {chat.connectionLabel || formatPhone(chat.connectionPhoneNumber || '')}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+          {chatsQuery.isFetchingNextPage && (
+            <div className="flex justify-center py-3">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
+      </div>
 
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-3 sm:p-4">
-                  <div className="space-y-3">
-                    {msgQuery.isLoading ? (
-                      Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className={cn('flex', i % 2 === 0 ? 'justify-start' : 'justify-end')}>
-                          <Skeleton className="h-12 w-48 rounded-xl" />
-                        </div>
-                      ))
-                    ) : messages.length === 0 ? (
-                      <div className="flex flex-col items-center py-12 text-center">
-                        <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
-                        <p className="mt-2 text-xs text-muted-foreground">Nenhuma mensagem. Envie a primeira!</p>
-                      </div>
-                    ) : messages.map(msg => {
-                      const isMine = msg.direction === 'OUTBOUND'
-                      return (
-                        <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
-                          <div className={cn(
-                            'max-w-[85%] sm:max-w-[70%] rounded-xl px-3.5 py-2 text-sm',
-                            isMine
-                              ? 'bg-green-500 text-white rounded-br-sm'
-                              : 'bg-muted rounded-bl-sm',
-                          )}>
-                            {msg.type === 'image' && msg.mediaUrl ? (
-                              <div className="mb-1">
-                                <MediaImage messageId={msg.id} />
-                                {msg.content && msg.content !== '[imagem]' && (
-                                  <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
-                                )}
-                              </div>
-                            ) : msg.type === 'video' && msg.mediaUrl ? (
-                              <div className="mb-1">
-                                <MediaVideo messageId={msg.id} />
-                                {msg.content && msg.content !== '[video]' && (
-                                  <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
-                                )}
-                              </div>
-                            ) : msg.type === 'audio' && msg.mediaUrl ? (
-                              <div className="mb-1">
-                                <MediaAudio messageId={msg.id} />
-                              </div>
-                            ) : msg.type === 'document' && msg.mediaUrl ? (
-                              <div className="mb-1">
-                                <DocumentLink messageId={msg.id} label={msg.content && msg.content !== '[documento]' ? msg.content : 'Documento'} isMine={isMine} />
-                              </div>
-                            ) : (
-                              <>
-                                {msg.type !== 'text' && (
-                                  <p className={cn(
-                                    'text-[10px] mb-1 italic',
-                                    isMine ? 'text-white/70' : 'text-muted-foreground',
-                                  )}>
-                                    [{msg.type}]
-                                  </p>
-                                )}
-                                <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                              </>
-                            )}
-                            <div className={cn(
-                              'flex items-center justify-end gap-1 mt-1',
-                              isMine ? 'text-white/60' : 'text-muted-foreground',
-                            )}>
-                              <span className="text-[10px]">{formatTime(msg.createdAt)}</span>
-                              {isMine && <StatusIcon status={msg.status} />}
-                            </div>
-                          </div>
-                          {msg.reactions?.length > 0 && (
-                            <div className={cn('flex gap-0.5 -mt-1.5', isMine ? 'justify-end' : 'justify-start')}>
-                              <div className="flex items-center gap-0.5 rounded-full bg-background border shadow-sm px-1.5 py-0.5">
-                                {Object.entries(
-                                  msg.reactions.reduce<Record<string, number>>((acc, r) => {
-                                    acc[r.emoji] = (acc[r.emoji] || 0) + 1
-                                    return acc
-                                  }, {})
-                                ).map(([emoji, count]) => (
-                                  <span key={emoji} className="text-xs" title={`${count}`}>
-                                    {emoji}{count > 1 && <span className="text-[10px] text-muted-foreground ml-0.5">{count}</span>}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
+      {/* Context menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 min-w-48 rounded-lg border bg-popover p-1 shadow-lg"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={e => e.stopPropagation()}
+        >
+          {contextMenu.chat.unreadCount > 0 ? (
+            <button
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
+              onClick={() => {
+                markRead.mutate({
+                  connectionId: contextMenu.chat.connectionId,
+                  phone: contextMenu.chat.remotePhone,
+                })
+                setContextMenu(null)
+              }}
+            >
+              <MailOpen className="h-4 w-4" /> Marcar como lida
+            </button>
+          ) : (
+            <button
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
+              onClick={() => {
+                markUnread.mutate({
+                  connectionId: contextMenu.chat.connectionId,
+                  phone: contextMenu.chat.remotePhone,
+                })
+                setContextMenu(null)
+              }}
+            >
+              <MailX className="h-4 w-4" /> Marcar como nao lida
+            </button>
+          )}
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent cursor-pointer"
+            onClick={() => {
+              toggleReplyLater.mutate({
+                connectionId: contextMenu.chat.connectionId,
+                phone: contextMenu.chat.remotePhone,
+              })
+              setContextMenu(null)
+            }}
+          >
+            <Timer className="h-4 w-4" />
+            {contextMenu.chat.replyLater ? 'Remover responder depois' : 'Responder mais tarde'}
+          </button>
+          <div className="my-1 border-t" />
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10 cursor-pointer"
+            onClick={() => {
+              if (window.confirm('Tem certeza que deseja excluir esta conversa? Todas as mensagens serão apagadas.')) {
+                deleteChat.mutate({
+                  connectionId: contextMenu.chat.connectionId,
+                  phone: contextMenu.chat.remotePhone,
+                })
+              }
+              setContextMenu(null)
+            }}
+          >
+            <Trash2 className="h-4 w-4" /> Excluir conversa
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
+  const ChatArea = (
+    <div className="flex flex-1 flex-col overflow-hidden h-full">
+      {selectedChat ? (
+        <>
+          {/* Chat header */}
+          <div className="flex items-center justify-between border-b px-3 py-3 sm:px-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden shrink-0"
+                onClick={() => setSelectedChat(null)}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
+                {getInitials(selectedChat.name || selectedChat.phone.slice(-4))}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">
+                  {selectedChat.name || formatPhone(selectedChat.phone)}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {formatPhone(selectedChat.phone)}
+                  {activeConnForSelected && (
+                    <> · via {connectionShortLabel(activeConnForSelected)}</>
+                  )}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedChat(null)}
+              className="text-muted-foreground hidden lg:inline-flex"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Messages */}
+          <ScrollArea className="flex-1 p-3 sm:p-4">
+            <div className="space-y-3">
+              {msgQuery.isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className={cn('flex', i % 2 === 0 ? 'justify-start' : 'justify-end')}>
+                    <Skeleton className="h-12 w-48 rounded-xl" />
+                  </div>
+                ))
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center py-12 text-center">
+                  <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
+                  <p className="mt-2 text-xs text-muted-foreground">Nenhuma mensagem. Envie a primeira!</p>
+                </div>
+              ) : messages.map(msg => {
+                const isMine = msg.direction === 'OUTBOUND'
+                return (
+                  <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
+                    <div className={cn(
+                      'max-w-[85%] sm:max-w-[70%] rounded-xl px-3.5 py-2 text-sm',
+                      isMine
+                        ? 'bg-green-500 text-white rounded-br-sm'
+                        : 'bg-muted rounded-bl-sm',
+                    )}>
+                      {msg.type === 'image' && msg.mediaUrl ? (
+                        <div className="mb-1">
+                          <MediaImage messageId={msg.id} />
+                          {msg.content && msg.content !== '[imagem]' && (
+                            <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
                           )}
                         </div>
-                      )
-                    })}
-                    <div ref={scrollRef} />
-                  </div>
-                </ScrollArea>
-
-                {/* Input */}
-                <div className="border-t p-3">
-                  {/* Media preview */}
-                  {mediaFile && (
-                    <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted p-2">
-                      {mediaPreview ? (
-                        <img src={mediaPreview} alt="preview" className="h-16 w-16 rounded object-cover" />
-                      ) : (
-                        <div className="flex h-16 w-16 items-center justify-center rounded bg-muted-foreground/10">
-                          <Paperclip className="h-5 w-5 text-muted-foreground" />
+                      ) : msg.type === 'video' && msg.mediaUrl ? (
+                        <div className="mb-1">
+                          <MediaVideo messageId={msg.id} />
+                          {msg.content && msg.content !== '[video]' && (
+                            <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
+                          )}
                         </div>
+                      ) : msg.type === 'audio' && msg.mediaUrl ? (
+                        <div className="mb-1">
+                          <MediaAudio messageId={msg.id} />
+                        </div>
+                      ) : msg.type === 'document' && msg.mediaUrl ? (
+                        <div className="mb-1">
+                          <DocumentLink messageId={msg.id} label={msg.content && msg.content !== '[documento]' ? msg.content : 'Documento'} isMine={isMine} />
+                        </div>
+                      ) : (
+                        <>
+                          {msg.type !== 'text' && (
+                            <p className={cn(
+                              'text-[10px] mb-1 italic',
+                              isMine ? 'text-white/70' : 'text-muted-foreground',
+                            )}>
+                              [{msg.type}]
+                            </p>
+                          )}
+                          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                        </>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{mediaFile.name}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {(mediaFile.size / 1024).toFixed(0)} KB
-                        </p>
+                      <div className={cn(
+                        'flex items-center justify-end gap-1 mt-1',
+                        isMine ? 'text-white/60' : 'text-muted-foreground',
+                      )}>
+                        <span className="text-[10px]">{formatTime(msg.createdAt)}</span>
+                        {isMine && <StatusIcon status={msg.status} />}
                       </div>
-                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={clearMedia}>
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
                     </div>
-                  )}
-                  <form onSubmit={e => { e.preventDefault(); handleSend() }} className="flex gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx"
-                      className="hidden"
-                      onChange={handleFileSelect}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <ImagePlus className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      placeholder={mediaFile ? 'Legenda (opcional)...' : 'Digite uma mensagem...'}
-                      value={input}
-                      onChange={e => setInput(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      disabled={(!input.trim() && !mediaFile) || sendMsg.isPending || sendMediaMsg.isPending}
-                      className="bg-green-500 hover:bg-green-600"
-                    >
-                      {sendMediaMsg.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    </Button>
-                  </form>
+                    {msg.reactions?.length > 0 && (
+                      <div className={cn('flex gap-0.5 -mt-1.5', isMine ? 'justify-end' : 'justify-start')}>
+                        <div className="flex items-center gap-0.5 rounded-full bg-background border shadow-sm px-1.5 py-0.5">
+                          {Object.entries(
+                            msg.reactions.reduce<Record<string, number>>((acc, r) => {
+                              acc[r.emoji] = (acc[r.emoji] || 0) + 1
+                              return acc
+                            }, {})
+                          ).map(([emoji, count]) => (
+                            <span key={emoji} className="text-xs" title={`${count}`}>
+                              {emoji}{count > 1 && <span className="text-[10px] text-muted-foreground ml-0.5">{count}</span>}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              <div ref={scrollRef} />
+            </div>
+          </ScrollArea>
+
+          {/* Input */}
+          <div className="border-t p-3">
+            {/* Media preview */}
+            {mediaFile && (
+              <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted p-2">
+                {mediaPreview ? (
+                  <img src={mediaPreview} alt="preview" className="h-16 w-16 rounded object-cover" />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded bg-muted-foreground/10">
+                    <Paperclip className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{mediaFile.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {(mediaFile.size / 1024).toFixed(0)} KB
+                  </p>
                 </div>
-              </>
-            ) : (
-              <div className="flex flex-1 items-center justify-center">
-                <div className="text-center px-4">
-                  <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground/30" />
-                  <p className="mt-4 text-sm text-muted-foreground">Selecione uma conversa ou inicie uma nova</p>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={handleNewChat}>
-                    <Phone className="h-4 w-4" /> Nova Conversa
-                  </Button>
-                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={clearMedia}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
             )}
+            <form onSubmit={e => { e.preventDefault(); handleSend() }} className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <ImagePlus className="h-4 w-4" />
+              </Button>
+              <Input
+                placeholder={mediaFile ? 'Legenda (opcional)...' : 'Digite uma mensagem...'}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="submit"
+                size="icon"
+                disabled={(!input.trim() && !mediaFile) || sendMsg.isPending || sendMediaMsg.isPending}
+                className="bg-green-500 hover:bg-green-600"
+              >
+                {sendMediaMsg.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </form>
           </div>
-        )
-
-        return (
-          <>
-            {/* Desktop: side-by-side */}
-            <div className="hidden lg:flex flex-1 overflow-hidden">
-              <div className="w-80 shrink-0">{ChatSidebar}</div>
-              {ChatArea}
-            </div>
-
-            {/* Mobile: show list or chat */}
-            <div className="flex lg:hidden flex-1 overflow-hidden">
-              {selectedPhone ? ChatArea : ChatSidebar}
-            </div>
-          </>
-        )
-      })()}
-
-      {/* Empty state when not connected */}
-      {!isConnected && !connQuery.isLoading && (
-        <div className="flex flex-1 items-center justify-center p-4">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-              <MessageCircle className="h-8 w-8 text-green-500" />
-            </div>
-            <h2 className="text-lg font-semibold">Conecte seu WhatsApp</h2>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Clique em "Conectar" acima e escaneie o QR Code com seu celular para comecar a gerenciar suas conversas.
-            </p>
+        </>
+      ) : (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center px-4">
+            <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground/30" />
+            <p className="mt-4 text-sm text-muted-foreground">Selecione uma conversa ou inicie uma nova</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={handleNewChat}>
+              <Phone className="h-4 w-4" /> Nova Conversa
+            </Button>
           </div>
         </div>
       )}
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col bg-background -m-4 lg:-m-6 h-[calc(100vh-4rem)]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-background shrink-0 gap-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/10 text-green-500">
+            <Wifi className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold">WhatsApp CRM</h1>
+            <p className="text-xs text-muted-foreground truncate">
+              {connectedConnections.length} conexao(oes) ativa(s)
+              {isAll
+                ? ' · vendo todas'
+                : selectedConnection
+                  ? ` · vendo ${connectionShortLabel(selectedConnection)}`
+                  : ''}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {connectionSelector}
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => setShowBroadcast(true)}
+            className="h-8 w-8"
+            title="Broadcast"
+            disabled={isAll && connectedConnections.length !== 1}
+          >
+            <Megaphone className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            onClick={handleNewChat}
+            className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 text-white"
+            title="Nova conversa"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            asChild
+            className="h-8 w-8"
+            title="Configuracoes"
+          >
+            <Link to="/whatsapp-configuracoes">
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop: side-by-side */}
+      <div className="hidden lg:flex flex-1 overflow-hidden">
+        <div className="w-80 shrink-0">{ChatSidebar}</div>
+        {ChatArea}
+      </div>
+
+      {/* Mobile: show list or chat */}
+      <div className="flex lg:hidden flex-1 overflow-hidden">
+        {selectedChat ? ChatArea : ChatSidebar}
+      </div>
 
       {/* Broadcast Modal */}
-      {showBroadcast && <BroadcastModal onClose={() => setShowBroadcast(false)} />}
+      {showBroadcast && (
+        <BroadcastModal
+          onClose={() => setShowBroadcast(false)}
+          connectionId={
+            !isAll
+              ? selectedId!
+              : connectedConnections[0]?.id || ''
+          }
+        />
+      )}
     </div>
   )
 }

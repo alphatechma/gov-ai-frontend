@@ -57,6 +57,7 @@ import { ExecutiveRequestFormPage } from '@/modules/politico/pages/ExecutiveRequ
 import { ChatPage } from '@/modules/comunicacao/chat/pages/ChatPage'
 import { WhatsappCrmPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappCrmPage'
 import { WhatsappDashboardPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappDashboardPage'
+import { WhatsappSettingsPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappSettingsPage'
 
 // Inteligência
 import { AiAssistantPage } from '@/modules/inteligencia/pages/AiAssistantPage'
@@ -159,6 +160,7 @@ export const router = createBrowserRouter([
           moduleRoute('chat', '/chat', <ChatPage />),
           moduleRoute('whatsapp', '/whatsapp', <WhatsappCrmPage />),
           moduleRoute('whatsapp', '/whatsapp-analytics', <WhatsappDashboardPage />),
+          moduleRoute('whatsapp', '/whatsapp-configuracoes', <WhatsappSettingsPage />),
 
           // Inteligência
           moduleRoute('ai', '/ia', <AiAssistantPage />),
