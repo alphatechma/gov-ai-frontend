@@ -19,7 +19,7 @@ const CENTER = Math.floor(VISIBLE / 2) // index 2 = center row
 function ScrollColumn({ items, selected, onChange, className }: ColumnProps) {
   const listRef = React.useRef<HTMLDivElement>(null)
   const suppressSnap = React.useRef(false)
-  const snapTimer = React.useRef<ReturnType<typeof setTimeout>>()
+  const snapTimer = React.useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const selectedIdx = items.findIndex(i => i.value === selected)
 
