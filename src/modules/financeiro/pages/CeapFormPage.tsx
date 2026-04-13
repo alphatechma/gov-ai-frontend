@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
@@ -180,7 +181,7 @@ export function CeapFormPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Data *</label>
-              <Input type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required />
+              <DatePicker value={form.date} onChange={(v) => set('date', v)} placeholder="Selecione a data" />
             </div>
           </CardContent>
         </Card>

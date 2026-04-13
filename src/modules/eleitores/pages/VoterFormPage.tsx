@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -262,7 +263,7 @@ export function VoterFormPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Data de Nascimento</label>
-              <Input type="date" value={form.birthDate} onChange={(e) => set('birthDate', e.target.value)} />
+              <DatePicker value={form.birthDate} onChange={(v) => set('birthDate', v)} placeholder="Selecione a data" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Genero</label>

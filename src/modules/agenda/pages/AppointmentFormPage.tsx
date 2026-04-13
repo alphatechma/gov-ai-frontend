@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -148,12 +149,48 @@ export function AppointmentFormPage() {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Inicio *</label>
-              <Input type="datetime-local" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} required />
+              <label className="text-sm font-medium">Data Inicio *</label>
+              <div className="flex gap-2">
+                <DatePicker
+                  value={form.startDate ? form.startDate.split('T')[0] : ''}
+                  onChange={(v) => {
+                    const time = form.startDate?.split('T')[1] || '09:00'
+                    set('startDate', `${v}T${time}`)
+                  }}
+                  placeholder="Selecione a data"
+                />
+                <Input
+                  type="time"
+                  className="w-28"
+                  value={form.startDate ? form.startDate.split('T')[1] || '' : ''}
+                  onChange={(e) => {
+                    const date = form.startDate?.split('T')[0] || ''
+                    if (date) set('startDate', `${date}T${e.target.value}`)
+                  }}
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Fim</label>
-              <Input type="datetime-local" value={form.endDate} onChange={(e) => set('endDate', e.target.value)} />
+              <label className="text-sm font-medium">Data Fim</label>
+              <div className="flex gap-2">
+                <DatePicker
+                  value={form.endDate ? form.endDate.split('T')[0] : ''}
+                  onChange={(v) => {
+                    const time = form.endDate?.split('T')[1] || '18:00'
+                    set('endDate', `${v}T${time}`)
+                  }}
+                  placeholder="Selecione a data"
+                />
+                <Input
+                  type="time"
+                  className="w-28"
+                  value={form.endDate ? form.endDate.split('T')[1] || '' : ''}
+                  onChange={(e) => {
+                    const date = form.endDate?.split('T')[0] || ''
+                    if (date) set('endDate', `${date}T${e.target.value}`)
+                  }}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Local</label>

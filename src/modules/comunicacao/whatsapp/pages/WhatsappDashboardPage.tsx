@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Select } from '@/components/ui/select'
 import { PageHeader } from '@/components/PageHeader'
 import {
@@ -229,18 +230,18 @@ export function WhatsappDashboardPage() {
           {/* Date range */}
           <div className="flex items-center gap-1.5">
             <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-            <Input
-              type="date"
+            <DatePicker
               value={startDate}
-              onChange={e => { setStartDate(e.target.value); setPeriod(0 as Period) }}
-              className="h-7 text-xs w-[130px]"
+              onChange={v => { setStartDate(v); setPeriod(0 as Period) }}
+              placeholder="Inicio"
+              className="h-7 text-xs w-[140px]"
             />
             <span className="text-xs text-muted-foreground">ate</span>
-            <Input
-              type="date"
+            <DatePicker
               value={endDate}
-              onChange={e => { setEndDate(e.target.value); setPeriod(0 as Period) }}
-              className="h-7 text-xs w-[130px]"
+              onChange={v => { setEndDate(v); setPeriod(0 as Period) }}
+              placeholder="Fim"
+              className="h-7 text-xs w-[140px]"
             />
           </div>
 

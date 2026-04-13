@@ -5,6 +5,7 @@ import api from '@/lib/api'
 import { DataTable, type Column } from '@/components/DataTable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Select } from '@/components/ui/select'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { Badge } from '@/components/ui/badge'
@@ -1123,20 +1124,16 @@ export function VotersListPage() {
                   ))}
                 </Select>
 
-                <Input
-                  type="date"
+                <DatePicker
                   value={filterDateFrom}
-                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                  onChange={(v) => setFilterDateFrom(v)}
                   placeholder="Data inicial"
-                  title="Data inicial"
                 />
 
-                <Input
-                  type="date"
+                <DatePicker
                   value={filterDateTo}
-                  onChange={(e) => setFilterDateTo(e.target.value)}
+                  onChange={(v) => setFilterDateTo(v)}
                   placeholder="Data final"
-                  title="Data final"
                 />
               </div>
 
