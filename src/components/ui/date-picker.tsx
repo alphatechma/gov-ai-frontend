@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { format, parse, isValid } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import { Calendar } from './calendar'
+import { Input } from './input'
 
 interface DatePickerProps {
   value?: string
@@ -17,7 +17,7 @@ interface DatePickerProps {
 function DatePicker({
   value,
   onChange,
-  placeholder = 'Selecione uma data',
+  placeholder = 'DD/MM/AAAA',
   className,
   disabled = false,
 }: DatePickerProps) {
@@ -29,39 +29,73 @@ function DatePicker({
     return isValid(date) ? date : undefined
   }, [value])
 
+  const [inputValue, setInputValue] = React.useState('')
+
+  React.useEffect(() => {
+    if (selectedDate) {
+      setInputValue(format(selectedDate, 'dd/MM/yyyy'))
+    } else {
+      setInputValue('')
+    }
+  }, [selectedDate])
+
   function handleSelect(date: Date) {
     onChange(format(date, 'yyyy-MM-dd'))
+    setInputValue(format(date, 'dd/MM/yyyy'))
     setOpen(false)
   }
 
-  const displayValue = selectedDate
-    ? format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })
-    : null
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    let val = e.target.value.replace(/\D/g, '')
+    if (val.length > 8) val = val.substring(0, 8)
+    
+    if (val.length > 4) {
+      val = `${val.substring(0, 2)}/${val.substring(2, 4)}/${val.substring(4)}`
+    } else if (val.length > 2) {
+      val = `${val.substring(0, 2)}/${val.substring(2)}`
+    }
+    
+    setInputValue(val)
+    
+    if (val.length === 10) {
+      const date = parse(val, 'dd/MM/yyyy', new Date())
+      if (isValid(date)) {
+        onChange(format(date, 'yyyy-MM-dd'))
+      }
+    } else if (val.length === 0) {
+      onChange('')
+    }
+  }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          disabled={disabled}
-          className={cn(
-            'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-            !displayValue && 'text-muted-foreground',
-            className,
-          )}
-        >
-          <span>{displayValue || placeholder}</span>
-          <CalendarDays className="h-4 w-4 text-muted-foreground" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-4" align="start">
-        <Calendar
-          selected={selectedDate}
-          onSelect={handleSelect}
-          onCancel={() => setOpen(false)}
-        />
-      </PopoverContent>
-    </Popover>
+    <div className={cn("relative w-full", className)}>
+      <Input
+        type="text"
+        placeholder={placeholder}
+        value={inputValue}
+        onChange={handleInputChange}
+        disabled={disabled}
+        className="w-full pr-10"
+      />
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            disabled={disabled}
+            className="absolute inset-y-0 right-0 p-3 flex items-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <CalendarDays className="h-4 w-4" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-4" align="end">
+          <Calendar
+            selected={selectedDate}
+            onSelect={handleSelect}
+            onCancel={() => setOpen(false)}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
   )
 }
 
