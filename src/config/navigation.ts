@@ -21,6 +21,7 @@ import {
   Scale,
   Handshake,
   Zap,
+  Megaphone,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -100,6 +101,7 @@ export const navigation: NavGroup[] = [
       { label: 'WhatsApp CRM', path: '/whatsapp', icon: MessageCircle, moduleKey: 'whatsapp' },
       { label: 'WhatsApp Analytics', path: '/whatsapp-analytics', icon: BarChart3, moduleKey: 'whatsapp' },
       { label: 'WhatsApp Conexoes', path: '/whatsapp-configuracoes', icon: Settings, moduleKey: 'whatsapp' },
+      { label: 'Disparos', path: '/disparos', icon: Megaphone, moduleKey: 'whatsapp' },
       { label: 'Assistente IA', path: '/ia', icon: Brain, moduleKey: 'ai' },
       { label: 'Relatorios', path: '/relatorios', icon: BarChart3, moduleKey: 'reports' },
     ],

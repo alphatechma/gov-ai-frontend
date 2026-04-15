@@ -58,6 +58,7 @@ import { ChatPage } from '@/modules/comunicacao/chat/pages/ChatPage'
 import { WhatsappCrmPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappCrmPage'
 import { WhatsappDashboardPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappDashboardPage'
 import { WhatsappSettingsPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappSettingsPage'
+import { DisparosPage } from '@/modules/comunicacao/disparos/pages/DisparosPage'
 
 // Inteligência
 import { AiAssistantPage } from '@/modules/inteligencia/pages/AiAssistantPage'
@@ -161,6 +162,7 @@ export const router = createBrowserRouter([
           moduleRoute('whatsapp', '/whatsapp', <WhatsappCrmPage />),
           moduleRoute('whatsapp', '/whatsapp-analytics', <WhatsappDashboardPage />),
           moduleRoute('whatsapp', '/whatsapp-configuracoes', <WhatsappSettingsPage />),
+          moduleRoute('whatsapp', '/disparos', <DisparosPage />),
 
           // Inteligência
           moduleRoute('ai', '/ia', <AiAssistantPage />),
