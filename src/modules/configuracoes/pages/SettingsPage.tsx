@@ -13,10 +13,11 @@ import {
   Moon, Sun, User, Lock, Loader2, Save,
   ChevronDown, Zap, BookOpen, Shield, Users, BarChart3,
   Mail, Phone, MapPin, Clock, MessageCircle, Headphones, Instagram,
-  Wifi, WifiOff,
+  Wifi, WifiOff, CreditCard,
 } from 'lucide-react'
 import { UserRole } from '@/types/enums'
 import { AparenciaTab } from '../components/AparenciaTab'
+import { ContaTab } from '../components/ContaTab'
 
 /* ─── types ─── */
 interface Profile {
@@ -38,6 +39,7 @@ const allTabs = [
   { key: 'geral', label: 'Geral', icon: Settings, adminOnly: false },
   { key: 'aparencia', label: 'Aparencia', icon: Palette, adminOnly: true },
   { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, adminOnly: false },
+  { key: 'conta', label: 'Conta', icon: CreditCard, adminOnly: true },
   { key: 'perfil', label: 'Meu Perfil', icon: UserPen, adminOnly: false },
   { key: 'ajuda', label: 'Ajuda', icon: HelpCircle, adminOnly: false },
   { key: 'contato', label: 'Contato', icon: Contact, adminOnly: false },
@@ -524,6 +526,7 @@ export function SettingsPage() {
           {activeTab === 'geral' && <GeralTab />}
           {activeTab === 'aparencia' && <AparenciaTab />}
           {activeTab === 'whatsapp' && <WhatsappTab />}
+          {activeTab === 'conta' && <ContaTab />}
           {activeTab === 'perfil' && <PerfilTab />}
           {activeTab === 'ajuda' && <AjudaTab />}
           {activeTab === 'contato' && <ContatoTab />}

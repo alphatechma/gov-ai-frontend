@@ -7,6 +7,7 @@ import { AdminGuard } from './guards/AdminGuard'
 
 // Auth
 import { LoginPage } from '@/modules/auth/pages/LoginPage'
+import { CompleteSignupPage } from '@/modules/auth/pages/CompleteSignupPage'
 
 // Dashboard
 import { QuickAccessPage } from '@/modules/dashboard/pages/QuickAccessPage'
@@ -86,6 +87,7 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: '/login', element: <LoginPage /> },
+      { path: '/complete-signup', element: <CompleteSignupPage /> },
     ],
   },
   {

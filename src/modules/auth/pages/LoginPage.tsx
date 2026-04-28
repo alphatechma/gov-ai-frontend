@@ -1,8 +1,12 @@
 import { useState } from 'react'
+import type { AxiosError } from 'axios'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useLogin } from '../hooks/useAuth'
-import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+
+const LANDING_URL =
+  (import.meta.env.VITE_LANDING_URL as string | undefined) ?? 'https://governeai.com.br'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -14,6 +18,21 @@ export function LoginPage() {
     e.preventDefault()
     login.mutate({ email, password })
   }
+
+  const errorInfo = (() => {
+    if (!login.isError) return null
+    const err = login.error as AxiosError<{ message?: string; code?: string }>
+    const data = err.response?.data
+    if (data?.code === 'SUBSCRIPTION_EXPIRED') {
+      return {
+        kind: 'expired' as const,
+        message:
+          data.message ??
+          'Sua assinatura expirou. Regularize o pagamento para continuar.',
+      }
+    }
+    return { kind: 'generic' as const, message: 'Credenciais inválidas. Tente novamente.' }
+  })()
 
   return (
     <div className="space-y-8">
@@ -71,9 +90,27 @@ export function LoginPage() {
           </div>
         </div>
 
-        {login.isError && (
+        {errorInfo && errorInfo.kind === 'expired' && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
+              <div className="space-y-2">
+                <p className="font-medium text-amber-700 dark:text-amber-400">
+                  {errorInfo.message}
+                </p>
+                <a
+                  href={LANDING_URL}
+                  className="inline-flex text-xs font-medium underline underline-offset-2 text-amber-700 hover:text-amber-800 dark:text-amber-400"
+                >
+                  Renovar assinatura →
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+        {errorInfo && errorInfo.kind === 'generic' && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Credenciais invalidas. Tente novamente.
+            {errorInfo.message}
           </div>
         )}
 
