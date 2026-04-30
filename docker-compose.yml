@@ -20,3 +20,7 @@ networks:
         - subnet: 10.200.200.0/24
   easypanel:
     external: true
+  default:
+    ipam:
+      config:
+        - subnet: 10.200.201.0/24
