@@ -7,9 +7,14 @@ services:
     env_file:
       - .env
     networks:
-      - default
+      - gov-ai-frontend-net
+      - easypanel
 
 networks:
-  default:
+  gov-ai-frontend-net:
+    name: gov-ai-frontend-net
+    ipam:
+      config:
+        - subnet: 10.200.200.0/24
+  easypanel:
     external: true
-    name: easypanel
