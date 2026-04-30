@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AuthLayout } from './layouts/AuthLayout'
 import { RoleBasedLayout } from './layouts/RoleBasedLayout'
@@ -16,10 +17,16 @@ import { DashboardPage } from '@/modules/dashboard/pages/DashboardPage'
 // Eleitoral
 import { VotersListPage } from '@/modules/eleitores/pages/VotersListPage'
 import { VoterFormPage } from '@/modules/eleitores/pages/VoterFormPage'
-import { HeatmapPage } from '@/modules/eleitores/pages/HeatmapPage'
+const HeatmapPage = lazy(() =>
+  import('@/modules/eleitores/pages/HeatmapPage').then((m) => ({ default: m.HeatmapPage })),
+)
 import { LeadersListPage } from '@/modules/liderancas/pages/LeadersListPage'
 import { LeaderFormPage } from '@/modules/liderancas/pages/LeaderFormPage'
-import { ElectionResultsPage } from '@/modules/inteligencia/pages/ElectionResultsPage'
+const ElectionResultsPage = lazy(() =>
+  import('@/modules/inteligencia/pages/ElectionResultsPage').then((m) => ({
+    default: m.ElectionResultsPage,
+  })),
+)
 
 // Gabinete
 import { HelpRecordFormPage } from '@/modules/gabinete/pages/HelpRecordFormPage'
@@ -55,15 +62,27 @@ import { ExecutiveRequestsPage } from '@/modules/politico/pages/ExecutiveRequest
 import { ExecutiveRequestFormPage } from '@/modules/politico/pages/ExecutiveRequestFormPage'
 
 // Comunicação
-import { ChatPage } from '@/modules/comunicacao/chat/pages/ChatPage'
-import { WhatsappCrmPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappCrmPage'
+const ChatPage = lazy(() =>
+  import('@/modules/comunicacao/chat/pages/ChatPage').then((m) => ({ default: m.ChatPage })),
+)
+const WhatsappCrmPage = lazy(() =>
+  import('@/modules/comunicacao/whatsapp/pages/WhatsappCrmPage').then((m) => ({
+    default: m.WhatsappCrmPage,
+  })),
+)
 import { WhatsappDashboardPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappDashboardPage'
 import { WhatsappSettingsPage } from '@/modules/comunicacao/whatsapp/pages/WhatsappSettingsPage'
-import { DisparosPage } from '@/modules/comunicacao/disparos/pages/DisparosPage'
+const DisparosPage = lazy(() =>
+  import('@/modules/comunicacao/disparos/pages/DisparosPage').then((m) => ({
+    default: m.DisparosPage,
+  })),
+)
 
 // Inteligência
 import { AiAssistantPage } from '@/modules/inteligencia/pages/AiAssistantPage'
-import { ReportsPage } from '@/modules/inteligencia/pages/ReportsPage'
+const ReportsPage = lazy(() =>
+  import('@/modules/inteligencia/pages/ReportsPage').then((m) => ({ default: m.ReportsPage })),
+)
 
 // Recepcao
 import { ReceptionDashboardPage } from '@/modules/recepcao/pages/ReceptionDashboardPage'

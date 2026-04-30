@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useBrandingStore } from '@/stores/brandingStore'
@@ -5,6 +6,7 @@ import { clearBranding } from '@/lib/applyBranding'
 import { LogOut, User, DoorOpen, Users, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { RouteFallback } from '@/components/RouteFallback'
 
 const navItems = [
   { label: 'Dashboard', path: '/recepcao', icon: LayoutDashboard },
@@ -78,7 +80,9 @@ export function ReceptionistLayout() {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   )

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useBrandingStore } from '@/stores/brandingStore'
@@ -5,6 +6,7 @@ import { clearBranding } from '@/lib/applyBranding'
 import { LogOut, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
+import { RouteFallback } from '@/components/RouteFallback'
 
 export function AttendantLayout() {
   const { user, logout } = useAuthStore()
@@ -48,7 +50,9 @@ export function AttendantLayout() {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   )
