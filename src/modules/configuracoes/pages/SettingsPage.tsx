@@ -18,6 +18,7 @@ import {
 import { UserRole } from '@/types/enums'
 import { AparenciaTab } from '../components/AparenciaTab'
 import { ContaTab } from '../components/ContaTab'
+import { PermissoesTab } from '../components/PermissoesTab'
 
 /* ─── types ─── */
 interface Profile {
@@ -38,6 +39,7 @@ interface FaqItem { question: string; answer: string }
 const allTabs = [
   { key: 'geral', label: 'Geral', icon: Settings, adminOnly: false },
   { key: 'aparencia', label: 'Aparencia', icon: Palette, adminOnly: true },
+  { key: 'permissoes', label: 'Permissoes', icon: Shield, adminOnly: true },
   { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, adminOnly: false },
   { key: 'conta', label: 'Conta', icon: CreditCard, adminOnly: true },
   { key: 'perfil', label: 'Meu Perfil', icon: UserPen, adminOnly: false },
@@ -525,6 +527,7 @@ export function SettingsPage() {
         <div className="flex-1 min-w-0">
           {activeTab === 'geral' && <GeralTab />}
           {activeTab === 'aparencia' && <AparenciaTab />}
+          {activeTab === 'permissoes' && <PermissoesTab />}
           {activeTab === 'whatsapp' && <WhatsappTab />}
           {activeTab === 'conta' && <ContaTab />}
           {activeTab === 'perfil' && <PerfilTab />}
