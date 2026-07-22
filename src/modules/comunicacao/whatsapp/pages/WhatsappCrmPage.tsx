@@ -14,8 +14,9 @@ import {
   MessageCircle, Send, Search, Wifi, WifiOff,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
   AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2, Plus,
-  MailOpen, MailX, Timer, Trash2, Settings, MoreVertical,
+  MailOpen, MailX, Timer, Trash2, Settings, MoreVertical, Ban,
 } from 'lucide-react'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useWhatsappSocket } from '../hooks/useWhatsappSocket'
@@ -51,6 +52,7 @@ interface WaMessage {
   mediaUrl: string | null
   reactions: { emoji: string; from: string }[]
   createdAt: string
+  deleted?: boolean
 }
 
 interface SelectedChat {
@@ -483,11 +485,40 @@ export function WhatsappCrmPage() {
     },
   })
 
+  const deleteMessage = useMutation({
+    mutationFn: ({ messageId, connectionId }: { messageId: string; connectionId: string }) =>
+      api.delete(`/whatsapp/messages/${messageId}?connectionId=${connectionId}`),
+    onSuccess: () => {
+      if (selectedChat) {
+        qc.invalidateQueries({
+          queryKey: ['whatsapp', 'messages', selectedChat.connectionId, selectedChat.phone],
+        })
+      }
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
+    },
+    onError: (err: any) => {
+      alert(err?.response?.data?.message || 'Não foi possível apagar a mensagem para todos')
+    },
+  })
+
   /* ─── socket events ─── */
   useEffect(() => {
     const offs: (() => void)[] = []
 
     offs.push(on('whatsapp:message', (payload: { connectionId: string; message: WaMessage }) => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
+      if (
+        selectedChat &&
+        selectedChat.connectionId === payload.connectionId &&
+        payload.message?.remotePhone === selectedChat.phone
+      ) {
+        qc.invalidateQueries({
+          queryKey: ['whatsapp', 'messages', selectedChat.connectionId, selectedChat.phone],
+        })
+      }
+    }))
+
+    offs.push(on('whatsapp:message:deleted', (payload: { connectionId: string; message: WaMessage }) => {
       qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
       if (
         selectedChat &&
@@ -982,14 +1013,43 @@ export function WhatsappCrmPage() {
               ) : messages.map(msg => {
                 const isMine = msg.direction === 'OUTBOUND'
                 return (
-                  <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
+                  <div key={msg.id} className={cn('group flex items-center gap-2', isMine ? 'justify-end' : 'justify-start')}>
+                    {isMine && !msg.deleted && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            title="Opções da mensagem"
+                            className="opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-52 p-1">
+                          <button
+                            type="button"
+                            onClick={() => { if (confirm('Apagar esta mensagem para todos?')) deleteMessage.mutate({ messageId: msg.id, connectionId: msg.connectionId }) }}
+                            className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-left hover:bg-accent text-destructive cursor-pointer"
+                          >
+                            <Ban className="h-4 w-4" /> Apagar para todos
+                          </button>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                     <div className={cn(
                       'max-w-[85%] sm:max-w-[70%] rounded-xl px-3.5 py-2 text-sm',
-                      isMine
-                        ? 'bg-green-500 text-white rounded-br-sm'
-                        : 'bg-muted rounded-bl-sm',
+                      msg.deleted
+                        ? 'bg-muted/60 text-muted-foreground italic'
+                        : isMine
+                          ? 'bg-green-500 text-white rounded-br-sm'
+                          : 'bg-muted rounded-bl-sm',
                     )}>
-                      {msg.type === 'image' && msg.mediaUrl ? (
+                      {msg.deleted ? (
+                        <p className="flex items-center gap-1.5 break-words">
+                          <Ban className="h-3.5 w-3.5 shrink-0" />
+                          Esta mensagem foi apagada
+                        </p>
+                      ) : msg.type === 'image' && msg.mediaUrl ? (
                         <div className="mb-1">
                           <MediaImage messageId={msg.id} />
                           {msg.content && msg.content !== '[imagem]' && (
@@ -1026,10 +1086,10 @@ export function WhatsappCrmPage() {
                       )}
                       <div className={cn(
                         'flex items-center justify-end gap-1 mt-1',
-                        isMine ? 'text-white/60' : 'text-muted-foreground',
+                        msg.deleted ? 'text-muted-foreground' : isMine ? 'text-white/60' : 'text-muted-foreground',
                       )}>
                         <span className="text-[10px]">{formatTime(msg.createdAt)}</span>
-                        {isMine && <StatusIcon status={msg.status} />}
+                        {isMine && !msg.deleted && <StatusIcon status={msg.status} />}
                       </div>
                     </div>
                     {msg.reactions?.length > 0 && (
