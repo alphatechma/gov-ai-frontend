@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Send, MessageSquare, Users, User, X, Search,
-  Settings, UserPlus, LogOut, Trash2, Check, ArrowLeft,
+  Settings, UserPlus, LogOut, Trash2, Check, ArrowLeft, Ban, MoreVertical,
 } from 'lucide-react'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
@@ -43,6 +44,7 @@ interface ChatMessage {
   content: string
   type: string
   createdAt: string
+  deleted?: boolean
 }
 
 interface TenantUser {
@@ -117,6 +119,26 @@ export function ChatPage() {
     },
   })
 
+  const deleteMsg = useMutation({
+    mutationFn: (messageId: string) =>
+      api.delete(`/chat/conversations/${selectedId}/messages/${messageId}`),
+    onSuccess: (_data, messageId) => {
+      // Optimistically mark as deleted; socket event will reconcile for others
+      if (selectedId) emit('message:delete', { conversationId: selectedId, messageId })
+      qc.invalidateQueries({ queryKey: ['chat', 'messages', selectedId] })
+      qc.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+    },
+  })
+
+  const deleteMsgForMe = useMutation({
+    mutationFn: (messageId: string) =>
+      api.delete(`/chat/conversations/${selectedId}/messages/${messageId}/me`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['chat', 'messages', selectedId] })
+      qc.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+    },
+  })
+
   const createDirect = useMutation({
     mutationFn: (participantId: string) =>
       api.post('/chat/conversations/direct', { participantId }).then((r) => r.data),
@@ -184,6 +206,11 @@ export function ChatPage() {
       if (msg.conversationId === selectedId && msg.senderId !== userId) {
         markRead.mutate(msg.conversationId)
       }
+    }))
+
+    offs.push(on('message:deleted', ({ conversationId }: { conversationId: string; messageId: string }) => {
+      qc.invalidateQueries({ queryKey: ['chat', 'messages', conversationId] })
+      qc.invalidateQueries({ queryKey: ['chat', 'conversations'] })
     }))
 
     offs.push(on('conversation:updated', () => {
@@ -392,16 +419,54 @@ export function ChatPage() {
               {(msgQuery.data ?? []).map((msg) => {
                 const isMine = msg.senderId === userId
                 return (
-                  <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
+                  <div key={msg.id} className={cn('group flex items-center gap-2', isMine ? 'justify-end' : 'justify-start')}>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          title="Opções da mensagem"
+                          className="opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-52 p-1">
+                        {isMine && !msg.deleted && (
+                          <button
+                            type="button"
+                            onClick={() => { if (confirm('Apagar esta mensagem para todos?')) deleteMsg.mutate(msg.id) }}
+                            className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-left hover:bg-accent text-destructive cursor-pointer"
+                          >
+                            <Ban className="h-4 w-4" /> Apagar para todos
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => { if (confirm('Apagar esta mensagem para você?')) deleteMsgForMe.mutate(msg.id) }}
+                          className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-left hover:bg-accent cursor-pointer"
+                        >
+                          <Trash2 className="h-4 w-4" /> Apagar para mim
+                        </button>
+                      </PopoverContent>
+                    </Popover>
                     <div className={cn(
                       'max-w-[85%] sm:max-w-[70%] rounded-xl px-3.5 py-2 text-sm',
-                      isMine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm',
+                      msg.deleted
+                        ? 'bg-muted/60 text-muted-foreground italic'
+                        : isMine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm',
                     )}>
-                      {!isMine && selectedConv.type === 'GROUP' && (
+                      {!isMine && selectedConv.type === 'GROUP' && !msg.deleted && (
                         <p className="text-xs font-semibold mb-0.5 text-primary">{msg.senderName}</p>
                       )}
-                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                      <p className={cn('text-[10px] mt-1 text-right', isMine ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
+                      {msg.deleted ? (
+                        <p className="flex items-center gap-1.5 break-words">
+                          <Ban className="h-3.5 w-3.5 shrink-0" />
+                          Esta mensagem foi apagada
+                        </p>
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      )}
+                      <p className={cn('text-[10px] mt-1 text-right', msg.deleted ? 'text-muted-foreground/70' : isMine ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
                         {formatTime(msg.createdAt)}
                       </p>
                     </div>
