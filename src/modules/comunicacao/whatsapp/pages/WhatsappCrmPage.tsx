@@ -14,7 +14,7 @@ import {
   MessageCircle, Send, Search, Wifi, WifiOff,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
   AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2, Plus,
-  MailOpen, MailX, Timer, Trash2, Settings,
+  MailOpen, MailX, Timer, Trash2, Settings, MoreVertical,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -832,6 +832,21 @@ export function WhatsappCrmPage() {
                     </div>
                   )}
                 </div>
+                {/* Botão de opções (mobile) — no desktop usa clique direito */}
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Opções da conversa"
+                  className="lg:hidden shrink-0 self-center flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+                  onClick={e => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                    setContextMenu({ x: Math.max(8, rect.right - 192), y: rect.bottom + 4, chat })
+                  }}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </span>
               </button>
             )
           })}
