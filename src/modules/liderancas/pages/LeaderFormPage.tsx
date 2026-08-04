@@ -94,13 +94,13 @@ export function LeaderFormPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{isEdit ? 'Editar Lideranca' : 'Nova Lideranca'}</h1>
+          <h1 className="text-2xl font-bold">{isEdit ? 'Editar Liderança' : 'Nova Liderança'}</h1>
           <p className="text-sm text-muted-foreground">
-            {isEdit ? 'Atualize os dados da lideranca' : 'Cadastre uma nova lideranca comunitaria'}
+            {isEdit ? 'Atualize os dados da liderança' : 'Cadastre uma nova liderança comunitária'}
           </p>
         </div>
         {isEdit && (
-          <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta lideranca?')) remove.mutate() }}>
+          <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta liderança?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
@@ -130,10 +130,10 @@ export function LeaderFormPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Area de Atuacao</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Área de Atuação</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Regiao</label>
+              <label className="text-sm font-medium">Região</label>
               <Input value={form.region} onChange={(e) => set('region', e.target.value)} placeholder="Ex: Zona Norte" />
             </div>
             <div className="space-y-2">
@@ -152,7 +152,7 @@ export function LeaderFormPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserPlus className="h-4 w-4" />
-                Acesso a Plataforma
+                Acesso à Plataforma
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -166,10 +166,10 @@ export function LeaderFormPage() {
                   }}
                   className="h-4 w-4 rounded border-input"
                 />
-                <span className="text-sm font-medium">Criar acesso na aplicacao para esta lideranca</span>
+                <span className="text-sm font-medium">Criar acesso na aplicação para esta liderança</span>
               </label>
               <p className="text-xs text-muted-foreground">
-                A lideranca podera acessar a plataforma com o e-mail informado e a senha definida abaixo. Perfil: Lideranca
+                A liderança poderá acessar a plataforma com o e-mail informado e a senha definida abaixo. Perfil: Liderança
               </p>
 
               {createAccess && (
@@ -184,7 +184,7 @@ export function LeaderFormPage() {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Minimo 6 caracteres"
+                      placeholder="Mínimo 6 caracteres"
                       required={createAccess}
                       minLength={6}
                     />
@@ -199,7 +199,7 @@ export function LeaderFormPage() {
           <Button variant="outline" type="button" onClick={() => navigate('/liderancas')}>Cancelar</Button>
           <Button type="submit" disabled={save.isPending}>
             {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Cadastrar Lideranca'}
+            {isEdit ? 'Salvar' : 'Cadastrar Liderança'}
           </Button>
         </div>
 

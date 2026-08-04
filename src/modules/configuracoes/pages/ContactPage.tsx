@@ -7,21 +7,21 @@ const teamMembers = [
   {
     name: 'Equipe de Suporte',
     role: 'Atendimento ao Cliente',
-    description: 'Disponivel para tirar duvidas, resolver problemas tecnicos e auxiliar na configuracao da plataforma.',
+    description: 'Disponível para tirar dúvidas, resolver problemas técnicos e auxiliar na configuração da plataforma.',
     email: 'suporte@governeai.com.br',
     phone: '(00) 0000-0000',
   },
   {
     name: 'Equipe Comercial',
     role: 'Vendas e Parcerias',
-    description: 'Entre em contato para conhecer nossos planos, modulos adicionais e condicoes especiais.',
+    description: 'Entre em contato para conhecer nossos planos, módulos adicionais e condições especiais.',
     email: 'comercial@governeai.com.br',
     phone: '(00) 0000-0000',
   },
   {
     name: 'Equipe de Desenvolvimento',
-    role: 'Tecnologia e Inovacao',
-    description: 'Responsavel por novas funcionalidades, integraces e melhorias continuas na plataforma.',
+    role: 'Tecnologia e Inovação',
+    description: 'Responsável por novas funcionalidades, integrações e melhorias contínuas na plataforma.',
     email: 'dev@governeai.com.br',
   },
 ]
@@ -31,21 +31,21 @@ const channels = [
     icon: Mail,
     title: 'Email',
     value: 'contato@governeai.com.br',
-    description: 'Resposta em ate 24 horas uteis',
+    description: 'Resposta em até 24 horas úteis',
     href: 'mailto:contato@governeai.com.br',
   },
   {
     icon: MessageCircle,
     title: 'WhatsApp',
     value: '(00) 00000-0000',
-    description: 'Atendimento de seg a sex, 9h as 18h',
+    description: 'Atendimento de seg a sex, 9h às 18h',
     href: 'https://wa.me/5500000000000',
   },
   {
     icon: Phone,
     title: 'Telefone',
     value: '(00) 0000-0000',
-    description: 'Ligacoes de seg a sex, 9h as 17h',
+    description: 'Ligações de seg a sex, 9h às 17h',
     href: 'tel:+550000000000',
   },
   {
@@ -122,11 +122,11 @@ export function ContactPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <MapPin className="h-5 w-5" /> Endereco
+              <MapPin className="h-5 w-5" /> Endereço
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>GoverneAI - Tecnologia para Gestao Politica</p>
+            <p>GoverneAI - Tecnologia para Gestão Política</p>
             <p>Rua Exemplo, 123 - Centro</p>
             <p>Cidade - UF, CEP 00000-000</p>
           </CardContent>
@@ -135,17 +135,17 @@ export function ContactPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5" /> Horario de Atendimento
+              <Clock className="h-5 w-5" /> Horário de Atendimento
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <div className="flex justify-between">
               <span>Segunda a Sexta</span>
-              <span className="font-medium text-foreground">9h as 18h</span>
+              <span className="font-medium text-foreground">9h às 18h</span>
             </div>
             <div className="flex justify-between">
-              <span>Sabado</span>
-              <span className="font-medium text-foreground">9h as 12h</span>
+              <span>Sábado</span>
+              <span className="font-medium text-foreground">9h às 12h</span>
             </div>
             <div className="flex justify-between">
               <span>Domingo e Feriados</span>

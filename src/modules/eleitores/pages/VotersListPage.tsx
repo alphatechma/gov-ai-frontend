@@ -38,7 +38,7 @@ function buildVoterColumns(onDelete: (id: string) => void): Column<Voter>[] {
     { key: 'neighborhood', label: 'Bairro' },
     {
       key: 'confidenceLevel',
-      label: 'Confianca',
+      label: 'Confiança',
       render: (v) => (
         <Badge variant={confidenceLevelColors[v.confidenceLevel] ?? 'secondary'}>
           {confidenceLevelLabels[v.confidenceLevel] ?? 'Neutro'}
@@ -47,7 +47,7 @@ function buildVoterColumns(onDelete: (id: string) => void): Column<Voter>[] {
     },
     {
       key: 'id',
-      label: 'Acoes',
+      label: 'Ações',
       render: (v) => (
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" asChild>
@@ -81,7 +81,7 @@ const statusColors: Record<string, 'warning' | 'default' | 'success' | 'secondar
 const statusLabels: Record<string, string> = {
   PENDING: 'Pendente',
   IN_PROGRESS: 'Em Andamento',
-  COMPLETED: 'Concluido',
+  COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
 }
 
@@ -91,11 +91,11 @@ const helpColumns: Column<any>[] = [
   { key: 'voterName', label: 'Eleitor', render: (h: any) => h.voterName ?? '-' },
   { key: 'type', label: 'Tipo', render: (h: any) => h.type ?? '-' },
   { key: 'voterNeighborhood', label: 'Bairro', render: (h: any) => h.voterNeighborhood ?? '-' },
-  { key: 'observations', label: 'Observacoes', render: (h: any) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
+  { key: 'observations', label: 'Observações', render: (h: any) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
   { key: 'status', label: 'Status', render: (h: any) => <Badge variant={statusColors[h.status] ?? 'secondary'}>{statusLabels[h.status] ?? h.status}</Badge> },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (h: any) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/atendimentos/${h.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -375,7 +375,7 @@ export function VotersListPage() {
     { key: 'attendedBy', label: 'Atendido por', render: (v) => v.attendedBy || '-' },
     {
       key: 'id',
-      label: 'Acoes',
+      label: 'Ações',
       render: (v) => (
         <Button
           variant="ghost"
@@ -399,11 +399,11 @@ export function VotersListPage() {
     { key: 'name', label: 'Nome', render: (v) => v.name },
     { key: 'phone', label: 'Telefone', render: (v) => v.phone || '-' },
     { key: 'email', label: 'E-mail', render: (v) => v.email || '-' },
-    { key: 'organization', label: 'Organizacao', render: (v) => v.organization || '-' },
+    { key: 'organization', label: 'Organização', render: (v) => v.organization || '-' },
     { key: 'createdAt', label: 'Cadastrado em', render: (v) => formatDate(v.createdAt) },
     {
       key: 'id',
-      label: 'Acoes',
+      label: 'Ações',
       render: (v) => (
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" asChild>
@@ -653,7 +653,7 @@ export function VotersListPage() {
               )}
             >
               <DoorOpen className="h-4 w-4 shrink-0" />
-              Recepcao
+              Recepção
             </button>
             <button
               onClick={() => setTab('visitantes')}
@@ -748,7 +748,7 @@ export function VotersListPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Envie uma planilha Excel (.xlsx) com os dados dos eleitores. As colunas de atendimento sao opcionais — se preenchidas, um atendimento e criado junto com o eleitor. Baixe o modelo abaixo para preencher corretamente.
+                  Envie uma planilha Excel (.xlsx) com os dados dos eleitores. As colunas de atendimento são opcionais — se preenchidas, um atendimento é criado junto com o eleitor. Baixe o modelo abaixo para preencher corretamente.
                 </p>
 
                 <div className="flex flex-wrap gap-3">
@@ -901,18 +901,18 @@ export function VotersListPage() {
                   options={(leaders.data ?? []).filter((l) => l.active).map((l) => ({ value: l.id, label: l.name }))}
                   value={voterFilterLeader}
                   onChange={setVoterFilterLeader}
-                  placeholder="Todas as liderancas"
+                  placeholder="Todas as lideranças"
                 />
 
                 <Select value={voterFilterGender} onChange={(e) => setVoterFilterGender(e.target.value)}>
-                  <option value="">Todos os generos</option>
+                  <option value="">Todos os gêneros</option>
                   {(stats?.genders ?? []).map((g) => (
                     <option key={g} value={g}>{g}</option>
                   ))}
                 </Select>
 
                 <Select value={voterFilterConfidence} onChange={(e) => setVoterFilterConfidence(e.target.value)}>
-                  <option value="">Todas as confiancas</option>
+                  <option value="">Todas as confianças</option>
                   <option value="ALTO">Alto</option>
                   <option value="NEUTRO">Neutro</option>
                   <option value="BAIXO">Baixo</option>
@@ -956,7 +956,7 @@ export function VotersListPage() {
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Envie uma planilha Excel (.xlsx) com os dados dos atendimentos. Baixe o modelo abaixo para preencher corretamente.
-                  Os nomes de eleitor e lideranca serao vinculados automaticamente se ja estiverem cadastrados.
+                  Os nomes de eleitor e liderança serão vinculados automaticamente se já estiverem cadastrados.
                 </p>
 
                 <div className="flex flex-wrap gap-3">
@@ -1057,7 +1057,7 @@ export function VotersListPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{helpStats?.completed ?? 0}</p>
-                  <p className="text-xs text-muted-foreground">Concluidos</p>
+                  <p className="text-xs text-muted-foreground">Concluídos</p>
                 </div>
               </CardContent>
             </Card>
@@ -1095,7 +1095,7 @@ export function VotersListPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por eleitor, tipo ou observacoes..."
+                  placeholder="Buscar por eleitor, tipo ou observações..."
                   value={helpSearch}
                   onChange={(e) => setHelpSearch(e.target.value)}
                   className="pl-9"
@@ -1199,7 +1199,7 @@ export function VotersListPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nome, telefone ou organizacao..."
+                  placeholder="Buscar por nome, telefone ou organização..."
                   value={visitanteSearch}
                   onChange={(e) => {
                     setVisitanteSearch(e.target.value)

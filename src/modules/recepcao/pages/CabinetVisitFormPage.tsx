@@ -18,7 +18,7 @@ const SUPPORT_LABELS: Record<string, string> = {
   FIRME: 'Firme',
   SIMPATIZANTE: 'Simpatizante',
   INDEFINIDO: 'Indefinido',
-  OPOSICAO: 'Oposicao',
+  OPOSICAO: 'Oposição',
 }
 
 export function CabinetVisitFormPage() {
@@ -179,7 +179,7 @@ export function CabinetVisitFormPage() {
                             <div>
                               <p className="font-medium">{v.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {[v.phone, v.organization].filter(Boolean).join(' - ') || 'Sem informacoes adicionais'}
+                                {[v.phone, v.organization].filter(Boolean).join(' - ') || 'Sem informações adicionais'}
                               </p>
                             </div>
                           </button>
@@ -253,7 +253,7 @@ export function CabinetVisitFormPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Organizacao</label>
+                    <label className="text-sm font-medium">Organização</label>
                     <Input
                       value={newVisitor.organization}
                       onChange={(e) => setNewVisitor((p) => ({ ...p, organization: e.target.value }))}
@@ -284,14 +284,14 @@ export function CabinetVisitFormPage() {
                   <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
                   <div className="flex-1 space-y-2">
                     <p className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
-                      Este visitante e um eleitor cadastrado!
+                      Este visitante é um eleitor cadastrado!
                     </p>
                     <div className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-300">
                       <UserCheck className="h-4 w-4" />
                       <span>
                         <strong>{voterMatch.voter.name}</strong>
                         {voterMatch.voter.supportLevel &&
-                          ` - Nivel: ${SUPPORT_LABELS[voterMatch.voter.supportLevel] ?? voterMatch.voter.supportLevel}`}
+                          ` - Nível: ${SUPPORT_LABELS[voterMatch.voter.supportLevel] ?? voterMatch.voter.supportLevel}`}
                       </span>
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer mt-2">
@@ -342,7 +342,7 @@ export function CabinetVisitFormPage() {
               <Input
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
-                placeholder="Ex: Solicitacao de documento, reuniao..."
+                placeholder="Ex: Solicitação de documento, reunião..."
               />
             </div>
             <div className="space-y-2">
@@ -354,12 +354,12 @@ export function CabinetVisitFormPage() {
               />
             </div>
             <div className="sm:col-span-2 space-y-2">
-              <label className="text-sm font-medium">Observacoes</label>
+              <label className="text-sm font-medium">Observações</label>
               <textarea
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={observations}
                 onChange={(e) => setObservations(e.target.value)}
-                placeholder="Observacoes adicionais..."
+                placeholder="Observações adicionais..."
               />
             </div>
           </CardContent>

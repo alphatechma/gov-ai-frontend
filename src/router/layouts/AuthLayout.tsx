@@ -56,10 +56,10 @@ export function AuthLayout() {
           {/* Tagline */}
           <div className="space-y-4">
             <h2 className="text-3xl font-bold text-white leading-tight max-w-md">
-              Gestao politica inteligente ao seu alcance
+              Gestão política inteligente ao seu alcance
             </h2>
             <p className="text-white/70 text-sm max-w-sm">
-              Organize eleitores, atendimentos, projetos e muito mais em uma unica plataforma.
+              Organize eleitores, atendimentos, projetos e muito mais em uma única plataforma.
             </p>
           </div>
 

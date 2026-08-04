@@ -216,7 +216,7 @@ function BroadcastModal({
     mutationFn: (data: { phones: string[]; content: string }) =>
       api.post('/whatsapp/broadcast', { ...data, connectionId }).then(r => r.data),
     onSuccess: (result: any) => {
-      alert(`Broadcast concluido: ${result.sent} enviadas, ${result.failed} falharam`)
+      alert(`Broadcast concluído: ${result.sent} enviadas, ${result.failed} falharam`)
       onClose()
     },
   })
@@ -327,7 +327,7 @@ function BroadcastModal({
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Numeros adicionais (um por linha)</label>
+            <label className="text-sm font-medium">Números adicionais (um por linha)</label>
             <Textarea
               value={phones}
               onChange={e => setPhones(e.target.value)}
@@ -361,7 +361,7 @@ function BroadcastModal({
 
           {totalRecipients > 20 && (
             <p className="text-xs text-amber-600 text-center">
-              Envios em massa tem delay de 1.5-3s entre mensagens para evitar bloqueio
+              Envios em massa têm delay de 1.5-3s entre mensagens para evitar bloqueio
             </p>
           )}
         </CardContent>
@@ -633,10 +633,10 @@ export function WhatsappCrmPage() {
       ? selectedId!
       : connectedConnections[0]?.id
     if (!targetConnId) {
-      alert('Nenhuma conexao disponivel. Conecte um numero em Configuracoes.')
+      alert('Nenhuma conexão disponível. Conecte um número em Configurações.')
       return
     }
-    const phone = prompt('Digite o numero (com DDD, ex: 11999998888):')
+    const phone = prompt('Digite o número (com DDD, ex: 11999998888):')
     if (!phone) return
     setSelectedChat({
       connectionId: targetConnId,
@@ -669,7 +669,7 @@ export function WhatsappCrmPage() {
       }}
       className="h-8 w-[200px] text-xs"
     >
-      <option value="__all__">Todas as conexoes</option>
+      <option value="__all__">Todas as conexões</option>
       {connections.map(c => {
         const status = c.liveStatus || c.status
         const dot = status === 'CONNECTED' ? '●' : '○'
@@ -702,11 +702,11 @@ export function WhatsappCrmPage() {
         </div>
         <h2 className="text-lg font-semibold">Conecte seu WhatsApp</h2>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          Voce ainda nao tem nenhum numero conectado. Va em Configuracoes para adicionar.
+          Você ainda não tem nenhum número conectado. Vá em Configurações para adicionar.
         </p>
         <Button asChild className="mt-4">
           <Link to="/whatsapp-configuracoes">
-            <Settings className="h-4 w-4 mr-1" /> Gerenciar conexoes
+            <Settings className="h-4 w-4 mr-1" /> Gerenciar conexões
           </Link>
         </Button>
       </div>
@@ -720,13 +720,13 @@ export function WhatsappCrmPage() {
         <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
           <WifiOff className="h-8 w-8 text-amber-500" />
         </div>
-        <h2 className="text-lg font-semibold">Nenhuma conexao ativa</h2>
+        <h2 className="text-lg font-semibold">Nenhuma conexão ativa</h2>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          Voce tem {connections.length} conexao(oes) cadastrada(s), mas nenhuma esta ativa no momento.
+          Você tem {connections.length} conexão(ões) cadastrada(s), mas nenhuma está ativa no momento.
         </p>
         <Button asChild className="mt-4">
           <Link to="/whatsapp-configuracoes">
-            <Settings className="h-4 w-4 mr-1" /> Abrir configuracoes
+            <Settings className="h-4 w-4 mr-1" /> Abrir configurações
           </Link>
         </Button>
       </div>
@@ -735,7 +735,7 @@ export function WhatsappCrmPage() {
 
   const filterTabs: { key: ChatFilter; label: string }[] = [
     { key: 'all', label: 'Todas' },
-    { key: 'unread', label: 'Nao lidas' },
+    { key: 'unread', label: 'Não lidas' },
     { key: 'reply-later', label: 'Responder depois' },
   ]
 
@@ -789,7 +789,7 @@ export function WhatsappCrmPage() {
             <div className="flex flex-col items-center py-12 text-center">
               <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
               <p className="mt-2 text-xs text-muted-foreground">
-                {chatFilter === 'unread' ? 'Nenhuma conversa nao lida' :
+                {chatFilter === 'unread' ? 'Nenhuma conversa não lida' :
                  chatFilter === 'reply-later' ? 'Nenhuma conversa pendente' :
                  'Nenhuma conversa'}
               </p>
@@ -920,7 +920,7 @@ export function WhatsappCrmPage() {
                 setContextMenu(null)
               }}
             >
-              <MailX className="h-4 w-4" /> Marcar como nao lida
+              <MailX className="h-4 w-4" /> Marcar como não lida
             </button>
           )}
           <button
@@ -1197,7 +1197,7 @@ export function WhatsappCrmPage() {
           <div className="min-w-0">
             <h1 className="text-base font-semibold">WhatsApp CRM</h1>
             <p className="text-xs text-muted-foreground truncate">
-              {connectedConnections.length} conexao(oes) ativa(s)
+              {connectedConnections.length} conexão(ões) ativa(s)
               {isAll
                 ? ' · vendo todas'
                 : selectedConnection
@@ -1232,7 +1232,7 @@ export function WhatsappCrmPage() {
             variant="ghost"
             asChild
             className="h-8 w-8"
-            title="Configuracoes"
+            title="Configurações"
           >
             <Link to="/whatsapp-configuracoes">
               <Settings className="h-4 w-4" />

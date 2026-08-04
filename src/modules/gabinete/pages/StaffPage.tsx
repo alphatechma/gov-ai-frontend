@@ -17,7 +17,7 @@ const roleLabels: Record<string, string> = {
   [UserRole.TENANT_ADMIN]: 'Administrador',
   [UserRole.MANAGER]: 'Gerente',
   [UserRole.ADVISOR]: 'Assessor',
-  [UserRole.LEADER]: 'Lideranca',
+  [UserRole.LEADER]: 'Liderança',
   [UserRole.VIEWER]: 'Visualizador',
   [UserRole.ATTENDANT]: 'Atendente',
   [UserRole.RECEPTIONIST]: 'Recepcionista',
@@ -39,7 +39,7 @@ const columns: Column<User>[] = [
   },
   {
     key: 'lastLoginAt',
-    label: 'Ultimo Acesso',
+    label: 'Último Acesso',
     render: (u) =>
       u.lastLoginAt
         ? new Date(u.lastLoginAt).toLocaleDateString('pt-BR', {
@@ -53,7 +53,7 @@ const columns: Column<User>[] = [
   },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (u) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/equipe/${u.id}/editar`}>
@@ -83,12 +83,12 @@ export function StaffPage() {
     <div className="space-y-6">
       <PageHeader
         title="Equipe"
-        description="Gerencie os usuarios do seu gabinete"
+        description="Gerencie os usuários do seu gabinete"
         action={
           <Button asChild>
             <Link to="/equipe/novo">
               <Plus className="h-4 w-4" />
-              Novo Usuario
+              Novo Usuário
             </Link>
           </Button>
         }

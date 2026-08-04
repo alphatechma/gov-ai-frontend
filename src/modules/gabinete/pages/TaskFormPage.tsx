@@ -14,7 +14,7 @@ import type { Task } from '@/types/entities'
 
 const PRIORITY_LABELS: Record<string, string> = {
   BAIXA: 'Baixa',
-  MEDIA: 'Media',
+  MEDIA: 'Média',
   ALTA: 'Alta',
   URGENTE: 'Urgente',
 }
@@ -22,7 +22,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   PENDENTE: 'Pendente',
   EM_ANDAMENTO: 'Em Andamento',
-  CONCLUIDA: 'Concluida',
+  CONCLUIDA: 'Concluída',
   ATRASADA: 'Atrasada',
 }
 
@@ -124,7 +124,7 @@ export function TaskFormPage() {
           <CardHeader><CardTitle>Dados da Tarefa</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
-              <label className="text-sm font-medium">Titulo *</label>
+              <label className="text-sm font-medium">Título *</label>
               <Input value={form.title} onChange={(e) => set('title', e.target.value)} required />
             </div>
             <div className="space-y-2">
@@ -147,7 +147,7 @@ export function TaskFormPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Descricao</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Descrição</CardTitle></CardHeader>
           <CardContent>
             <Textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={4} placeholder="Descreva a tarefa..." />
           </CardContent>

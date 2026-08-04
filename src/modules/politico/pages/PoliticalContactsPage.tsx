@@ -13,8 +13,8 @@ import type { PoliticalContact } from '@/types/entities'
 const roleLabels: Record<string, string> = {
   PREFEITO: 'Prefeito(a)',
   VEREADOR: 'Vereador(a)',
-  LIDERANCA_COMUNITARIA: 'Lid. Comunitaria',
-  SECRETARIO: 'Secretario(a)',
+  LIDERANCA_COMUNITARIA: 'Lid. Comunitária',
+  SECRETARIO: 'Secretário(a)',
   DEPUTADO_ESTADUAL: 'Dep. Estadual',
   DEPUTADO_FEDERAL: 'Dep. Federal',
   SENADOR: 'Senador(a)',
@@ -24,7 +24,7 @@ const roleLabels: Record<string, string> = {
 const relationshipLabels: Record<string, string> = {
   ALIADO: 'Aliado',
   NEUTRO: 'Neutro',
-  OPOSICAO: 'Oposicao',
+  OPOSICAO: 'Oposição',
 }
 
 const relationshipColors: Record<string, 'success' | 'secondary' | 'destructive'> = {
@@ -38,10 +38,10 @@ const columns: Column<PoliticalContact>[] = [
   { key: 'role', label: 'Cargo', render: (c) => roleLabels[c.role] ?? c.role },
   { key: 'party', label: 'Partido', render: (c) => c.party ?? '-' },
   { key: 'phone', label: 'Telefone', render: (c) => c.phone ?? '-' },
-  { key: 'relationship', label: 'Relacao', render: (c) => <Badge variant={relationshipColors[c.relationship] ?? 'secondary'}>{relationshipLabels[c.relationship] ?? c.relationship}</Badge> },
+  { key: 'relationship', label: 'Relação', render: (c) => <Badge variant={relationshipColors[c.relationship] ?? 'secondary'}>{relationshipLabels[c.relationship] ?? c.relationship}</Badge> },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (c) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/contatos-politicos/${c.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -62,8 +62,8 @@ export function PoliticalContactsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Contatos Politicos"
-        description="Rede de contatos politicos"
+        title="Contatos Políticos"
+        description="Rede de contatos políticos"
         action={
           <Button asChild>
             <Link to="/contatos-politicos/novo">

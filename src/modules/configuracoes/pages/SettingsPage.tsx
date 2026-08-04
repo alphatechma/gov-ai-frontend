@@ -38,8 +38,8 @@ interface FaqItem { question: string; answer: string }
 /* ─── tabs ─── */
 const allTabs = [
   { key: 'geral', label: 'Geral', icon: Settings, adminOnly: false },
-  { key: 'aparencia', label: 'Aparencia', icon: Palette, adminOnly: true },
-  { key: 'permissoes', label: 'Permissoes', icon: Shield, adminOnly: true },
+  { key: 'aparencia', label: 'Aparência', icon: Palette, adminOnly: true },
+  { key: 'permissoes', label: 'Permissões', icon: Shield, adminOnly: true },
   { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, adminOnly: false },
   { key: 'conta', label: 'Conta', icon: CreditCard, adminOnly: true },
   { key: 'perfil', label: 'Meu Perfil', icon: UserPen, adminOnly: false },
@@ -54,57 +54,57 @@ const faqSections = [
   {
     title: 'Primeiros Passos', icon: Zap,
     items: [
-      { question: 'Como comeco a usar o GoverneAI?', answer: 'Apos o login, voce sera direcionado ao Dashboard. A partir da barra lateral, acesse os modulos habilitados para seu gabinete. Comece cadastrando seus eleitores e liderancas para aproveitar ao maximo a plataforma.' },
-      { question: 'O que sao os modulos?', answer: 'Modulos sao funcionalidades da plataforma que podem ser habilitadas ou desabilitadas conforme o plano contratado. Cada modulo (Eleitores, Visitas, Chat, IA, etc.) pode ser ativado independentemente pelo administrador.' },
-      { question: 'Como altero meu tema (claro/escuro)?', answer: 'Na aba Geral das Configuracoes, clique no botao de alternancia de tema para escolher entre modo claro e escuro.' },
+      { question: 'Como começo a usar o GoverneAI?', answer: 'Após o login, você será direcionado ao Dashboard. A partir da barra lateral, acesse os módulos habilitados para seu gabinete. Comece cadastrando seus eleitores e lideranças para aproveitar ao máximo a plataforma.' },
+      { question: 'O que são os módulos?', answer: 'Módulos são funcionalidades da plataforma que podem ser habilitadas ou desabilitadas conforme o plano contratado. Cada módulo (Eleitores, Visitas, Chat, IA, etc.) pode ser ativado independentemente pelo administrador.' },
+      { question: 'Como altero meu tema (claro/escuro)?', answer: 'Na aba Geral das Configurações, clique no botão de alternância de tema para escolher entre modo claro e escuro.' },
     ],
   },
   {
-    title: 'Eleitores e Liderancas', icon: Users,
+    title: 'Eleitores e Lideranças', icon: Users,
     items: [
-      { question: 'Como cadastro um novo eleitor?', answer: 'Acesse Eleitores na barra lateral e clique em "Novo Eleitor". Preencha os dados como nome, telefone, bairro e nivel de apoio. Voce tambem pode vincular o eleitor a uma lideranca.' },
-      { question: 'O que e o Mapa de Calor?', answer: 'O Mapa de Calor mostra a distribuicao geografica dos seus eleitores cadastrados. Ele ajuda a identificar regioes com maior ou menor concentracao de apoiadores, facilitando o planejamento de acoes territoriais.' },
-      { question: 'Como funciona o sistema de liderancas?', answer: 'Liderancas sao pessoas que representam o gabinete em determinadas regioes. Cada lideranca tem uma meta de eleitores e pode ter eleitores vinculados a ela, permitindo acompanhar o desempenho de captacao.' },
+      { question: 'Como cadastro um novo eleitor?', answer: 'Acesse Eleitores na barra lateral e clique em "Novo Eleitor". Preencha os dados como nome, telefone, bairro e nível de apoio. Você também pode vincular o eleitor a uma liderança.' },
+      { question: 'O que é o Mapa de Calor?', answer: 'O Mapa de Calor mostra a distribuição geográfica dos seus eleitores cadastrados. Ele ajuda a identificar regiões com maior ou menor concentração de apoiadores, facilitando o planejamento de ações territoriais.' },
+      { question: 'Como funciona o sistema de lideranças?', answer: 'Lideranças são pessoas que representam o gabinete em determinadas regiões. Cada liderança tem uma meta de eleitores e pode ter eleitores vinculados a ela, permitindo acompanhar o desempenho de captação.' },
     ],
   },
   {
     title: 'Gabinete', icon: BookOpen,
     items: [
-      { question: 'Como registro um atendimento?', answer: 'Acesse Atendimentos e clique em "Novo Atendimento". Selecione a categoria, descreva a solicitacao, vincule a um eleitor se necessario e acompanhe o status ate a resolucao.' },
-      { question: 'Como gerencio tarefas da equipe?', answer: 'O modulo Tarefas permite criar, atribuir e acompanhar tarefas. Cada tarefa tem status (pendente, em andamento, concluida), prioridade e prazo. Use o quadro para visualizar o fluxo de trabalho.' },
-      { question: 'Como funciona a agenda de compromissos?', answer: 'Acesse Compromissos para visualizar e criar eventos. Voce pode definir titulo, data, horario, local e vincular a eleitores ou liderancas.' },
+      { question: 'Como registro um atendimento?', answer: 'Acesse Atendimentos e clique em "Novo Atendimento". Selecione a categoria, descreva a solicitação, vincule a um eleitor se necessário e acompanhe o status até a resolução.' },
+      { question: 'Como gerencio tarefas da equipe?', answer: 'O módulo Tarefas permite criar, atribuir e acompanhar tarefas. Cada tarefa tem status (pendente, em andamento, concluída), prioridade e prazo. Use o quadro para visualizar o fluxo de trabalho.' },
+      { question: 'Como funciona a agenda de compromissos?', answer: 'Acesse Compromissos para visualizar e criar eventos. Você pode definir título, data, horário, local e vincular a eleitores ou lideranças.' },
     ],
   },
   {
-    title: 'Inteligencia e Relatorios', icon: BarChart3,
+    title: 'Inteligência e Relatórios', icon: BarChart3,
     items: [
-      { question: 'O que o Assistente IA pode fazer?', answer: 'O Assistente IA responde perguntas sobre estrategia politica, analise eleitoral e gestao do gabinete. Com o "Contexto" ativado, ele usa seus dados reais (eleitores, visitas, atendimentos) para dar respostas personalizadas.' },
-      { question: 'Como exporto relatorios?', answer: 'Acesse Relatorios, selecione o tipo de dado que deseja exportar (eleitores, visitas, atendimentos, etc.) e clique em "Exportar CSV". O arquivo sera baixado automaticamente.' },
-      { question: 'O que e a Analise Eleitoral?', answer: 'A Analise Eleitoral permite importar dados do TSE e visualizar resultados por secao, bairro e zona. Voce pode comparar eleicoes de anos diferentes e gerar projecoes com auxilio da IA.' },
+      { question: 'O que o Assistente IA pode fazer?', answer: 'O Assistente IA responde perguntas sobre estratégia política, análise eleitoral e gestão do gabinete. Com o "Contexto" ativado, ele usa seus dados reais (eleitores, visitas, atendimentos) para dar respostas personalizadas.' },
+      { question: 'Como exporto relatórios?', answer: 'Acesse Relatórios, selecione o tipo de dado que deseja exportar (eleitores, visitas, atendimentos, etc.) e clique em "Exportar CSV". O arquivo será baixado automaticamente.' },
+      { question: 'O que é a Análise Eleitoral?', answer: 'A Análise Eleitoral permite importar dados do TSE e visualizar resultados por seção, bairro e zona. Você pode comparar eleições de anos diferentes e gerar projeções com auxílio da IA.' },
     ],
   },
   {
-    title: 'Seguranca e Privacidade', icon: Shield,
+    title: 'Segurança e Privacidade', icon: Shield,
     items: [
-      { question: 'Meus dados estao seguros?', answer: 'Sim. O GoverneAI utiliza criptografia em transito (HTTPS), autenticacao JWT com tokens de acesso e refresh, e isolamento multi-tenant — seus dados sao completamente separados de outros gabinetes.' },
-      { question: 'Como altero minha senha?', answer: 'Na aba "Meu Perfil" das Configuracoes, use a secao "Alterar Senha". Informe sua senha atual e a nova senha desejada.' },
-      { question: 'Quem pode ver meus dados?', answer: 'Apenas usuarios do seu gabinete (tenant) tem acesso aos dados. Administradores do gabinete podem gerenciar usuarios e permissoes. A equipe GoverneAI nao acessa seus dados operacionais.' },
+      { question: 'Meus dados estão seguros?', answer: 'Sim. O GoverneAI utiliza criptografia em trânsito (HTTPS), autenticação JWT com tokens de acesso e refresh, e isolamento multi-tenant — seus dados são completamente separados de outros gabinetes.' },
+      { question: 'Como altero minha senha?', answer: 'Na aba "Meu Perfil" das Configurações, use a seção "Alterar Senha". Informe sua senha atual e a nova senha desejada.' },
+      { question: 'Quem pode ver meus dados?', answer: 'Apenas usuários do seu gabinete (tenant) têm acesso aos dados. Administradores do gabinete podem gerenciar usuários e permissões. A equipe GoverneAI não acessa seus dados operacionais.' },
     ],
   },
 ]
 
 /* ─── Contact data ─── */
 const channels = [
-  { icon: Mail, title: 'Email', value: 'contato@governeai.com.br', description: 'Resposta em ate 24 horas uteis', href: 'mailto:contato@governeai.com.br' },
-  { icon: MessageCircle, title: 'WhatsApp', value: '(00) 00000-0000', description: 'Atendimento de seg a sex, 9h as 18h', href: 'https://wa.me/5500000000000' },
-  { icon: Phone, title: 'Telefone', value: '(00) 0000-0000', description: 'Ligacoes de seg a sex, 9h as 17h', href: 'tel:+550000000000' },
+  { icon: Mail, title: 'Email', value: 'contato@governeai.com.br', description: 'Resposta em até 24 horas úteis', href: 'mailto:contato@governeai.com.br' },
+  { icon: MessageCircle, title: 'WhatsApp', value: '(00) 00000-0000', description: 'Atendimento de seg a sex, 9h às 18h', href: 'https://wa.me/5500000000000' },
+  { icon: Phone, title: 'Telefone', value: '(00) 0000-0000', description: 'Ligações de seg a sex, 9h às 17h', href: 'tel:+550000000000' },
   { icon: Instagram, title: 'Instagram', value: '@governeai', description: 'Siga para novidades e dicas', href: 'https://instagram.com/governeai' },
 ]
 
 const teamMembers = [
-  { name: 'Equipe de Suporte', role: 'Atendimento ao Cliente', description: 'Disponivel para tirar duvidas, resolver problemas tecnicos e auxiliar na configuracao da plataforma.', email: 'suporte@governeai.com.br', phone: '(00) 0000-0000' },
-  { name: 'Equipe Comercial', role: 'Vendas e Parcerias', description: 'Entre em contato para conhecer nossos planos, modulos adicionais e condicoes especiais.', email: 'comercial@governeai.com.br', phone: '(00) 0000-0000' },
-  { name: 'Equipe de Desenvolvimento', role: 'Tecnologia e Inovacao', description: 'Responsavel por novas funcionalidades, integracoes e melhorias continuas na plataforma.', email: 'dev@governeai.com.br' },
+  { name: 'Equipe de Suporte', role: 'Atendimento ao Cliente', description: 'Disponível para tirar dúvidas, resolver problemas técnicos e auxiliar na configuração da plataforma.', email: 'suporte@governeai.com.br', phone: '(00) 0000-0000' },
+  { name: 'Equipe Comercial', role: 'Vendas e Parcerias', description: 'Entre em contato para conhecer nossos planos, módulos adicionais e condições especiais.', email: 'comercial@governeai.com.br', phone: '(00) 0000-0000' },
+  { name: 'Equipe de Desenvolvimento', role: 'Tecnologia e Inovação', description: 'Responsável por novas funcionalidades, integrações e melhorias contínuas na plataforma.', email: 'dev@governeai.com.br' },
 ]
 
 /* ─── Components ─── */
@@ -151,7 +151,7 @@ function GeralTab() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-lg">Aparencia</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-lg">Aparência</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
@@ -211,7 +211,7 @@ function PerfilTab() {
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault()
     setPasswordMsg(null)
-    if (passwordForm.password !== passwordForm.confirmPassword) { setPasswordMsg({ type: 'error', text: 'As senhas nao coincidem.' }); return }
+    if (passwordForm.password !== passwordForm.confirmPassword) { setPasswordMsg({ type: 'error', text: 'As senhas não coincidem.' }); return }
     if (passwordForm.password.length < 6) { setPasswordMsg({ type: 'error', text: 'A nova senha deve ter pelo menos 6 caracteres.' }); return }
     changePassword.mutate({ currentPassword: passwordForm.currentPassword, password: passwordForm.password })
   }
@@ -224,7 +224,7 @@ function PerfilTab() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><User className="h-5 w-5" /> Informacoes Pessoais</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><User className="h-5 w-5" /> Informações Pessoais</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div className="space-y-2">
@@ -366,18 +366,18 @@ function ContatoTab() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><MapPin className="h-5 w-5" /> Endereco</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><MapPin className="h-5 w-5" /> Endereço</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>GoverneAI - Tecnologia para Gestao Politica</p>
+            <p>GoverneAI - Tecnologia para Gestão Política</p>
             <p>Rua Exemplo, 123 - Centro</p>
             <p>Cidade - UF, CEP 00000-000</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5" /> Horario de Atendimento</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5" /> Horário de Atendimento</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex justify-between"><span>Segunda a Sexta</span><span className="font-medium text-foreground">9h as 18h</span></div>
-            <div className="flex justify-between"><span>Sabado</span><span className="font-medium text-foreground">9h as 12h</span></div>
+            <div className="flex justify-between"><span>Segunda a Sexta</span><span className="font-medium text-foreground">9h às 18h</span></div>
+            <div className="flex justify-between"><span>Sábado</span><span className="font-medium text-foreground">9h às 12h</span></div>
             <div className="flex justify-between"><span>Domingo e Feriados</span><span className="font-medium text-foreground">Fechado</span></div>
           </CardContent>
         </Card>
@@ -438,7 +438,7 @@ function WhatsappTab() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <MessageCircle className="h-5 w-5" /> Conexao WhatsApp
+            <MessageCircle className="h-5 w-5" /> Conexão WhatsApp
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -459,7 +459,7 @@ function WhatsappTab() {
               )}
               {!isConnected && (
                 <p className="text-sm text-muted-foreground">
-                  Nenhum dispositivo conectado. Conecte pela pagina do WhatsApp CRM.
+                  Nenhum dispositivo conectado. Conecte pela página do WhatsApp CRM.
                 </p>
               )}
             </div>
@@ -468,7 +468,7 @@ function WhatsappTab() {
           {isConnected && (
             <div className="pt-2 border-t">
               <p className="text-sm text-muted-foreground mb-3">
-                Ao desconectar, todas as conversas em tempo real serao interrompidas. Voce precisara escanear o QR Code novamente para reconectar.
+                Ao desconectar, todas as conversas em tempo real serão interrompidas. Você precisará escanear o QR Code novamente para reconectar.
               </p>
               <Button
                 variant="destructive"
@@ -497,7 +497,7 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Configuracoes" description="Gerencie suas preferencias e informacoes" />
+      <PageHeader title="Configurações" description="Gerencie suas preferências e informações" />
 
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* Sidebar navigation */}

@@ -28,7 +28,7 @@ interface LeaderRanking {
 const columns: Column<Leader>[] = [
   { key: 'name', label: 'Nome' },
   { key: 'phone', label: 'Telefone' },
-  { key: 'region', label: 'Regiao' },
+  { key: 'region', label: 'Região' },
   { key: 'votersCount', label: 'Eleitores', render: (l) => <span>{l.votersCount} / {l.votersGoal}</span> },
   {
     key: 'active',
@@ -37,7 +37,7 @@ const columns: Column<Leader>[] = [
   },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (l) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/liderancas/${l.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -61,29 +61,29 @@ export function LeadersListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Liderancas"
-        description="Gerencie suas liderancas comunitarias"
+        title="Lideranças"
+        description="Gerencie suas lideranças comunitárias"
         action={
           <Button asChild>
-            <Link to="/liderancas/nova"><Plus className="h-4 w-4" />Nova Lideranca</Link>
+            <Link to="/liderancas/nova"><Plus className="h-4 w-4" />Nova Liderança</Link>
           </Button>
         }
       />
 
-      {/* Ranking de Liderancas - Grafico */}
+      {/* Ranking de Lideranças - Gráfico */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-amber-500" />
-            <CardTitle className="text-base">Ranking de Liderancas por Confianca</CardTitle>
+            <CardTitle className="text-base">Ranking de Lideranças por Confiança</CardTitle>
           </div>
-          <p className="text-xs text-muted-foreground">Pontuacao por nivel de confianca dos eleitores (Alto=3, Neutro=1, Baixo=0.5)</p>
+          <p className="text-xs text-muted-foreground">Pontuação por nível de confiança dos eleitores (Alto=3, Neutro=1, Baixo=0.5)</p>
         </CardHeader>
         <CardContent className="pb-4">
           {leaderRankingQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">Carregando...</p>
           ) : leaderRanking.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma lideranca com eleitores vinculados ainda.</p>
+            <p className="text-sm text-muted-foreground">Nenhuma liderança com eleitores vinculados ainda.</p>
           ) : (
             <ResponsiveContainer width="100%" height={leaderRanking.length * 64 + 20}>
               <BarChart

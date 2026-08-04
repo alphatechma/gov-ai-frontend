@@ -13,13 +13,13 @@ import { UserRole } from '@/types/enums'
 import { useAuthStore } from '@/stores/authStore'
 
 const accessRoles = [
-  { value: UserRole.TENANT_ADMIN, label: 'Administrador', description: 'Acesso total ao gabinete, incluindo gestao de equipe' },
-  { value: UserRole.ADVISOR, label: 'Assessor', description: 'Acesso completo aos modulos habilitados' },
-  { value: UserRole.MANAGER, label: 'Gerente', description: 'Acesso completo aos modulos habilitados' },
-  { value: UserRole.LEADER, label: 'Lideranca', description: 'Acesso completo aos modulos habilitados' },
-  { value: UserRole.VIEWER, label: 'Visualizador', description: 'Apenas visualizacao dos dados' },
-  { value: UserRole.ATTENDANT, label: 'Atendente', description: 'Acesso restrito ao modulo de visitas' },
-  { value: UserRole.RECEPTIONIST, label: 'Recepcionista', description: 'Acesso restrito a recepcao do gabinete' },
+  { value: UserRole.TENANT_ADMIN, label: 'Administrador', description: 'Acesso total ao gabinete, incluindo gestão de equipe' },
+  { value: UserRole.ADVISOR, label: 'Assessor', description: 'Acesso completo aos módulos habilitados' },
+  { value: UserRole.MANAGER, label: 'Gerente', description: 'Acesso completo aos módulos habilitados' },
+  { value: UserRole.LEADER, label: 'Liderança', description: 'Acesso completo aos módulos habilitados' },
+  { value: UserRole.VIEWER, label: 'Visualizador', description: 'Apenas visualização dos dados' },
+  { value: UserRole.ATTENDANT, label: 'Atendente', description: 'Acesso restrito ao módulo de visitas' },
+  { value: UserRole.RECEPTIONIST, label: 'Recepcionista', description: 'Acesso restrito à recepção do gabinete' },
 ] as const
 
 export function StaffFormPage() {
@@ -131,12 +131,12 @@ export function StaffFormPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">
-            {isEdit ? 'Editar Usuario' : 'Novo Usuario'}
+            {isEdit ? 'Editar Usuário' : 'Novo Usuário'}
           </h1>
           <p className="text-sm text-muted-foreground">
             {isEdit
-              ? 'Atualize os dados do usuario'
-              : 'Cadastre um novo usuario no gabinete'}
+              ? 'Atualize os dados do usuário'
+              : 'Cadastre um novo usuário no gabinete'}
           </p>
         </div>
         {isEdit && !isSelf && (
@@ -144,7 +144,7 @@ export function StaffFormPage() {
             variant="destructive"
             size="icon"
             onClick={() => {
-              if (confirm('Excluir este usuario? Essa acao nao pode ser desfeita.'))
+              if (confirm('Excluir este usuário? Essa ação não pode ser desfeita.'))
                 remove.mutate()
             }}
           >
@@ -164,7 +164,7 @@ export function StaffFormPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
-              Dados do Usuario
+              Dados do Usuário
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -208,7 +208,7 @@ export function StaffFormPage() {
                   type="password"
                   value={form.password}
                   onChange={(e) => set('password', e.target.value)}
-                  placeholder="Minimo 6 caracteres"
+                  placeholder="Mínimo 6 caracteres"
                   required
                   minLength={6}
                 />
@@ -234,7 +234,7 @@ export function StaffFormPage() {
                   type="password"
                   value={form.password}
                   onChange={(e) => set('password', e.target.value)}
-                  placeholder="Minimo 6 caracteres"
+                  placeholder="Mínimo 6 caracteres"
                   required
                   minLength={6}
                   autoFocus
@@ -247,7 +247,7 @@ export function StaffFormPage() {
                     set('password', '')
                   }}
                 >
-                  Cancelar alteracao de senha
+                  Cancelar alteração de senha
                 </button>
               </div>
             )}
@@ -282,7 +282,7 @@ export function StaffFormPage() {
               )}
               {isSelf && (
                 <p className="text-xs text-amber-600 dark:text-amber-400">
-                  Voce nao pode alterar seu proprio perfil de acesso.
+                  Você não pode alterar seu próprio perfil de acesso.
                 </p>
               )}
             </div>
@@ -295,7 +295,7 @@ export function StaffFormPage() {
                     Perfil Atendente
                   </p>
                   <p className="text-blue-700 dark:text-blue-300 mt-0.5">
-                    Este usuario tera acesso restrito apenas ao modulo de Visitas, com
+                    Este usuário terá acesso restrito apenas ao módulo de Visitas, com
                     layout simplificado.
                   </p>
                 </div>
@@ -310,7 +310,7 @@ export function StaffFormPage() {
                     Perfil Recepcionista
                   </p>
                   <p className="text-blue-700 dark:text-blue-300 mt-0.5">
-                    Este usuario tera acesso restrito a Recepcao do Gabinete, com layout
+                    Este usuário terá acesso restrito à Recepção do Gabinete, com layout
                     simplificado.
                   </p>
                 </div>
@@ -338,7 +338,7 @@ export function StaffFormPage() {
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {isEdit ? 'Salvar' : 'Criar Usuario'}
+            {isEdit ? 'Salvar' : 'Criar Usuário'}
           </Button>
         </div>
 

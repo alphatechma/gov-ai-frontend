@@ -14,17 +14,17 @@ import type { Appointment } from '@/types/entities'
 
 const TYPE_LABELS: Record<string, string> = {
   COMPROMISSO: 'Compromisso',
-  ACAO: 'Acao',
-  REUNIAO: 'Reuniao',
+  ACAO: 'Ação',
+  REUNIAO: 'Reunião',
   VISITA: 'Visita',
-  LIGACAO: 'Ligacao',
+  LIGACAO: 'Ligação',
   OUTRO: 'Outro',
 }
 
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: 'Agendado',
   IN_PROGRESS: 'Em Andamento',
-  COMPLETED: 'Concluido',
+  COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
 }
 
@@ -131,7 +131,7 @@ export function AppointmentFormPage() {
           <CardHeader><CardTitle>Dados do Compromisso</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2 sm:col-span-2 lg:col-span-3">
-              <label className="text-sm font-medium">Titulo *</label>
+              <label className="text-sm font-medium">Título *</label>
               <Input value={form.title} onChange={(e) => set('title', e.target.value)} required />
             </div>
             <div className="space-y-2">
@@ -149,7 +149,7 @@ export function AppointmentFormPage() {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Data Inicio *</label>
+              <label className="text-sm font-medium">Data Início *</label>
               <div className="flex gap-2">
                 <DatePicker
                   value={form.startDate ? form.startDate.split('T')[0] : ''}
@@ -194,7 +194,7 @@ export function AppointmentFormPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Local</label>
-              <Input value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="Ex: Gabinete, Camara Municipal..." />
+              <Input value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="Ex: Gabinete, Câmara Municipal..." />
             </div>
           </CardContent>
         </Card>
@@ -203,12 +203,12 @@ export function AppointmentFormPage() {
           <CardHeader><CardTitle>Detalhes</CardTitle></CardHeader>
           <CardContent className="grid gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Descricao</label>
+              <label className="text-sm font-medium">Descrição</label>
               <Textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={3} placeholder="Descreva o compromisso..." />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Observacoes</label>
-              <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} placeholder="Observacoes adicionais..." />
+              <label className="text-sm font-medium">Observações</label>
+              <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={2} placeholder="Observações adicionais..." />
             </div>
           </CardContent>
         </Card>

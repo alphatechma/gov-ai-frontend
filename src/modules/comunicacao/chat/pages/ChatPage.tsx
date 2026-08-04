@@ -496,7 +496,7 @@ export function ChatPage() {
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center px-4">
             <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground/30" />
-            <p className="mt-4 text-sm text-muted-foreground">Selecione uma conversa para comecar</p>
+            <p className="mt-4 text-sm text-muted-foreground">Selecione uma conversa para começar</p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowNewDirect(true)}>
                 <User className="h-4 w-4" /> Nova Conversa
@@ -552,7 +552,7 @@ export function ChatPage() {
             <CardContent className="space-y-3">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Buscar usuario..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-8" />
+                <Input placeholder="Buscar usuário..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-8" />
               </div>
               <ScrollArea className="max-h-64">
                 <div className="space-y-1">
@@ -572,7 +572,7 @@ export function ChatPage() {
                     </button>
                   ))}
                   {filteredUsers.length === 0 && (
-                    <p className="text-sm text-center text-muted-foreground py-4">Nenhum usuario encontrado</p>
+                    <p className="text-sm text-center text-muted-foreground py-4">Nenhum usuário encontrado</p>
                   )}
                 </div>
               </ScrollArea>
@@ -614,7 +614,7 @@ export function ChatPage() {
                 )}
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input placeholder="Buscar usuario..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-8" />
+                  <Input placeholder="Buscar usuário..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-8" />
                 </div>
                 <ScrollArea className="max-h-48">
                   <div className="space-y-1">
@@ -706,7 +706,7 @@ export function ChatPage() {
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium truncate">{p.userName ?? 'Usuario'}</p>
+                              <p className="text-sm font-medium truncate">{p.userName ?? 'Usuário'}</p>
                               {p.role === 'ADMIN' && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Admin</Badge>}
                             </div>
                           </div>
@@ -744,7 +744,7 @@ export function ChatPage() {
             <CardContent className="space-y-3">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Buscar usuario..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-8" />
+                <Input placeholder="Buscar usuário..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-8" />
               </div>
               <ScrollArea className="max-h-48">
                 <div className="space-y-1">

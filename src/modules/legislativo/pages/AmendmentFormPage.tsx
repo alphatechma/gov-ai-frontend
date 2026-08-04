@@ -13,7 +13,7 @@ import type { Amendment } from '@/types/entities'
 
 const STATUS_LABELS: Record<string, string> = {
   APROVADA: 'Aprovada',
-  EM_EXECUCAO: 'Em Execucao',
+  EM_EXECUCAO: 'Em Execução',
   EXECUTADA: 'Executada',
   CANCELADA: 'Cancelada',
 }
@@ -117,7 +117,7 @@ export function AmendmentFormPage() {
           <CardHeader><CardTitle>Dados da Emenda</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Codigo</label>
+              <label className="text-sm font-medium">Código</label>
               <Input value={form.code} onChange={(e) => set('code', e.target.value)} placeholder="Ex: EM 001/2026" />
             </div>
             <div className="space-y-2">
@@ -133,18 +133,18 @@ export function AmendmentFormPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Execucao (%)</label>
+                  <label className="text-sm font-medium">Execução (%)</label>
                   <Input type="number" min={0} max={100} value={form.executionPercentage} onChange={(e) => set('executionPercentage', parseInt(e.target.value) || 0)} />
                 </div>
               </>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Beneficiario</label>
-              <Input value={form.beneficiary} onChange={(e) => set('beneficiary', e.target.value)} placeholder="Ex: Secretaria de Saude" />
+              <label className="text-sm font-medium">Beneficiário</label>
+              <Input value={form.beneficiary} onChange={(e) => set('beneficiary', e.target.value)} placeholder="Ex: Secretaria de Saúde" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Cidade</label>
-              <Input value={form.city} onChange={(e) => set('city', e.target.value)} placeholder="Ex: Sao Paulo" />
+              <Input value={form.city} onChange={(e) => set('city', e.target.value)} placeholder="Ex: São Paulo" />
             </div>
           </CardContent>
         </Card>
@@ -153,7 +153,7 @@ export function AmendmentFormPage() {
           <CardHeader><CardTitle>Detalhes</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Descricao *</label>
+              <label className="text-sm font-medium">Descrição *</label>
               <Textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={4} placeholder="Descreva o objetivo da emenda..." required />
             </div>
           </CardContent>

@@ -86,11 +86,11 @@ function formatDateTime(dateStr: string) {
 const TYPE_LABELS: Record<string, string> = {
   text: 'Texto',
   image: 'Imagem',
-  audio: 'Audio',
-  video: 'Video',
+  audio: 'Áudio',
+  video: 'Vídeo',
   document: 'Documento',
   sticker: 'Sticker',
-  location: 'Localizacao',
+  location: 'Localização',
   contact: 'Contato',
 }
 
@@ -171,7 +171,7 @@ export function WhatsappDashboardPage() {
   if (isLoading || !data) {
     return (
       <div className="space-y-6">
-        <PageHeader title="WhatsApp Dashboard" description="Analise de mensagens e conversas" />
+        <PageHeader title="WhatsApp Dashboard" description="Análise de mensagens e conversas" />
         <div className="flex items-center justify-center py-24">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -190,7 +190,7 @@ export function WhatsappDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <PageHeader title="WhatsApp Dashboard" description="Analise de mensagens e conversas" />
+        <PageHeader title="WhatsApp Dashboard" description="Análise de mensagens e conversas" />
         <div className="flex flex-wrap items-center gap-2">
           {/* Connection selector */}
           {connections.length > 0 && (
@@ -202,7 +202,7 @@ export function WhatsappDashboardPage() {
               }}
               className="h-7 w-[180px] text-xs"
             >
-              <option value="__all__">Todas as conexoes</option>
+              <option value="__all__">Todas as conexões</option>
               {connections.map(c => (
                 <option key={c.id} value={c.id}>
                   {connectionLabelShort(c)}
@@ -232,10 +232,10 @@ export function WhatsappDashboardPage() {
             <DatePicker
               value={startDate}
               onChange={v => { setStartDate(v); setPeriod(0 as Period) }}
-              placeholder="Inicio"
+              placeholder="Início"
               className="h-7 text-xs w-[140px]"
             />
-            <span className="text-xs text-muted-foreground">ate</span>
+            <span className="text-xs text-muted-foreground">até</span>
             <DatePicker
               value={endDate}
               onChange={v => { setEndDate(v); setPeriod(0 as Period) }}
@@ -264,7 +264,7 @@ export function WhatsappDashboardPage() {
         <KpiCard title="Recebidas" value={kpis.inbound} icon={ArrowDownLeft} color="bg-green-500/10 text-green-500" />
         <KpiCard title="Enviadas" value={kpis.outbound} icon={ArrowUpRight} color="bg-blue-500/10 text-blue-500" />
         <KpiCard title="Contatos ativos" value={kpis.activeContacts} icon={Users} color="bg-purple-500/10 text-purple-500" />
-        <KpiCard title="Nao lidas" value={kpis.unread} icon={MailX} color="bg-amber-500/10 text-amber-500" />
+        <KpiCard title="Não lidas" value={kpis.unread} icon={MailX} color="bg-amber-500/10 text-amber-500" />
         <KpiCard title="Responder depois" value={kpis.replyLater} icon={Timer} color="bg-orange-500/10 text-orange-500" />
         <KpiCard title="Taxa de resposta" value={`${kpis.responseRate}%`} icon={TrendingUp} color="bg-emerald-500/10 text-emerald-500" />
       </div>
@@ -276,7 +276,7 @@ export function WhatsappDashboardPage() {
         </CardHeader>
         <CardContent>
           {volumeByDay.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Sem dados no periodo</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Sem dados no período</p>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={volumeByDay}>
@@ -322,7 +322,7 @@ export function WhatsappDashboardPage() {
         {/* Peak hours */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Horarios de pico</CardTitle>
+            <CardTitle className="text-base">Horários de pico</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -424,7 +424,7 @@ export function WhatsappDashboardPage() {
         {/* Recent messages */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Ultimas mensagens</CardTitle>
+            <CardTitle className="text-base">Últimas mensagens</CardTitle>
           </CardHeader>
           <CardContent>
             {recentMessages.length === 0 ? (

@@ -21,31 +21,31 @@ const statusColors: Record<string, 'default' | 'success' | 'secondary' | 'warnin
 
 const statusLabels: Record<string, string> = {
   SCHEDULED: 'Agendado',
-  COMPLETED: 'Concluido',
+  COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
   IN_PROGRESS: 'Em Andamento',
 }
 
 const typeLabels: Record<string, string> = {
   COMPROMISSO: 'Compromisso',
-  ACAO: 'Acao',
-  REUNIAO: 'Reuniao',
+  ACAO: 'Ação',
+  REUNIAO: 'Reunião',
   VISITA: 'Visita',
-  LIGACAO: 'Ligacao',
+  LIGACAO: 'Ligação',
   OUTRO: 'Outro',
 }
 
 type ViewMode = 'calendar' | 'list'
 
 const columns: Column<Appointment>[] = [
-  { key: 'title', label: 'Titulo' },
+  { key: 'title', label: 'Título' },
   { key: 'type', label: 'Tipo', render: (a) => typeLabels[a.type] ?? a.type },
-  { key: 'startDate', label: 'Inicio', render: (a) => formatDateTime(a.startDate) },
+  { key: 'startDate', label: 'Início', render: (a) => formatDateTime(a.startDate) },
   { key: 'location', label: 'Local', render: (a) => a.location ?? '-' },
   { key: 'status', label: 'Status', render: (a) => <Badge variant={statusColors[a.status] ?? 'secondary'}>{statusLabels[a.status] ?? a.status}</Badge> },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (a) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/agenda/${a.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -82,7 +82,7 @@ export function AppointmentsPage() {
                 }`}
               >
                 <CalendarDays className="h-3.5 w-3.5" />
-                Calendario
+                Calendário
               </button>
               <button
                 onClick={() => setView('list')}
@@ -113,7 +113,7 @@ export function AppointmentsPage() {
             <CardContent className="p-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Buscar por titulo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                <Input placeholder="Buscar por título..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
               </div>
             </CardContent>
           </Card>

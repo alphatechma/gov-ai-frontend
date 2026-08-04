@@ -15,34 +15,34 @@ const faqSections = [
     icon: Zap,
     items: [
       {
-        question: 'Como comeco a usar o GoverneAI?',
-        answer: 'Apos o login, voce sera direcionado ao Dashboard. A partir da barra lateral, acesse os modulos habilitados para seu gabinete. Comece cadastrando seus eleitores e liderancas para aproveitar ao maximo a plataforma.',
+        question: 'Como começo a usar o GoverneAI?',
+        answer: 'Após o login, você será direcionado ao Dashboard. A partir da barra lateral, acesse os módulos habilitados para seu gabinete. Comece cadastrando seus eleitores e lideranças para aproveitar ao máximo a plataforma.',
       },
       {
-        question: 'O que sao os modulos?',
-        answer: 'Modulos sao funcionalidades da plataforma que podem ser habilitadas ou desabilitadas conforme o plano contratado. Cada modulo (Eleitores, Visitas, Chat, IA, etc.) pode ser ativado independentemente pelo administrador.',
+        question: 'O que são os módulos?',
+        answer: 'Módulos são funcionalidades da plataforma que podem ser habilitadas ou desabilitadas conforme o plano contratado. Cada módulo (Eleitores, Visitas, Chat, IA, etc.) pode ser ativado independentemente pelo administrador.',
       },
       {
         question: 'Como altero meu tema (claro/escuro)?',
-        answer: 'Acesse Configuracoes na barra lateral e clique no botao de alternancia de tema. Voce pode escolher entre modo claro e escuro.',
+        answer: 'Acesse Configurações na barra lateral e clique no botão de alternância de tema. Você pode escolher entre modo claro e escuro.',
       },
     ],
   },
   {
-    title: 'Eleitores e Liderancas',
+    title: 'Eleitores e Lideranças',
     icon: Users,
     items: [
       {
         question: 'Como cadastro um novo eleitor?',
-        answer: 'Acesse Eleitores na barra lateral e clique em "Novo Eleitor". Preencha os dados como nome, telefone, bairro e nivel de apoio. Voce tambem pode vincular o eleitor a uma lideranca.',
+        answer: 'Acesse Eleitores na barra lateral e clique em "Novo Eleitor". Preencha os dados como nome, telefone, bairro e nível de apoio. Você também pode vincular o eleitor a uma liderança.',
       },
       {
-        question: 'O que e o Mapa de Calor?',
-        answer: 'O Mapa de Calor mostra a distribuicao geografica dos seus eleitores cadastrados. Ele ajuda a identificar regioes com maior ou menor concentracao de apoiadores, facilitando o planejamento de acoes territoriais.',
+        question: 'O que é o Mapa de Calor?',
+        answer: 'O Mapa de Calor mostra a distribuição geográfica dos seus eleitores cadastrados. Ele ajuda a identificar regiões com maior ou menor concentração de apoiadores, facilitando o planejamento de ações territoriais.',
       },
       {
-        question: 'Como funciona o sistema de liderancas?',
-        answer: 'Liderancas sao pessoas que representam o gabinete em determinadas regioes. Cada lideranca tem uma meta de eleitores e pode ter eleitores vinculados a ela, permitindo acompanhar o desempenho de captacao.',
+        question: 'Como funciona o sistema de lideranças?',
+        answer: 'Lideranças são pessoas que representam o gabinete em determinadas regiões. Cada liderança tem uma meta de eleitores e pode ter eleitores vinculados a ela, permitindo acompanhar o desempenho de captação.',
       },
     ],
   },
@@ -52,51 +52,51 @@ const faqSections = [
     items: [
       {
         question: 'Como registro um atendimento?',
-        answer: 'Acesse Atendimentos e clique em "Novo Atendimento". Selecione a categoria, descreva a solicitacao, vincule a um eleitor se necessario e acompanhe o status ate a resolucao.',
+        answer: 'Acesse Atendimentos e clique em "Novo Atendimento". Selecione a categoria, descreva a solicitação, vincule a um eleitor se necessário e acompanhe o status até a resolução.',
       },
       {
         question: 'Como gerencio tarefas da equipe?',
-        answer: 'O modulo Tarefas permite criar, atribuir e acompanhar tarefas. Cada tarefa tem status (pendente, em andamento, concluida), prioridade e prazo. Use o quadro para visualizar o fluxo de trabalho.',
+        answer: 'O módulo Tarefas permite criar, atribuir e acompanhar tarefas. Cada tarefa tem status (pendente, em andamento, concluída), prioridade e prazo. Use o quadro para visualizar o fluxo de trabalho.',
       },
       {
         question: 'Como funciona a agenda de compromissos?',
-        answer: 'Acesse Compromissos para visualizar e criar eventos. Voce pode definir titulo, data, horario, local e vincular a eleitores ou liderancas.',
+        answer: 'Acesse Compromissos para visualizar e criar eventos. Você pode definir título, data, horário, local e vincular a eleitores ou lideranças.',
       },
     ],
   },
   {
-    title: 'Inteligencia e Relatorios',
+    title: 'Inteligência e Relatórios',
     icon: BarChart3,
     items: [
       {
         question: 'O que o Assistente IA pode fazer?',
-        answer: 'O Assistente IA responde perguntas sobre estrategia politica, analise eleitoral e gestao do gabinete. Com o "Contexto" ativado, ele usa seus dados reais (eleitores, visitas, atendimentos) para dar respostas personalizadas.',
+        answer: 'O Assistente IA responde perguntas sobre estratégia política, análise eleitoral e gestão do gabinete. Com o "Contexto" ativado, ele usa seus dados reais (eleitores, visitas, atendimentos) para dar respostas personalizadas.',
       },
       {
-        question: 'Como exporto relatorios?',
-        answer: 'Acesse Relatorios, selecione o tipo de dado que deseja exportar (eleitores, visitas, atendimentos, etc.) e clique em "Exportar CSV". O arquivo sera baixado automaticamente.',
+        question: 'Como exporto relatórios?',
+        answer: 'Acesse Relatórios, selecione o tipo de dado que deseja exportar (eleitores, visitas, atendimentos, etc.) e clique em "Exportar CSV". O arquivo será baixado automaticamente.',
       },
       {
-        question: 'O que e a Analise Eleitoral?',
-        answer: 'A Analise Eleitoral permite importar dados do TSE e visualizar resultados por secao, bairro e zona. Voce pode comparar eleicoes de anos diferentes e gerar projecoes com auxilio da IA.',
+        question: 'O que é a Análise Eleitoral?',
+        answer: 'A Análise Eleitoral permite importar dados do TSE e visualizar resultados por seção, bairro e zona. Você pode comparar eleições de anos diferentes e gerar projeções com auxílio da IA.',
       },
     ],
   },
   {
-    title: 'Seguranca e Privacidade',
+    title: 'Segurança e Privacidade',
     icon: Shield,
     items: [
       {
-        question: 'Meus dados estao seguros?',
-        answer: 'Sim. O GoverneAI utiliza criptografia em transito (HTTPS), autenticacao JWT com tokens de acesso e refresh, e isolamento multi-tenant — seus dados sao completamente separados de outros gabinetes.',
+        question: 'Meus dados estão seguros?',
+        answer: 'Sim. O GoverneAI utiliza criptografia em trânsito (HTTPS), autenticação JWT com tokens de acesso e refresh, e isolamento multi-tenant — seus dados são completamente separados de outros gabinetes.',
       },
       {
         question: 'Como altero minha senha?',
-        answer: 'Acesse Meu Perfil na barra lateral. Na secao "Alterar Senha", informe sua senha atual e a nova senha desejada.',
+        answer: 'Acesse Meu Perfil na barra lateral. Na seção "Alterar Senha", informe sua senha atual e a nova senha desejada.',
       },
       {
         question: 'Quem pode ver meus dados?',
-        answer: 'Apenas usuarios do seu gabinete (tenant) tem acesso aos dados. Administradores do gabinete podem gerenciar usuarios e permissoes. A equipe GoverneAI nao acessa seus dados operacionais.',
+        answer: 'Apenas usuários do seu gabinete (tenant) têm acesso aos dados. Administradores do gabinete podem gerenciar usuários e permissões. A equipe GoverneAI não acessa seus dados operacionais.',
       },
     ],
   },

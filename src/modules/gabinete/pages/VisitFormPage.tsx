@@ -15,7 +15,7 @@ import { VisitStatus } from '@/types/enums'
 const statusLabels: Record<string, string> = {
   [VisitStatus.AGENDADA]: 'Agendada',
   [VisitStatus.EM_ATENDIMENTO]: 'Em Atendimento',
-  [VisitStatus.CONCLUIDA]: 'Concluida',
+  [VisitStatus.CONCLUIDA]: 'Concluída',
   [VisitStatus.CANCELADA]: 'Cancelada',
 }
 
@@ -23,9 +23,9 @@ const REQUEST_TYPES = [
   { value: '', label: 'Selecione o tipo' },
   { value: 'ESPORTE', label: 'Esporte' },
   { value: 'RELIGIOSO', label: 'Religioso' },
-  { value: 'SAUDE', label: 'Saude' },
-  { value: 'PATROCINIO', label: 'Patrocinio' },
-  { value: 'REUNIAO', label: 'Reuniao' },
+  { value: 'SAUDE', label: 'Saúde' },
+  { value: 'PATROCINIO', label: 'Patrocínio' },
+  { value: 'REUNIAO', label: 'Reunião' },
   { value: 'VISITA_LOCAL', label: 'Visita ao Local' },
   { value: 'OUTROS', label: 'Outros' },
 ]
@@ -37,9 +37,9 @@ const AREA_TYPES = [
 ]
 
 const DISTRICTS = [
-  { value: '1_DISTRITO', label: '1o Distrito' },
-  { value: '2_DISTRITO', label: '2o Distrito' },
-  { value: '3_DISTRITO', label: '3o Distrito' },
+  { value: '1_DISTRITO', label: '1º Distrito' },
+  { value: '2_DISTRITO', label: '2º Distrito' },
+  { value: '3_DISTRITO', label: '3º Distrito' },
 ]
 
 export function VisitFormPage() {
@@ -229,25 +229,25 @@ export function VisitFormPage() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Nome *</label>
-              <Input value={form.visitorName} onChange={(e) => set('visitorName', e.target.value)} placeholder="Nome do cidadao" required />
+              <Input value={form.visitorName} onChange={(e) => set('visitorName', e.target.value)} placeholder="Nome do cidadão" required />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Data *</label>
               <DatePicker value={form.date} onChange={(v) => set('date', v)} placeholder="Selecione a data" />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <label className="text-sm font-medium">Endereco</label>
-              <Input value={form.visitorAddress} onChange={(e) => set('visitorAddress', e.target.value)} placeholder="Rua, numero, bairro..." />
+              <label className="text-sm font-medium">Endereço</label>
+              <Input value={form.visitorAddress} onChange={(e) => set('visitorAddress', e.target.value)} placeholder="Rua, número, bairro..." />
             </div>
           </CardContent>
         </Card>
 
         {/* Regiao e Solicitacao */}
         <Card>
-          <CardHeader><CardTitle>Regiao e Solicitacao</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Região e Solicitação</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo de Regiao</label>
+              <label className="text-sm font-medium">Tipo de Região</label>
               <Select value={form.areaType} onChange={(e) => { set('areaType', e.target.value); set('district', ''); set('neighborhood', '') }}>
                 {AREA_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
@@ -268,7 +268,7 @@ export function VisitFormPage() {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo de Solicitacao</label>
+              <label className="text-sm font-medium">Tipo de Solicitação</label>
               <Select value={form.requestType} onChange={(e) => { set('requestType', e.target.value); if (e.target.value !== 'OUTROS') set('requestTypeOther', '') }}>
                 {REQUEST_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
               </Select>
@@ -338,14 +338,14 @@ export function VisitFormPage() {
               )}
               {form.voterId && (
                 <button type="button" className="text-xs text-muted-foreground hover:text-destructive" onClick={() => { setForm((p) => ({ ...p, voterId: '' })); setVoterSearch('') }}>
-                  Remover vinculo
+                  Remover vínculo
                 </button>
               )}
             </div>
 
             {/* Lideranca dropdown */}
             <div className="space-y-2 relative" ref={leaderRef}>
-              <label className="text-sm font-medium">Lideranca</label>
+              <label className="text-sm font-medium">Liderança</label>
               <Input
                 value={leaderSearch}
                 onChange={(e) => {
@@ -354,7 +354,7 @@ export function VisitFormPage() {
                   setShowLeaderDropdown(true)
                 }}
                 onFocus={() => setShowLeaderDropdown(true)}
-                placeholder="Digite o nome da lideranca..."
+                placeholder="Digite o nome da liderança..."
               />
               {showLeaderDropdown && leaderSearch.length > 0 && (
                 <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
@@ -393,7 +393,7 @@ export function VisitFormPage() {
               )}
               {form.leaderId && (
                 <button type="button" className="text-xs text-muted-foreground hover:text-destructive" onClick={() => { setForm((p) => ({ ...p, leaderId: '' })); setLeaderSearch('') }}>
-                  Remover vinculo
+                  Remover vínculo
                 </button>
               )}
             </div>
@@ -409,8 +409,8 @@ export function VisitFormPage() {
               <Textarea value={form.objective} onChange={(e) => set('objective', e.target.value)} rows={3} placeholder="Descreva o objetivo da visita..." />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Solicitacao do Cidadao</label>
-              <Textarea value={form.requestDescription} onChange={(e) => set('requestDescription', e.target.value)} rows={3} placeholder="Descreva a solicitacao do cidadao..." />
+              <label className="text-sm font-medium">Solicitação do Cidadão</label>
+              <Textarea value={form.requestDescription} onChange={(e) => set('requestDescription', e.target.value)} rows={3} placeholder="Descreva a solicitação do cidadão..." />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Resultado</label>

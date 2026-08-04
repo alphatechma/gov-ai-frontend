@@ -31,21 +31,21 @@ const TYPE_COLORS: Record<string, string> = {
 
 const TYPE_LABELS: Record<string, string> = {
   COMPROMISSO: 'Compromisso',
-  ACAO: 'Acao',
-  REUNIAO: 'Reuniao',
+  ACAO: 'Ação',
+  REUNIAO: 'Reunião',
   VISITA: 'Visita',
-  LIGACAO: 'Ligacao',
+  LIGACAO: 'Ligação',
   OUTRO: 'Outro',
 }
 
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: 'Agendado',
-  COMPLETED: 'Concluido',
+  COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
   IN_PROGRESS: 'Em Andamento',
 }
 
-const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
+const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 interface CalendarViewProps {
   appointments: Appointment[]

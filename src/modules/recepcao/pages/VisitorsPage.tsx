@@ -30,11 +30,11 @@ export function VisitorsPage() {
     { key: 'name', label: 'Nome', render: (v) => v.name },
     { key: 'phone', label: 'Telefone', render: (v) => v.phone || '-' },
     { key: 'email', label: 'E-mail', render: (v) => v.email || '-' },
-    { key: 'organization', label: 'Organizacao', render: (v) => v.organization || '-' },
+    { key: 'organization', label: 'Organização', render: (v) => v.organization || '-' },
     { key: 'createdAt', label: 'Cadastrado em', render: (v) => formatDate(v.createdAt) },
     {
       key: 'id',
-      label: 'Acoes',
+      label: 'Ações',
       render: (v) => (
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" asChild>
@@ -76,7 +76,7 @@ export function VisitorsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, telefone ou organizacao..."
+              placeholder="Buscar por nome, telefone ou organização..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
@@ -96,7 +96,7 @@ export function VisitorsPage() {
             Anterior
           </Button>
           <span className="text-sm text-muted-foreground">
-            Pagina {data.page} de {Math.ceil(data.total / data.limit)}
+            Página {data.page} de {Math.ceil(data.total / data.limit)}
           </span>
           <Button
             variant="outline"
@@ -104,7 +104,7 @@ export function VisitorsPage() {
             disabled={page >= Math.ceil(data.total / data.limit)}
             onClick={() => setPage((p) => p + 1)}
           >
-            Proxima
+            Próxima
           </Button>
         </div>
       )}

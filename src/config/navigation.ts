@@ -41,10 +41,10 @@ export interface NavGroup {
 
 export const navigation: NavGroup[] = [
   {
-    label: 'Acesso Rapido',
+    label: 'Acesso Rápido',
     icon: Zap,
     items: [
-      { label: 'Acesso Rapido', path: '/', icon: Zap },
+      { label: 'Acesso Rápido', path: '/', icon: Zap },
     ],
   },
   {
@@ -60,8 +60,8 @@ export const navigation: NavGroup[] = [
     items: [
       { label: 'Eleitores', path: '/eleitores', icon: Users, moduleKey: 'voters' },
       { label: 'Mapa de Calor', path: '/mapa-calor', icon: Map, moduleKey: 'heatmap' },
-      { label: 'Liderancas', path: '/liderancas', icon: Crown, moduleKey: 'leaders' },
-      { label: 'Analise Eleitoral', path: '/resultados-eleitorais', icon: BarChart3, moduleKey: 'election-analysis' },
+      { label: 'Lideranças', path: '/liderancas', icon: Crown, moduleKey: 'leaders' },
+      { label: 'Análise Eleitoral', path: '/resultados-eleitorais', icon: BarChart3, moduleKey: 'election-analysis' },
     ],
   },
   {
@@ -79,31 +79,31 @@ export const navigation: NavGroup[] = [
     icon: Scale,
     items: [
       { label: 'Projetos de Lei', path: '/projetos', icon: Landmark, moduleKey: 'projects' },
-      { label: 'Proposicoes', path: '/proposicoes', icon: FileText, moduleKey: 'bills' },
+      { label: 'Proposições', path: '/proposicoes', icon: FileText, moduleKey: 'bills' },
       { label: 'Emendas', path: '/emendas', icon: FileText, moduleKey: 'amendments' },
-      { label: 'Votacoes', path: '/votacoes', icon: Vote, moduleKey: 'voting-records' },
+      { label: 'Votações', path: '/votacoes', icon: Vote, moduleKey: 'voting-records' },
       { label: 'CEAP', path: '/ceap', icon: DollarSign, moduleKey: 'ceap' },
     ],
   },
   {
-    label: 'Politico',
+    label: 'Político',
     icon: Handshake,
     items: [
-      { label: 'Contatos Politicos', path: '/contatos-politicos', icon: Users, moduleKey: 'political-contacts' },
+      { label: 'Contatos Políticos', path: '/contatos-politicos', icon: Users, moduleKey: 'political-contacts' },
       { label: 'Requerimentos', path: '/requerimentos', icon: Send, moduleKey: 'executive-requests' },
     ],
   },
   {
-    label: 'Comunicacao',
+    label: 'Comunicação',
     icon: MessageSquare,
     items: [
       { label: 'Chat', path: '/chat', icon: MessageSquare, moduleKey: 'chat' },
       { label: 'WhatsApp CRM', path: '/whatsapp', icon: MessageCircle, moduleKey: 'whatsapp' },
       { label: 'WhatsApp Analytics', path: '/whatsapp-analytics', icon: BarChart3, moduleKey: 'whatsapp' },
-      { label: 'WhatsApp Conexoes', path: '/whatsapp-configuracoes', icon: Settings, moduleKey: 'whatsapp' },
+      { label: 'WhatsApp Conexões', path: '/whatsapp-configuracoes', icon: Settings, moduleKey: 'whatsapp' },
       { label: 'Disparos', path: '/disparos', icon: Megaphone, moduleKey: 'whatsapp' },
       { label: 'Assistente IA', path: '/ia', icon: Brain, moduleKey: 'ai' },
-      { label: 'Relatorios', path: '/relatorios', icon: BarChart3, moduleKey: 'reports' },
+      { label: 'Relatórios', path: '/relatorios', icon: BarChart3, moduleKey: 'reports' },
     ],
   },
 ]

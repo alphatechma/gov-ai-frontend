@@ -21,15 +21,15 @@ const statusColors: Record<string, 'warning' | 'default' | 'success' | 'destruct
 
 const statusLabels: Record<string, string> = {
   ENVIADO: 'Enviado',
-  EM_ANALISE: 'Em Analise',
+  EM_ANALISE: 'Em Análise',
   RESPONDIDO: 'Respondido',
   ATENDIDO: 'Atendido',
   NEGADO: 'Negado',
 }
 
 const typeLabels: Record<string, string> = {
-  OFICIO: 'Oficio',
-  INDICACAO: 'Indicacao',
+  OFICIO: 'Ofício',
+  INDICACAO: 'Indicação',
   REQUERIMENTO: 'Requerimento',
 }
 
@@ -37,12 +37,12 @@ const columns: Column<ExecutiveRequest>[] = [
   { key: 'type', label: 'Tipo', render: (r) => typeLabels[r.type] ?? r.type },
   { key: 'protocolNumber', label: 'Protocolo', render: (r) => r.protocolNumber ?? '-' },
   { key: 'subject', label: 'Assunto', render: (r) => <span className="line-clamp-1 max-w-xs">{r.subject}</span> },
-  { key: 'recipientOrgan', label: 'Destinatario', render: (r) => r.recipientOrgan ?? '-' },
+  { key: 'recipientOrgan', label: 'Destinatário', render: (r) => r.recipientOrgan ?? '-' },
   { key: 'status', label: 'Status', render: (r) => <Badge variant={statusColors[r.status] ?? 'secondary'}>{statusLabels[r.status] ?? r.status}</Badge> },
   { key: 'createdAt', label: 'Data', render: (r) => formatDate(r.createdAt) },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (r) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/requerimentos/${r.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -64,7 +64,7 @@ export function ExecutiveRequestsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Requerimentos"
-        description="Oficios, indicacoes e requerimentos ao executivo"
+        description="Ofícios, indicações e requerimentos ao executivo"
         action={
           <Button asChild>
             <Link to="/requerimentos/novo">

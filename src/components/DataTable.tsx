@@ -102,7 +102,7 @@ export function DataTable<T extends Record<string, any>>({
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
             >
-              Proximo
+              Próximo
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

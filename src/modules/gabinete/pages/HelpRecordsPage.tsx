@@ -22,28 +22,28 @@ const statusColors: Record<string, 'warning' | 'default' | 'success' | 'secondar
 const statusLabels: Record<string, string> = {
   PENDING: 'Pendente',
   IN_PROGRESS: 'Em Andamento',
-  COMPLETED: 'Concluido',
+  COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
 }
 
 const categoryLabels: Record<string, string> = {
-  SAUDE: 'Saude',
-  EDUCACAO: 'Educacao',
-  ASSISTENCIA_SOCIAL: 'Assistencia Social',
+  SAUDE: 'Saúde',
+  EDUCACAO: 'Educação',
+  ASSISTENCIA_SOCIAL: 'Assistência Social',
   INFRAESTRUTURA: 'Infraestrutura',
   EMPREGO: 'Emprego',
-  DOCUMENTACAO: 'Documentacao',
+  DOCUMENTACAO: 'Documentação',
   OUTROS: 'Outros',
 }
 
 const columns: Column<HelpRecord>[] = [
   { key: 'category', label: 'Categoria', render: (h) => h.category ? (categoryLabels[h.category] ?? h.category) : '-' },
-  { key: 'observations', label: 'Descricao', render: (h) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
+  { key: 'observations', label: 'Descrição', render: (h) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
   { key: 'status', label: 'Status', render: (h) => <Badge variant={statusColors[h.status] ?? 'secondary'}>{statusLabels[h.status] ?? h.status}</Badge> },
   { key: 'createdAt', label: 'Data', render: (h) => formatDate(h.createdAt) },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (h) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/atendimentos/${h.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -109,7 +109,7 @@ export function HelpRecordsPage() {
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por descricao..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Buscar por descrição..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
         </CardContent>
       </Card>

@@ -21,7 +21,7 @@ const typeLabels: Record<string, string> = {
 }
 
 const statusLabels: Record<string, string> = {
-  EM_TRAMITACAO: 'Em Tramitacao',
+  EM_TRAMITACAO: 'Em Tramitação',
   APROVADO: 'Aprovado',
   REJEITADO: 'Rejeitado',
   ARQUIVADO: 'Arquivado',
@@ -37,20 +37,20 @@ const statusColors: Record<string, 'default' | 'success' | 'destructive' | 'seco
 }
 
 const authorshipLabels: Record<string, string> = {
-  PROPRIO: 'Proprio',
+  PROPRIO: 'Próprio',
   COAUTORIA: 'Coautoria',
   ACOMPANHAMENTO: 'Acompanhamento',
 }
 
 const columns: Column<Bill>[] = [
   { key: 'number', label: 'Nº', render: (b) => b.number ?? '-' },
-  { key: 'title', label: 'Titulo' },
+  { key: 'title', label: 'Título' },
   { key: 'type', label: 'Tipo', render: (b) => <Badge variant="default">{typeLabels[b.type] ?? b.type}</Badge> },
   { key: 'status', label: 'Status', render: (b) => <Badge variant={statusColors[b.status] ?? 'secondary'}>{statusLabels[b.status] ?? b.status}</Badge> },
   { key: 'authorship', label: 'Autoria', render: (b) => authorshipLabels[b.authorship ?? ''] ?? b.authorship ?? '-' },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (b) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/proposicoes/${b.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -71,13 +71,13 @@ export function BillsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Proposicoes"
-        description="Proposicoes legislativas"
+        title="Proposições"
+        description="Proposições legislativas"
         action={
           <Button asChild>
             <Link to="/proposicoes/novo">
               <Plus className="h-4 w-4" />
-              Nova Proposicao
+              Nova Proposição
             </Link>
           </Button>
         }
@@ -87,7 +87,7 @@ export function BillsPage() {
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por titulo ou numero..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Buscar por título ou número..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
         </CardContent>
       </Card>

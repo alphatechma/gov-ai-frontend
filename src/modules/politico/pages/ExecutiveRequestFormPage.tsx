@@ -13,14 +13,14 @@ import { RequestType, RequestStatus } from '@/types/enums'
 import type { ExecutiveRequest } from '@/types/entities'
 
 const TYPE_LABELS: Record<string, string> = {
-  OFICIO: 'Oficio',
-  INDICACAO: 'Indicacao',
+  OFICIO: 'Ofício',
+  INDICACAO: 'Indicação',
   REQUERIMENTO: 'Requerimento',
 }
 
 const STATUS_LABELS: Record<string, string> = {
   ENVIADO: 'Enviado',
-  EM_ANALISE: 'Em Analise',
+  EM_ANALISE: 'Em Análise',
   RESPONDIDO: 'Respondido',
   ATENDIDO: 'Atendido',
   NEGADO: 'Negado',
@@ -136,12 +136,12 @@ export function ExecutiveRequestFormPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Numero do Protocolo</label>
+              <label className="text-sm font-medium">Número do Protocolo</label>
               <Input value={form.protocolNumber} onChange={(e) => set('protocolNumber', e.target.value)} placeholder="Ex: OF-2026/001" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Orgao Destinatario</label>
-              <Input value={form.recipientOrgan} onChange={(e) => set('recipientOrgan', e.target.value)} placeholder="Ex: Secretaria de Saude" />
+              <label className="text-sm font-medium">Órgão Destinatário</label>
+              <Input value={form.recipientOrgan} onChange={(e) => set('recipientOrgan', e.target.value)} placeholder="Ex: Secretaria de Saúde" />
             </div>
             <div className="space-y-2 sm:col-span-2 lg:col-span-3">
               <label className="text-sm font-medium">Assunto *</label>
@@ -166,7 +166,7 @@ export function ExecutiveRequestFormPage() {
           <CardHeader><CardTitle>Detalhes</CardTitle></CardHeader>
           <CardContent className="grid gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Descricao *</label>
+              <label className="text-sm font-medium">Descrição *</label>
               <Textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={4} placeholder="Descreva o pedido..." required />
             </div>
             {isEdit && showResponse && (

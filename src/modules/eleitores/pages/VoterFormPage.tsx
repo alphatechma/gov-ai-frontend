@@ -266,7 +266,7 @@ export function VoterFormPage() {
               <DatePicker value={form.birthDate} onChange={(v) => set('birthDate', v)} placeholder="Selecione a data" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Genero</label>
+              <label className="text-sm font-medium">Gênero</label>
               <Select value={form.gender} onChange={(e) => set('gender', e.target.value)}>
                 {GENDER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
@@ -275,11 +275,11 @@ export function VoterFormPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Endereco</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Endereço</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2 sm:col-span-2 lg:col-span-3">
-              <label className="text-sm font-medium">Endereco</label>
-              <Input value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="Rua, numero, complemento" />
+              <label className="text-sm font-medium">Endereço</label>
+              <Input value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="Rua, número, complemento" />
             </div>
             <div className="space-y-2 relative" ref={neighborhoodRef}>
               <label className="text-sm font-medium">Bairro</label>
@@ -329,7 +329,7 @@ export function VoterFormPage() {
           <CardHeader><CardTitle>Dados Eleitorais</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Titulo de Eleitor</label>
+              <label className="text-sm font-medium">Título de Eleitor</label>
               <Input value={form.voterRegistration} onChange={(e) => set('voterRegistration', e.target.value)} placeholder="0000 0000 0000" />
             </div>
             <div className="space-y-2">
@@ -337,11 +337,11 @@ export function VoterFormPage() {
               <Input value={form.votingZone} onChange={(e) => set('votingZone', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Secao Eleitoral</label>
+              <label className="text-sm font-medium">Seção Eleitoral</label>
               <Input value={form.votingSection} onChange={(e) => set('votingSection', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nivel de Confianca</label>
+              <label className="text-sm font-medium">Nível de Confiança</label>
               <Select value={form.confidenceLevel} onChange={(e) => set('confidenceLevel', e.target.value)}>
                 <option value="NEUTRO">Neutro</option>
                 <option value="ALTO">Alto</option>
@@ -349,7 +349,7 @@ export function VoterFormPage() {
               </Select>
             </div>
             <div className="space-y-2 relative" ref={leaderRef}>
-              <label className="text-sm font-medium">Lideranca</label>
+              <label className="text-sm font-medium">Liderança</label>
               <Input
                 value={leaderSearch}
                 onChange={(e) => {
@@ -358,7 +358,7 @@ export function VoterFormPage() {
                   setShowLeaderDropdown(true)
                 }}
                 onFocus={() => setShowLeaderDropdown(true)}
-                placeholder="Digite o nome da lideranca..."
+                placeholder="Digite o nome da liderança..."
               />
               {showLeaderDropdown && leaderSearch.length > 0 && (
                 <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
@@ -399,15 +399,15 @@ export function VoterFormPage() {
             </div>
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium">Tags</label>
-              <Input value={form.tags} onChange={(e) => set('tags', e.target.value)} placeholder="Separadas por virgula: tag1, tag2" />
+              <Input value={form.tags} onChange={(e) => set('tags', e.target.value)} placeholder="Separadas por vírgula: tag1, tag2" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Observacoes</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Observações</CardTitle></CardHeader>
           <CardContent>
-            <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={4} placeholder="Anotacoes sobre o eleitor..." />
+            <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={4} placeholder="Anotações sobre o eleitor..." />
           </CardContent>
         </Card>
 

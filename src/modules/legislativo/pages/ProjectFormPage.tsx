@@ -12,9 +12,9 @@ import { ProjectStatus } from '@/types/enums'
 import type { Project } from '@/types/entities'
 
 const STATUS_LABELS: Record<string, string> = {
-  EM_ELABORACAO: 'Em Elaboracao',
+  EM_ELABORACAO: 'Em Elaboração',
   PROTOCOLADO: 'Protocolado',
-  EM_TRAMITACAO: 'Em Tramitacao',
+  EM_TRAMITACAO: 'Em Tramitação',
   APROVADO: 'Aprovado',
   REJEITADO: 'Rejeitado',
   ARQUIVADO: 'Arquivado',
@@ -119,11 +119,11 @@ export function ProjectFormPage() {
           <CardHeader><CardTitle>Dados do Projeto</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Numero</label>
+              <label className="text-sm font-medium">Número</label>
               <Input value={form.number} onChange={(e) => set('number', e.target.value)} placeholder="Ex: PL 001/2026" />
             </div>
             <div className="space-y-2 sm:col-span-1 lg:col-span-2">
-              <label className="text-sm font-medium">Titulo *</label>
+              <label className="text-sm font-medium">Título *</label>
               <Input value={form.title} onChange={(e) => set('title', e.target.value)} required />
             </div>
             {isEdit && (
@@ -143,7 +143,7 @@ export function ProjectFormPage() {
 
         {isEdit && (
           <Card>
-            <CardHeader><CardTitle>Votacao</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Votação</CardTitle></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Votos a Favor</label>

@@ -100,7 +100,7 @@ function QrPanel({
     <div className="flex flex-col items-center gap-3 p-4 border rounded-lg bg-background">
       <img src={qrCode} alt="QR Code WhatsApp" className="w-56 h-56" />
       <p className="text-xs text-muted-foreground text-center max-w-xs">
-        Abra o WhatsApp no celular, va em <strong>Dispositivos conectados</strong> e escaneie o QR Code
+        Abra o WhatsApp no celular, vá em <strong>Dispositivos conectados</strong> e escaneie o QR Code
       </p>
     </div>
   )
@@ -171,7 +171,7 @@ function ConnectionCard({
 
   const handleDelete = () => {
     if (!window.confirm(
-      `Tem certeza que deseja remover esta conexao? As mensagens ja recebidas serao mantidas, mas a conexao sera desativada.`,
+      `Tem certeza que deseja remover esta conexão? As mensagens já recebidas serão mantidas, mas a conexão será desativada.`,
     )) return
     del.mutate()
   }
@@ -244,7 +244,7 @@ function ConnectionCard({
                     </button>
                     {conn.isDefault && (
                       <Badge variant="outline" className="text-[10px] h-4 px-1.5">
-                        <Star className="h-2.5 w-2.5 mr-0.5" /> Padrao
+                        <Star className="h-2.5 w-2.5 mr-0.5" /> Padrão
                       </Badge>
                     )}
                     <Badge
@@ -268,7 +268,7 @@ function ConnectionCard({
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground italic">
-                      Numero nao identificado
+                      Número não identificado
                     </p>
                   )}
                   <p className="text-[10px] text-muted-foreground">
@@ -322,12 +322,12 @@ function ConnectionCard({
                   (conn.isDefault && !canUnsetDefault)
                 }
                 className="h-7 text-xs"
-                title={conn.isDefault ? 'Remover padrao' : 'Definir como padrao'}
+                title={conn.isDefault ? 'Remover padrão' : 'Definir como padrão'}
               >
                 {conn.isDefault ? (
-                  <><StarOff className="h-3.5 w-3.5" /> Remover padrao</>
+                  <><StarOff className="h-3.5 w-3.5" /> Remover padrão</>
                 ) : (
-                  <><Star className="h-3.5 w-3.5" /> Definir padrao</>
+                  <><Star className="h-3.5 w-3.5" /> Definir padrão</>
                 )}
               </Button>
 
@@ -401,7 +401,7 @@ export function WhatsappSettingsPage() {
       qc.invalidateQueries({ queryKey: ['whatsapp', 'connections'] })
     },
     onError: (err: any) => {
-      alert(err?.response?.data?.message || 'Erro ao criar conexao')
+      alert(err?.response?.data?.message || 'Erro ao criar conexão')
       setCreating(false)
     },
   })
@@ -417,8 +417,8 @@ export function WhatsappSettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="WhatsApp - Configuracoes"
-        description="Gerencie os numeros conectados ao seu tenant"
+        title="WhatsApp - Configurações"
+        description="Gerencie os números conectados ao seu tenant"
         action={
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="h-3.5 w-3.5" /> Atualizar
@@ -430,7 +430,7 @@ export function WhatsappSettingsPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Adicionar nova conexao
+            <Plus className="h-4 w-4" /> Adicionar nova conexão
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -460,7 +460,7 @@ export function WhatsappSettingsPage() {
             </Button>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            Uma nova instancia sera criada e um QR Code sera gerado para parear o numero.
+            Uma nova instância será criada e um QR Code será gerado para parear o número.
           </p>
         </CardContent>
       </Card>
@@ -469,7 +469,7 @@ export function WhatsappSettingsPage() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground">
-            Conexoes cadastradas
+            Conexões cadastradas
             {connections.length > 0 && (
               <span className="ml-1 text-xs">({connections.length})</span>
             )}
@@ -488,9 +488,9 @@ export function WhatsappSettingsPage() {
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
                 <WifiOff className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium">Nenhuma conexao cadastrada</p>
+              <p className="text-sm font-medium">Nenhuma conexão cadastrada</p>
               <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-                Adicione uma nova conexao acima para comecar a gerenciar conversas no WhatsApp.
+                Adicione uma nova conexão acima para começar a gerenciar conversas no WhatsApp.
               </p>
             </CardContent>
           </Card>

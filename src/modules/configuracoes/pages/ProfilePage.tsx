@@ -75,7 +75,7 @@ export function ProfilePage() {
     e.preventDefault()
     setPasswordMsg(null)
     if (passwordForm.password !== passwordForm.confirmPassword) {
-      setPasswordMsg({ type: 'error', text: 'As senhas nao coincidem.' })
+      setPasswordMsg({ type: 'error', text: 'As senhas não coincidem.' })
       return
     }
     if (passwordForm.password.length < 6) {
@@ -97,14 +97,14 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Meu Perfil" description="Gerencie suas informacoes pessoais" />
+      <PageHeader title="Meu Perfil" description="Gerencie suas informações pessoais" />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Info pessoal */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <User className="h-5 w-5" /> Informacoes Pessoais
+              <User className="h-5 w-5" /> Informações Pessoais
             </CardTitle>
           </CardHeader>
           <CardContent>

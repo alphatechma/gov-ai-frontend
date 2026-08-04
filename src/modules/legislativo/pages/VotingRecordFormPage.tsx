@@ -12,11 +12,11 @@ import { VoteChoice } from '@/types/enums'
 import type { VotingRecord } from '@/types/entities'
 
 const VOTE_LABELS: Record<string, string> = {
-  FAVORAVEL: 'Favoravel',
-  CONTRARIO: 'Contrario',
-  ABSTENCAO: 'Abstencao',
+  FAVORAVEL: 'Favorável',
+  CONTRARIO: 'Contrário',
+  ABSTENCAO: 'Abstenção',
   AUSENTE: 'Ausente',
-  OBSTRUCAO: 'Obstrucao',
+  OBSTRUCAO: 'Obstrução',
 }
 
 const RESULT_LABELS: Record<string, string> = {
@@ -102,13 +102,13 @@ export function VotingRecordFormPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{isEdit ? 'Editar Votacao' : 'Nova Votacao'}</h1>
+          <h1 className="text-2xl font-bold">{isEdit ? 'Editar Votação' : 'Nova Votação'}</h1>
           <p className="text-sm text-muted-foreground">
-            {isEdit ? 'Atualize os dados da votacao' : 'Registre uma nova votacao'}
+            {isEdit ? 'Atualize os dados da votação' : 'Registre uma nova votação'}
           </p>
         </div>
         {isEdit && (
-          <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta votacao?')) remove.mutate() }}>
+          <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta votação?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
@@ -116,18 +116,18 @@ export function VotingRecordFormPage() {
 
       <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} className="space-y-6">
         <Card>
-          <CardHeader><CardTitle>Dados da Votacao</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Dados da Votação</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2 sm:col-span-2 lg:col-span-3">
-              <label className="text-sm font-medium">Materia *</label>
-              <Input value={form.subject} onChange={(e) => set('subject', e.target.value)} required placeholder="Ex: PL 001/2026 - Titulo da proposicao" />
+              <label className="text-sm font-medium">Matéria *</label>
+              <Input value={form.subject} onChange={(e) => set('subject', e.target.value)} required placeholder="Ex: PL 001/2026 - Título da proposição" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Data *</label>
               <Input type="datetime-local" value={form.date} onChange={(e) => set('date', e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Sessao</label>
+              <label className="text-sm font-medium">Sessão</label>
               <Input value={form.session} onChange={(e) => set('session', e.target.value)} placeholder="Ex: 123/2026" />
             </div>
             <div className="space-y-2">
@@ -147,11 +147,11 @@ export function VotingRecordFormPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Observacoes</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Observações</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-2">
               <label className="text-sm font-medium">Notas</label>
-              <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={3} placeholder="Observacoes sobre a votacao..." />
+              <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} rows={3} placeholder="Observações sobre a votação..." />
             </div>
           </CardContent>
         </Card>
@@ -160,7 +160,7 @@ export function VotingRecordFormPage() {
           <Button variant="outline" type="button" onClick={() => navigate('/votacoes')}>Cancelar</Button>
           <Button type="submit" disabled={save.isPending}>
             {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Registrar Votacao'}
+            {isEdit ? 'Salvar' : 'Registrar Votação'}
           </Button>
         </div>
 

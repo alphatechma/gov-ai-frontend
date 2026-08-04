@@ -14,16 +14,16 @@ import { formatDate, cn } from '@/lib/utils'
 const statusConfig: Record<string, { label: string; className: string }> = {
   [VisitStatus.AGENDADA]: { label: 'Agendada', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
   [VisitStatus.EM_ATENDIMENTO]: { label: 'Em Atendimento', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' },
-  [VisitStatus.CONCLUIDA]: { label: 'Concluida', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
+  [VisitStatus.CONCLUIDA]: { label: 'Concluída', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
   [VisitStatus.CANCELADA]: { label: 'Cancelada', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' },
 }
 
 const requestTypeLabels: Record<string, string> = {
   ESPORTE: 'Esporte',
   RELIGIOSO: 'Religioso',
-  SAUDE: 'Saude',
-  PATROCINIO: 'Patrocinio',
-  REUNIAO: 'Reuniao',
+  SAUDE: 'Saúde',
+  PATROCINIO: 'Patrocínio',
+  REUNIAO: 'Reunião',
   VISITA_LOCAL: 'Visita ao Local',
   OUTROS: 'Outros',
 }
@@ -61,7 +61,7 @@ const columns: Column<Visit>[] = [
   { key: 'objective', label: 'Objetivo', render: (v) => <span className="line-clamp-1 max-w-xs">{v.objective ?? '-'}</span> },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (v) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/visitas/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>

@@ -11,9 +11,9 @@ import { useCrud } from '@/lib/useCrud'
 import type { Project } from '@/types/entities'
 
 const statusLabels: Record<string, string> = {
-  EM_ELABORACAO: 'Em Elaboracao',
+  EM_ELABORACAO: 'Em Elaboração',
   PROTOCOLADO: 'Protocolado',
-  EM_TRAMITACAO: 'Em Tramitacao',
+  EM_TRAMITACAO: 'Em Tramitação',
   APROVADO: 'Aprovado',
   REJEITADO: 'Rejeitado',
   ARQUIVADO: 'Arquivado',
@@ -30,12 +30,12 @@ const statusColors: Record<string, 'secondary' | 'default' | 'warning' | 'succes
 
 const columns: Column<Project>[] = [
   { key: 'number', label: 'Nº', render: (p) => p.number ?? '-' },
-  { key: 'title', label: 'Titulo' },
+  { key: 'title', label: 'Título' },
   { key: 'status', label: 'Status', render: (p) => <Badge variant={statusColors[p.status] ?? 'secondary'}>{statusLabels[p.status] ?? p.status}</Badge> },
-  { key: 'views', label: 'Visualizacoes' },
+  { key: 'views', label: 'Visualizações' },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (p) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/projetos/${p.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -72,7 +72,7 @@ export function ProjectsPage() {
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por titulo ou numero..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Buscar por título ou número..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
         </CardContent>
       </Card>

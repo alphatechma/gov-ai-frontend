@@ -15,7 +15,7 @@ import type { HelpRecord, HelpType, Voter, Leader } from '@/types/entities'
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Pendente',
   IN_PROGRESS: 'Em Andamento',
-  COMPLETED: 'Concluido',
+  COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
 }
 
@@ -269,7 +269,7 @@ export function HelpRecordFormPage() {
             </div>
 
             <div className="space-y-2 relative" ref={leaderRef}>
-              <label className="text-sm font-medium">Lideranca Responsavel</label>
+              <label className="text-sm font-medium">Liderança Responsável</label>
               <Input
                 value={leaderSearch}
                 onChange={(e) => {
@@ -278,7 +278,7 @@ export function HelpRecordFormPage() {
                   setShowLeaderDropdown(true)
                 }}
                 onFocus={() => setShowLeaderDropdown(true)}
-                placeholder="Digite o nome da lideranca..."
+                placeholder="Digite o nome da liderança..."
               />
               {showLeaderDropdown && leaderSearch.length > 0 && (
                 <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
@@ -380,7 +380,7 @@ export function HelpRecordFormPage() {
               <Input
                 value={form.category}
                 onChange={(e) => set('category', e.target.value)}
-                placeholder="Ex: Saude, Educacao, Infraestrutura..."
+                placeholder="Ex: Saúde, Educação, Infraestrutura..."
               />
             </div>
 
@@ -399,13 +399,13 @@ export function HelpRecordFormPage() {
           <CardHeader><CardTitle>Detalhes</CardTitle></CardHeader>
           <CardContent className="grid gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Observacoes</label>
-              <Textarea value={form.observations} onChange={(e) => set('observations', e.target.value)} rows={4} placeholder="Observacoes sobre o atendimento..." />
+              <label className="text-sm font-medium">Observações</label>
+              <Textarea value={form.observations} onChange={(e) => set('observations', e.target.value)} rows={4} placeholder="Observações sobre o atendimento..." />
             </div>
             {isEdit && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Resolucao</label>
-                <Textarea value={form.resolution} onChange={(e) => set('resolution', e.target.value)} rows={3} placeholder="Descreva a resolucao do atendimento..." />
+                <label className="text-sm font-medium">Resolução</label>
+                <Textarea value={form.resolution} onChange={(e) => set('resolution', e.target.value)} rows={3} placeholder="Descreva a resolução do atendimento..." />
               </div>
             )}
           </CardContent>

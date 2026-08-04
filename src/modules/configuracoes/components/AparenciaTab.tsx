@@ -193,7 +193,7 @@ export function AparenciaTab() {
   }
 
   if (!tenantId) {
-    return <p className="text-sm text-muted-foreground">Disponivel apenas para usuarios vinculados a um gabinete.</p>
+    return <p className="text-sm text-muted-foreground">Disponível apenas para usuários vinculados a um gabinete.</p>
   }
 
   if (branding.isLoading) {
@@ -242,7 +242,7 @@ export function AparenciaTab() {
                   value={form.fontFamily || 'inter'}
                   onChange={(e) => setForm((p) => ({ ...p, fontFamily: e.target.value === 'inter' ? '' : e.target.value }))}
                 >
-                  <option value="inter">Inter (padrao)</option>
+                  <option value="inter">Inter (padrão)</option>
                   <option value="poppins">Poppins</option>
                   <option value="nunito">Nunito</option>
                   <option value="open-sans">Open Sans</option>
@@ -306,10 +306,10 @@ export function AparenciaTab() {
                         <span className="text-sm font-medium ml-1">{theme.name}</span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {theme.id === 'padrao' && 'Tema padrao do sistema'}
+                        {theme.id === 'padrao' && 'Tema padrão do sistema'}
                         {theme.id === 'esmeralda' && 'Tom profissional e acolhedor'}
                         {theme.id === 'violeta' && 'Moderno e sofisticado'}
-                        {theme.id === 'ambar' && 'Quente e energico'}
+                        {theme.id === 'ambar' && 'Quente e enérgico'}
                       </p>
                     </button>
                   )
@@ -324,7 +324,7 @@ export function AparenciaTab() {
                 >
                   <option value="reto">Reto (0)</option>
                   <option value="suave">Suave (0.375rem)</option>
-                  <option value="arredondado">Arredondado (padrao)</option>
+                  <option value="arredondado">Arredondado (padrão)</option>
                 </Select>
               </div>
             </CardContent>
@@ -393,7 +393,7 @@ export function AparenciaTab() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Banner do Dashboard</CardTitle>
-              <p className="text-sm text-muted-foreground">Imagem exibida no topo do dashboard (proporcao recomendada: 3:1)</p>
+              <p className="text-sm text-muted-foreground">Imagem exibida no topo do dashboard (proporção recomendada: 3:1)</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <ImageUpload
@@ -425,7 +425,7 @@ export function AparenciaTab() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Banner na Sidebar</CardTitle>
-                <p className="text-sm text-muted-foreground">Exibir o banner tambem na sidebar do sistema</p>
+                <p className="text-sm text-muted-foreground">Exibir o banner também na sidebar do sistema</p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -442,14 +442,14 @@ export function AparenciaTab() {
 
                 {d?.showBannerInSidebar && (
                   <div className="space-y-2 max-w-sm">
-                    <label className="text-sm font-medium">Posicao do banner</label>
+                    <label className="text-sm font-medium">Posição do banner</label>
                     <Select
                       value={d?.sidebarBannerPosition ?? 'bottom'}
                       onChange={(e) => {
                         saveMutation.mutate({ sidebarBannerPosition: e.target.value } as any)
                       }}
                     >
-                      <option value="top">Em cima (logo e nome vao para baixo)</option>
+                      <option value="top">Em cima (logo e nome vão para baixo)</option>
                       <option value="bottom">Embaixo (logo e nome ficam em cima)</option>
                     </Select>
                   </div>
@@ -464,11 +464,11 @@ export function AparenciaTab() {
       <div className="flex items-center gap-3">
         <Button onClick={handleSave} disabled={saveMutation.isPending}>
           {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Salvar Alteracoes
+          Salvar Alterações
         </Button>
         <Button variant="outline" onClick={handleReset} disabled={saveMutation.isPending}>
           <RotateCcw className="h-4 w-4" />
-          Restaurar Padrao
+          Restaurar Padrão
         </Button>
       </div>
       {saveMutation.isSuccess && <p className="text-sm text-green-600">Branding atualizado com sucesso!</p>}

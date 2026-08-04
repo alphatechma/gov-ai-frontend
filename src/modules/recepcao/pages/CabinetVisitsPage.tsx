@@ -66,7 +66,7 @@ export function CabinetVisitsPage() {
     { key: 'attendedBy', label: 'Atendido por', render: (v) => v.attendedBy || '-' },
     {
       key: 'id',
-      label: 'Acoes',
+      label: 'Ações',
       render: (v) => (
         <Button
           variant="ghost"
@@ -121,7 +121,7 @@ export function CabinetVisitsPage() {
             Anterior
           </Button>
           <span className="text-sm text-muted-foreground">
-            Pagina {data.page} de {Math.ceil(data.total / data.limit)}
+            Página {data.page} de {Math.ceil(data.total / data.limit)}
           </span>
           <Button
             variant="outline"
@@ -129,7 +129,7 @@ export function CabinetVisitsPage() {
             disabled={page >= Math.ceil(data.total / data.limit)}
             onClick={() => setPage((p) => p + 1)}
           >
-            Proxima
+            Próxima
           </Button>
         </div>
       )}

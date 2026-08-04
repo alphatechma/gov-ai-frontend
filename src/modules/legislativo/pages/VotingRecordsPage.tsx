@@ -12,11 +12,11 @@ import { formatDateTime } from '@/lib/utils'
 import type { VotingRecord } from '@/types/entities'
 
 const voteLabels: Record<string, string> = {
-  FAVORAVEL: 'Favoravel',
-  CONTRARIO: 'Contrario',
-  ABSTENCAO: 'Abstencao',
+  FAVORAVEL: 'Favorável',
+  CONTRARIO: 'Contrário',
+  ABSTENCAO: 'Abstenção',
   AUSENTE: 'Ausente',
-  OBSTRUCAO: 'Obstrucao',
+  OBSTRUCAO: 'Obstrução',
 }
 
 const voteColors: Record<string, 'success' | 'destructive' | 'warning' | 'secondary' | 'default'> = {
@@ -40,14 +40,14 @@ const resultColors: Record<string, 'success' | 'destructive' | 'warning'> = {
 }
 
 const columns: Column<VotingRecord>[] = [
-  { key: 'subject', label: 'Materia', render: (v) => <span className="line-clamp-1 max-w-xs">{v.subject}</span> },
+  { key: 'subject', label: 'Matéria', render: (v) => <span className="line-clamp-1 max-w-xs">{v.subject}</span> },
   { key: 'date', label: 'Data', render: (v) => formatDateTime(v.date) },
-  { key: 'session', label: 'Sessao', render: (v) => v.session ?? '-' },
+  { key: 'session', label: 'Sessão', render: (v) => v.session ?? '-' },
   { key: 'vote', label: 'Voto', render: (v) => <Badge variant={voteColors[v.vote] ?? 'secondary'}>{voteLabels[v.vote] ?? v.vote}</Badge> },
   { key: 'result', label: 'Resultado', render: (v) => v.result ? <Badge variant={resultColors[v.result] ?? 'secondary'}>{resultLabels[v.result] ?? v.result}</Badge> : '-' },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (v) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/votacoes/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -67,13 +67,13 @@ export function VotingRecordsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Votacoes"
-        description="Registro de votacoes"
+        title="Votações"
+        description="Registro de votações"
         action={
           <Button asChild>
             <Link to="/votacoes/novo">
               <Plus className="h-4 w-4" />
-              Nova Votacao
+              Nova Votação
             </Link>
           </Button>
         }
@@ -83,7 +83,7 @@ export function VotingRecordsPage() {
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por materia..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Buscar por matéria..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
         </CardContent>
       </Card>

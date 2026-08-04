@@ -71,8 +71,8 @@ function NoElection() {
   return (
     <Card>
       <CardContent className="p-8 text-center">
-        <p className="text-lg font-semibold mb-2">Nenhuma eleicao selecionada</p>
-        <p className="text-sm text-muted-foreground">Selecione uma eleicao no seletor acima para visualizar os dados.</p>
+        <p className="text-lg font-semibold mb-2">Nenhuma eleição selecionada</p>
+        <p className="text-sm text-muted-foreground">Selecione uma eleição no seletor acima para visualizar os dados.</p>
       </CardContent>
     </Card>
   )
@@ -96,13 +96,13 @@ function TabResumo({ electionId }: { electionId: string }) {
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Total de Votos" value={fmt(summary?.totalVotes ?? 0)} color="#2563eb" subtitle="todos os candidatos" />
         <KpiCard label="Zonas Eleitorais" value={String(summary?.totalZones ?? 0)} color="#16a34a" />
-        <KpiCard label="Secoes Eleitorais" value={String(summary?.totalSections ?? 0)} color="#8b5cf6" subtitle={`${summary?.totalCandidates ?? 0} candidatos`} />
+        <KpiCard label="Seções Eleitorais" value={String(summary?.totalSections ?? 0)} color="#8b5cf6" subtitle={`${summary?.totalCandidates ?? 0} candidatos`} />
         <KpiCard label="Candidatos" value={String(summary?.totalCandidates ?? 0)} color="#f59e0b" />
       </div>
 
-      {/* Distribuicao por Partido */}
+      {/* Distribuição por Partido */}
       <Card>
-        <CardHeader><CardTitle>Distribuicao por Partido</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Distribuição por Partido</CardTitle></CardHeader>
         <CardContent>
           {loadingParty ? <Skeleton className="h-64" /> : (
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
@@ -213,19 +213,19 @@ function TabBairros({ electionId, electionType }: { electionId: string; election
     : (neighborhoods ?? []).map((n: any) => ({ label: n.neighborhood, votes: n.totalVotes, sections: n.sectionsCount, percentage: n.percentage }))
 
   const maxVotes = items.length > 0 ? Math.max(...items.map(i => i.votes)) : 1
-  const entityLabel = isStateLevel ? 'municipio' : 'bairro'
-  const entityLabelPlural = isStateLevel ? 'municipios' : 'bairros'
+  const entityLabel = isStateLevel ? 'município' : 'bairro'
+  const entityLabelPlural = isStateLevel ? 'municípios' : 'bairros'
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Distribuicao por {isStateLevel ? 'Municipio' : 'Bairro'}</CardTitle>
+          <CardTitle>Distribuição por {isStateLevel ? 'Município' : 'Bairro'}</CardTitle>
           <CardDescription>{items.length} {entityLabelPlural} - {isStateLevel ? 'Ordenados por votos' : 'Clique em um bairro para ver detalhes'}</CardDescription>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum dado de {entityLabel} disponivel.</p>
+            <p className="text-sm text-muted-foreground">Nenhum dado de {entityLabel} disponível.</p>
           ) : (
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
               {items.slice(0, isStateLevel ? 50 : 20).map((item, index) => {
@@ -245,7 +245,7 @@ function TabBairros({ electionId, electionType }: { electionId: string; election
                       </div>
                       <span className="font-medium text-sm truncate flex-1">{item.label}</span>
                       {item.zones !== undefined && <span className="text-xs text-muted-foreground">{item.zones} zonas</span>}
-                      {item.sections !== undefined && <span className="text-xs text-muted-foreground">{item.sections} secoes</span>}
+                      {item.sections !== undefined && <span className="text-xs text-muted-foreground">{item.sections} seções</span>}
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${barW}%`, backgroundColor: color }} />
@@ -273,7 +273,7 @@ function TabBairros({ electionId, electionType }: { electionId: string; election
               </div>
               <div className="p-4 bg-muted/50 rounded-lg">
                 <p className="text-xl font-bold">{details.sectionsCount}</p>
-                <p className="text-xs text-muted-foreground">Secoes</p>
+                <p className="text-xs text-muted-foreground">Seções</p>
               </div>
             </div>
 
@@ -335,10 +335,10 @@ function TabSecoes({ electionId }: { electionId: string }) {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle>Analise por Candidato</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Análise por Candidato</CardTitle></CardHeader>
         <CardContent>
           <Select value={selectedCandidate} onChange={e => setSelectedCandidate(e.target.value)}>
-            <option value="">Visao geral (lider por secao)</option>
+            <option value="">Visão geral (líder por seção)</option>
             {(candidates ?? []).map(c => (
               <option key={c.candidateName} value={c.candidateName}>
                 {c.candidateName} ({c.party}) - {fmt(c.totalVotes)} votos
@@ -363,9 +363,9 @@ function TabSecoes({ electionId }: { electionId: string }) {
       {selectedCandidate && candidateStats && (
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <KpiCard label="Total de Votos" value={candidateStats.totalVotes} color="#2563eb" />
-          <KpiCard label="Secoes c/ Votos" value={candidateStats.count} color="#8b5cf6" />
-          <KpiCard label="Maximo em Secao" value={candidateStats.max} color="#16a34a" />
-          <KpiCard label="Media por Secao" value={candidateStats.avg} color="#f59e0b" />
+          <KpiCard label="Seções c/ Votos" value={candidateStats.count} color="#8b5cf6" />
+          <KpiCard label="Máximo em Seção" value={candidateStats.max} color="#16a34a" />
+          <KpiCard label="Média por Seção" value={candidateStats.avg} color="#f59e0b" />
         </div>
       )}
 
@@ -377,7 +377,7 @@ function TabSecoes({ electionId }: { electionId: string }) {
                 <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
                   <tr className="border-b">
                     <th className="p-3 text-left font-medium">Zona</th>
-                    <th className="p-3 text-left font-medium">Secao</th>
+                    <th className="p-3 text-left font-medium">Seção</th>
                     {selectedCandidate ? (
                       <>
                         <th className="p-3 font-medium">Desempenho</th>
@@ -386,7 +386,7 @@ function TabSecoes({ electionId }: { electionId: string }) {
                       </>
                     ) : (
                       <>
-                        <th className="p-3 text-left font-medium">Lider</th>
+                        <th className="p-3 text-left font-medium">Líder</th>
                         <th className="p-3 text-left font-medium">Partido</th>
                         <th className="p-3 text-right font-medium">Votos</th>
                       </>
@@ -493,10 +493,10 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
     <div className="space-y-6">
       {/* Seletor de candidato */}
       <Card>
-        <CardHeader><CardTitle>Analise por Candidato</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Análise por Candidato</CardTitle></CardHeader>
         <CardContent>
           <Select value={selectedCandidate} onChange={e => setSelectedCandidate(e.target.value)}>
-            <option value="">Selecionar candidato para analise detalhada</option>
+            <option value="">Selecionar candidato para análise detalhada</option>
             {(candidates ?? []).map(c => (
               <option key={c.candidateName} value={c.candidateName}>
                 {c.candidateName} ({c.party}) - {fmt(c.totalVotes)} votos
@@ -511,14 +511,14 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
         <div className="space-y-4">
           <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
             <KpiCard label="Total de Votos" value={candTotalVotes} color="#10B981" />
-            <KpiCard label="Posicao Geral" value={`${candidateInfo.rank}o`} color="#3B82F6" />
+            <KpiCard label="Posição Geral" value={`${candidateInfo.rank}º`} color="#3B82F6" />
             <KpiCard label="% dos Votos" value={`${candPercentage}%`} color="#F59E0B" />
             <KpiCard label="Zonas c/ Votos" value={candZones.filter((z: any) => z.votes > 0).length} color="#8B5CF6" />
           </div>
 
           {candZones.length > 0 && (
             <Card>
-              <CardHeader><CardTitle>Distribuicao por Zona</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Distribuição por Zona</CardTitle></CardHeader>
               <CardContent>
                 <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
                   {candZones.sort((a: any, b: any) => b.votes - a.votes).map((z: any) => (
@@ -541,7 +541,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
             const candMaxCity = Math.max(...candCities.map((c: any) => c.votes), 1)
             return (
               <Card>
-                <CardHeader><CardTitle>Distribuicao por Municipio</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Distribuição por Município</CardTitle></CardHeader>
                 <CardContent>
                   <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
                     {candCities.map((c: any, idx: number) => (
@@ -563,7 +563,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
 
           {candSections.length > 0 && (
             <Card>
-              <CardHeader><CardTitle>Melhores Secoes</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Melhores Seções</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   {candSections.slice(0, 10).map((s: any, idx: number) => (
@@ -572,7 +572,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                         style={{ backgroundColor: MEDAL_COLORS[idx] || '#94A3B8' }}>
                         {idx + 1}
                       </div>
-                      <span className="text-sm flex-1">Zona {s.zone} - Secao {s.section}</span>
+                      <span className="text-sm flex-1">Zona {s.zone} - Seção {s.section}</span>
                       <span className="text-sm font-semibold">{fmt(s.votes)} votos</span>
                     </div>
                   ))}
@@ -599,46 +599,46 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
         const opportunities: string[] = []
 
         // Strengths
-        if (topZone) strengths.push(`Zona ${topZone.zone} e a base mais forte com ${fmt(topZone.votes)} votos (${topZone.percentage}% da zona)`)
-        if (strongZones.length > 0) strengths.push(`Desempenho acima da media em ${strongZones.length} de ${byZone.length} zonas`)
-        if (ci.rank <= 3) strengths.push(`Posicionado no top 3 (${ci.rank}o lugar)`)
-        else if (ci.rank <= 5) strengths.push(`Posicionado no top 5 (${ci.rank}o lugar)`)
-        if (ci.zonesWithVotes === byZone.length && byZone.length > 1) strengths.push(`Presenca em todas as ${byZone.length} zonas eleitorais`)
+        if (topZone) strengths.push(`Zona ${topZone.zone} é a base mais forte com ${fmt(topZone.votes)} votos (${topZone.percentage}% da zona)`)
+        if (strongZones.length > 0) strengths.push(`Desempenho acima da média em ${strongZones.length} de ${byZone.length} zonas`)
+        if (ci.rank <= 3) strengths.push(`Posicionado no top 3 (${ci.rank}º lugar)`)
+        else if (ci.rank <= 5) strengths.push(`Posicionado no top 5 (${ci.rank}º lugar)`)
+        if (ci.zonesWithVotes === byZone.length && byZone.length > 1) strengths.push(`Presença em todas as ${byZone.length} zonas eleitorais`)
         else if (ci.zonesWithVotes > byZone.length * 0.8) strengths.push(`Boa capilaridade: presente em ${ci.zonesWithVotes} de ${byZone.length} zonas`)
         if (ci.topSections?.length > 0) {
           const best = ci.topSections[0]
-          strengths.push(`Melhor secao: Zona ${best.zone}, Secao ${best.section} com ${fmt(best.votes)} votos`)
+          strengths.push(`Melhor seção: Zona ${best.zone}, Seção ${best.section} com ${fmt(best.votes)} votos`)
         }
 
         // Weaknesses
-        if (weakZones.length > 0) weaknesses.push(`Desempenho abaixo da media em ${weakZones.length} zonas (media: ${avgPct}%)`)
+        if (weakZones.length > 0) weaknesses.push(`Desempenho abaixo da média em ${weakZones.length} zonas (média: ${avgPct}%)`)
         if (zeroZones.length > 0) weaknesses.push(`Sem votos em ${zeroZones.length} zona(s): ${zeroZones.map((z: any) => `Zona ${z.zone}`).join(', ')}`)
-        if (ci.rank > 5) weaknesses.push(`Posicao distante do top 5 (${ci.rank}o de ${totalCands} candidatos)`)
+        if (ci.rank > 5) weaknesses.push(`Posição distante do top 5 (${ci.rank}º de ${totalCands} candidatos)`)
         if (weakZones.length > 0) {
           const worstZone = weakZones[0]
-          weaknesses.push(`Zona ${worstZone.zone} e a mais fraca com apenas ${worstZone.percentage}% dos votos da zona`)
+          weaknesses.push(`Zona ${worstZone.zone} é a mais fraca com apenas ${worstZone.percentage}% dos votos da zona`)
         }
-        if (ci.percentage < 5) weaknesses.push(`Apenas ${ci.percentage}% do total de votos da eleicao`)
+        if (ci.percentage < 5) weaknesses.push(`Apenas ${ci.percentage}% do total de votos da eleição`)
 
         // Opportunities
         if (weakZones.length > 0) {
           const potentialGain = weakZones.reduce((s: number, z: any) => s + Math.round(z.totalVotes * 0.1), 0)
           opportunities.push(`Ganhar 10% nas zonas fracas adicionaria ~${fmt(potentialGain)} votos`)
         }
-        if (zeroZones.length > 0) opportunities.push(`Conquistar presenca nas ${zeroZones.length} zona(s) sem votos`)
-        if (strongZones.length > 0) opportunities.push(`Consolidar lideranca nas ${strongZones.length} zonas fortes para manter base`)
+        if (zeroZones.length > 0) opportunities.push(`Conquistar presença nas ${zeroZones.length} zona(s) sem votos`)
+        if (strongZones.length > 0) opportunities.push(`Consolidar liderança nas ${strongZones.length} zonas fortes para manter base`)
         if (ci.rank > 1) {
           const above = insights.topCandidate
           if (above) {
             const gap = above.totalVotes - ci.totalVotes
-            opportunities.push(`Diferenca de ${fmt(gap)} votos para o 1o colocado (${above.candidateName})`)
+            opportunities.push(`Diferença de ${fmt(gap)} votos para o 1º colocado (${above.candidateName})`)
           }
         }
         opportunities.push(`Focar campanha nas zonas com % abaixo de ${avgPct}% para equilibrar desempenho`)
 
         return (
           <div className="space-y-4">
-            <p className="text-lg font-semibold">Analise Estrategica</p>
+            <p className="text-lg font-semibold">Análise Estratégica</p>
 
             {strengths.length > 0 && (
               <Card className="border-l-4 border-l-green-500">
@@ -691,20 +691,20 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
         )
       })()}
 
-      {/* Comparacao entre Eleicoes */}
+      {/* Comparação entre Eleições */}
       {selectedCandidate && otherElections.length > 0 && (
         <div className="space-y-4">
           <hr className="border-border" />
-          <p className="text-lg font-semibold">Comparacao entre Eleicoes</p>
+          <p className="text-lg font-semibold">Comparação entre Eleições</p>
 
           <Card>
             <CardContent className="p-4">
               <label className="block text-sm font-medium mb-2">Comparar com:</label>
               <Select value={compareElectionId} onChange={e => setCompareElectionId(e.target.value)}>
-                <option value="">Selecionar eleicao para comparar...</option>
+                <option value="">Selecionar eleição para comparar...</option>
                 {otherElections.map((el: any) => (
                   <option key={el.id} value={el.id}>
-                    {el.cargo} — {el.type === 'estadual_federal' ? `${el.state} (Estado)` : `${el.city}/${el.state}`} {el.year}{el.round > 1 ? ` (${el.round}o Turno)` : ''}
+                    {el.cargo} — {el.type === 'estadual_federal' ? `${el.state} (Estado)` : `${el.city}/${el.state}`} {el.year}{el.round > 1 ? ` (${el.round}º Turno)` : ''}
                   </option>
                 ))}
               </Select>
@@ -722,22 +722,22 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
 
             return (
               <div className="space-y-4">
-                {/* KPIs de evolucao */}
+                {/* KPIs de evolução */}
                 <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                   <KpiCard
-                    label="Variacao de Votos"
+                    label="Variação de Votos"
                     value={`${ev.votesDiff >= 0 ? '+' : ''}${fmt(ev.votesDiff)}`}
                     color={growthColor}
                     subtitle={`${ev.votesGrowth >= 0 ? '+' : ''}${ev.votesGrowth}% de crescimento`}
                   />
                   <KpiCard
-                    label="Mudanca de Ranking"
-                    value={`${compareEl.rank}o → ${currentEl.rank}o`}
+                    label="Mudança de Ranking"
+                    value={`${compareEl.rank}º → ${currentEl.rank}º`}
                     color={rankColor}
-                    subtitle={ev.rankChange > 0 ? `Subiu ${ev.rankChange} posicao(oes)` : ev.rankChange < 0 ? `Desceu ${Math.abs(ev.rankChange)}` : 'Manteve posicao'}
+                    subtitle={ev.rankChange > 0 ? `Subiu ${ev.rankChange} posição(ões)` : ev.rankChange < 0 ? `Desceu ${Math.abs(ev.rankChange)}` : 'Manteve posição'}
                   />
                   <KpiCard
-                    label="Variacao %"
+                    label="Variação %"
                     value={`${ev.percentageDiff >= 0 ? '+' : ''}${ev.percentageDiff} p.p.`}
                     color={ev.percentageDiff >= 0 ? '#16a34a' : '#dc2626'}
                     subtitle={`${compareEl.percentage}% → ${currentEl.percentage}%`}
@@ -746,7 +746,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                     label="Zonas com Votos"
                     value={`${compareEl.zones} → ${currentEl.zones}`}
                     color="#8b5cf6"
-                    subtitle={ev.zonesGained.length > 0 ? `+${ev.zonesGained.length} nova(s)` : ev.zonesLost.length > 0 ? `-${ev.zonesLost.length} perdida(s)` : 'Sem alteracao'}
+                    subtitle={ev.zonesGained.length > 0 ? `+${ev.zonesGained.length} nova(s)` : ev.zonesLost.length > 0 ? `-${ev.zonesLost.length} perdida(s)` : 'Sem alteração'}
                   />
                 </div>
 
@@ -755,14 +755,14 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                   <Card className="border-l-4 border-l-amber-500">
                     <CardContent className="p-4 flex items-center gap-3">
                       <span className="text-amber-500 text-lg">⚠</span>
-                      <p className="text-sm">Mudanca de partido: <strong>{compareEl.party}</strong> ({compareEl.year}) → <strong>{currentEl.party}</strong> ({currentEl.year})</p>
+                      <p className="text-sm">Mudança de partido: <strong>{compareEl.party}</strong> ({compareEl.year}) → <strong>{currentEl.party}</strong> ({currentEl.year})</p>
                     </CardContent>
                   </Card>
                 )}
 
                 {/* Grafico de barras side-by-side por zona */}
                 <Card>
-                  <CardHeader><CardTitle>Evolucao por Zona</CardTitle></CardHeader>
+                  <CardHeader><CardTitle>Evolução por Zona</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={Math.max(300, (ev.byZone ?? []).length * 40)}>
                       <BarChart data={ev.byZone ?? []} layout="vertical">
@@ -789,7 +789,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                             <th className="p-3 text-left font-medium">Zona</th>
                             <th className="p-3 text-right font-medium">{compareEl.year}</th>
                             <th className="p-3 text-right font-medium">{currentEl.year}</th>
-                            <th className="p-3 text-right font-medium">Diferenca</th>
+                            <th className="p-3 text-right font-medium">Diferença</th>
                             <th className="p-3 text-right font-medium">Crescimento</th>
                           </tr>
                         </thead>
@@ -823,7 +823,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                           <p className="text-sm">
                             {(ev.zonesGained ?? []).map((z: number) => `Zona ${z}`).join(', ')}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1">Zonas onde nao havia votos em {compareEl.year}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Zonas onde não havia votos em {compareEl.year}</p>
                         </CardContent>
                       </Card>
                     )}
@@ -834,7 +834,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                           <p className="text-sm">
                             {(ev.zonesLost ?? []).map((z: number) => `Zona ${z}`).join(', ')}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1">Zonas onde nao ha votos em {currentEl.year}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Zonas onde não há votos em {currentEl.year}</p>
                         </CardContent>
                       </Card>
                     )}
@@ -849,10 +849,10 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
             <Card className="border-l-4 border-l-amber-500">
               <CardContent className="p-5">
                 <p className="font-semibold text-amber-700 dark:text-amber-400 mb-2">
-                  Candidato nao encontrado em {crossData.compareElection?.year}
+                  Candidato não encontrado em {crossData.compareElection?.year}
                 </p>
                 <p className="text-sm text-muted-foreground mb-3">
-                  "{crossData.candidateName}" nao participou desta eleicao{crossData.compareElection ? ` (${crossData.compareElection.cargo} ${crossData.compareElection.year})` : ''}.
+                  "{crossData.candidateName}" não participou desta eleição{crossData.compareElection ? ` (${crossData.compareElection.cargo} ${crossData.compareElection.year})` : ''}.
                 </p>
                 {Array.isArray(crossData.suggestions) && crossData.suggestions.length > 0 && (
                   <div>
@@ -872,7 +872,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
 
       {selectedCandidate && <hr className="border-border" />}
 
-      <p className="text-lg font-semibold">Visao Geral da Eleicao</p>
+      <p className="text-lg font-semibold">Visão Geral da Eleição</p>
 
       <div className="grid gap-4 md:grid-cols-2">
         {insights.topCandidate && (
@@ -880,7 +880,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
             <CardContent className="p-5 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 text-xl shrink-0">🏆</div>
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Lider Geral</p>
+                <p className="text-xs text-muted-foreground">Líder Geral</p>
                 <p className="font-bold truncate">{insights.topCandidate.candidateName}</p>
                 <p className="text-sm text-muted-foreground">{fmt(insights.topCandidate.totalVotes)} votos - {insights.topCandidate.party}</p>
               </div>
@@ -893,9 +893,9 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
             <CardContent className="p-5 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 text-xl shrink-0">📈</div>
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Vantagem sobre 2o</p>
+                <p className="text-xs text-muted-foreground">Vantagem sobre 2º</p>
                 <p className="font-bold text-green-600">+{fmt(insights.voteDifference)} votos</p>
-                <p className="text-sm text-muted-foreground">{insights.percentageDifference}% a frente de {insights.runnerUp.candidateName}</p>
+                <p className="text-sm text-muted-foreground">{insights.percentageDifference}% à frente de {insights.runnerUp.candidateName}</p>
               </div>
             </CardContent>
           </Card>
@@ -905,7 +905,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
           <CardContent className="p-5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500 text-xl shrink-0">⚡</div>
             <div>
-              <p className="text-xs text-muted-foreground">Concentracao Top 3</p>
+              <p className="text-xs text-muted-foreground">Concentração Top 3</p>
               <p className="font-bold text-indigo-600">{insights.concentrationRate}%</p>
               <p className="text-sm text-muted-foreground">Dos votos entre os 3 primeiros</p>
             </div>
@@ -917,8 +917,8 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
             <CardContent className="p-5 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 text-xl shrink-0">📍</div>
               <div>
-                <p className="text-xs text-muted-foreground">Secao com Mais Votos</p>
-                <p className="font-bold text-orange-600">Zona {insights.topSection.zone} - Secao {insights.topSection.section}</p>
+                <p className="text-xs text-muted-foreground">Seção com Mais Votos</p>
+                <p className="font-bold text-orange-600">Zona {insights.topSection.zone} - Seção {insights.topSection.section}</p>
                 <p className="text-sm text-muted-foreground">{fmt(insights.topSection.votes)} votos</p>
               </div>
             </CardContent>
@@ -928,7 +928,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
 
       {insights.leadersByZone && insights.leadersByZone.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Lideres por Zona</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Líderes por Zona</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-2">
               {insights.leadersByZone.map((zl: any) => (
@@ -947,7 +947,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
 
       {insights.performanceByZone && insights.performanceByZone.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Performance por Zona vs Media</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Performance por Zona vs Média</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={insights.performanceByZone}>
@@ -955,7 +955,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                 <XAxis dataKey="zone" tick={{ fontSize: 12 }} label={{ value: 'Zona', position: 'bottom' }} />
                 <YAxis tickFormatter={(v) => `${v}%`} />
                 <Tooltip formatter={((v: number) => `${v}%`) as any} />
-                <Bar dataKey="vsAverage" name="vs Media">
+                <Bar dataKey="vsAverage" name="vs Média">
                   {(insights.performanceByZone ?? []).map((z: any, i: number) => (
                     <Cell key={i} fill={z.vsAverage >= 0 ? '#16a34a' : '#dc2626'} />
                   ))}
@@ -1051,7 +1051,7 @@ function TabComparar({ electionId }: { electionId: string }) {
 
           <div className="text-center p-3 bg-muted/50 rounded-lg">
             <span className="text-sm font-semibold">
-              Diferenca: {fmt(Math.abs(comparison.candidate1.totalVotes - comparison.candidate2.totalVotes))} votos
+              Diferença: {fmt(Math.abs(comparison.candidate1.totalVotes - comparison.candidate2.totalVotes))} votos
             </span>
           </div>
 
@@ -1097,10 +1097,10 @@ function TabComparar({ electionId }: { electionId: string }) {
 // TAB: PROJECOES
 // ══════════════════════════════════════════════════════
 const SCENARIOS = [
-  { id: 'otimista', label: 'Otimista', icon: '🚀', description: 'Consolidacao da base + campanha agressiva + aliancas fortes', multiplier: 1.20, color: '#16a34a' },
-  { id: 'moderado', label: 'Moderado', icon: '📊', description: 'Manutencao da base + crescimento organico + campanha tradicional', multiplier: 1.10, color: '#2563eb' },
-  { id: 'conservador', label: 'Conservador', icon: '🛡️', description: 'Manutencao das bases atuais + pequenos ganhos pontuais', multiplier: 1.03, color: '#f59e0b' },
-  { id: 'adverso', label: 'Adverso', icon: '⚠️', description: 'Concorrencia acirrada + perda de aliados + desgaste', multiplier: 0.90, color: '#dc2626' },
+  { id: 'otimista', label: 'Otimista', icon: '🚀', description: 'Consolidação da base + campanha agressiva + alianças fortes', multiplier: 1.20, color: '#16a34a' },
+  { id: 'moderado', label: 'Moderado', icon: '📊', description: 'Manutenção da base + crescimento orgânico + campanha tradicional', multiplier: 1.10, color: '#2563eb' },
+  { id: 'conservador', label: 'Conservador', icon: '🛡️', description: 'Manutenção das bases atuais + pequenos ganhos pontuais', multiplier: 1.03, color: '#f59e0b' },
+  { id: 'adverso', label: 'Adverso', icon: '⚠️', description: 'Concorrência acirrada + perda de aliados + desgaste', multiplier: 0.90, color: '#dc2626' },
 ]
 
 function TabProjecoes({ electionId, electionType }: { electionId: string; electionType?: string }) {
@@ -1140,7 +1140,7 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
         key: c.cityName, label: c.cityName, votes: c.votes,
       }))
     : (candidateBySection ?? []).sort((a: any, b: any) => b.votes - a.votes).map((s: any) => ({
-        key: `${s.zone}-${s.section}`, label: `Zona ${s.zone} / Secao ${s.section}`, votes: s.votes,
+        key: `${s.zone}-${s.section}`, label: `Zona ${s.zone} / Seção ${s.section}`, votes: s.votes,
       }))
 
   // Fallback para zonas se section/city ainda nao carregou
@@ -1151,8 +1151,8 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
     : []
   const adjustItems = items.length > 0 ? items : fallbackZones
 
-  const entityLabel = isStateLevel ? 'Municipio' : 'Secao'
-  const entityLabelPlural = isStateLevel ? 'Municipios' : 'Secoes'
+  const entityLabel = isStateLevel ? 'Município' : 'Seção'
+  const entityLabelPlural = isStateLevel ? 'Municípios' : 'Seções'
 
   // Apply scenario when changed
   const applyScenario = (scenarioId: string) => {
@@ -1191,8 +1191,8 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Simulador de Cenarios</CardTitle>
-          <CardDescription>Selecione um candidato e ajuste os cenarios para simular projecoes</CardDescription>
+          <CardTitle>Simulador de Cenários</CardTitle>
+          <CardDescription>Selecione um candidato e ajuste os cenários para simular projeções</CardDescription>
         </CardHeader>
         <CardContent>
           <Select value={selectedCandidate} onChange={e => { setSelectedCandidate(e.target.value); setItemMultipliers({}) }}>
@@ -1207,7 +1207,7 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
       </Card>
 
       {!selectedCandidate ? (
-        <p className="text-muted-foreground text-sm text-center">Selecione um candidato para ver as projecoes.</p>
+        <p className="text-muted-foreground text-sm text-center">Selecione um candidato para ver as projeções.</p>
       ) : isLoading ? <LoadingCards count={3} /> : data ? (
         <>
           {/* Scenario Selector */}
@@ -1234,18 +1234,18 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
             <KpiCard label="Total Atual" value={currentTotal} color="#2563eb" />
             <KpiCard label="Total Projetado" value={projectedTotal} color={scenario.color}
               subtitle={`${totalDiff >= 0 ? '+' : ''}${fmt(totalDiff)} (${totalDiff >= 0 ? '+' : ''}${pctChange}%)`} />
-            <KpiCard label="Posicao Atual" value={`${currentRank}o`} color="#8b5cf6" />
-            <KpiCard label="Posicao Projetada" value={`${projectedRank}o`} color={rankChange > 0 ? '#16a34a' : rankChange < 0 ? '#dc2626' : '#6b7280'}
-              subtitle={rankChange > 0 ? `Sobe ${rankChange} posicao(oes)` : rankChange < 0 ? `Desce ${Math.abs(rankChange)}` : 'Mantem posicao'} />
+            <KpiCard label="Posição Atual" value={`${currentRank}º`} color="#8b5cf6" />
+            <KpiCard label="Posição Projetada" value={`${projectedRank}º`} color={rankChange > 0 ? '#16a34a' : rankChange < 0 ? '#dc2626' : '#6b7280'}
+              subtitle={rankChange > 0 ? `Sobe ${rankChange} posição(ões)` : rankChange < 0 ? `Desce ${Math.abs(rankChange)}` : 'Mantém posição'} />
           </div>
 
           {/* Backend Scenarios Reference */}
           <Card>
-            <CardHeader><CardTitle>Cenarios Base ({entityLabelPlural} Fracos)</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Cenários Base ({entityLabelPlural} Fracos)</CardTitle></CardHeader>
             <CardContent>
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-medium">{entityLabelPlural} fracos:</span> {data.weakZonesCount} (abaixo da media)
+                  <span className="font-medium">{entityLabelPlural} fracos:</span> {data.weakZonesCount} (abaixo da média)
                 </div>
                 {(data.scenarios ?? []).map((s: any, i: number) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
@@ -1264,7 +1264,7 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
           <Card>
             <CardHeader>
               <CardTitle>Ajuste por {entityLabel}</CardTitle>
-              <CardDescription>Ajuste o multiplicador de cada {entityLabel.toLowerCase()} para simular cenarios personalizados</CardDescription>
+              <CardDescription>Ajuste o multiplicador de cada {entityLabel.toLowerCase()} para simular cenários personalizados</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
@@ -1288,7 +1288,7 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
 
           {data.trend && (
             <Card>
-              <CardHeader><CardTitle>Tendencia Multi-Ano</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Tendência Multi-Ano</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={data.trend}>
@@ -1332,7 +1332,7 @@ export function ElectionResultsPage() {
   if (loadingElections) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Analise Eleitoral" description="Explore resultados eleitorais, compare candidatos e descubra tendencias" />
+        <PageHeader title="Análise Eleitoral" description="Explore resultados eleitorais, compare candidatos e descubra tendências" />
         <LoadingCards count={4} />
       </div>
     )
@@ -1341,14 +1341,14 @@ export function ElectionResultsPage() {
   if (elections.length === 0) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Analise Eleitoral" description="Explore resultados eleitorais, compare candidatos e descubra tendencias" />
+        <PageHeader title="Análise Eleitoral" description="Explore resultados eleitorais, compare candidatos e descubra tendências" />
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
             </div>
-            <p className="text-lg font-semibold mb-1">Nenhuma eleicao disponivel</p>
-            <p className="text-sm text-muted-foreground">Os dados eleitorais para o seu perfil ainda nao foram carregados. Entre em contato com o suporte.</p>
+            <p className="text-lg font-semibold mb-1">Nenhuma eleição disponível</p>
+            <p className="text-sm text-muted-foreground">Os dados eleitorais para o seu perfil ainda não foram carregados. Entre em contato com o suporte.</p>
           </CardContent>
         </Card>
       </div>
@@ -1357,18 +1357,18 @@ export function ElectionResultsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Analise Eleitoral" description="Explore resultados eleitorais, compare candidatos e descubra tendencias" />
+      <PageHeader title="Análise Eleitoral" description="Explore resultados eleitorais, compare candidatos e descubra tendências" />
 
       {/* Election Selector - hidden when only one election */}
       {elections.length > 1 ? (
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <label className="text-sm font-medium whitespace-nowrap">Eleicao:</label>
+              <label className="text-sm font-medium whitespace-nowrap">Eleição:</label>
               <Select value={selectedElectionId} onChange={e => setSelectedElectionId(e.target.value)} className="flex-1">
                 {elections.map((el: any) => (
                   <option key={el.id} value={el.id}>
-                    {el.cargo} — {el.type === 'estadual_federal' ? `${el.state} (Estado)` : `${el.city}/${el.state}`} {el.year}{el.round > 1 ? ` (${el.round}o Turno)` : ''}
+                    {el.cargo} — {el.type === 'estadual_federal' ? `${el.state} (Estado)` : `${el.city}/${el.state}`} {el.year}{el.round > 1 ? ` (${el.round}º Turno)` : ''}
                   </option>
                 ))}
               </Select>
@@ -1387,7 +1387,7 @@ export function ElectionResultsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <p className="text-sm font-medium">
-                  {selectedElection.cargo} — {selectedElection.type === 'estadual_federal' ? `${selectedElection.state} (Estado)` : `${selectedElection.city}/${selectedElection.state}`} {selectedElection.year}{selectedElection.round > 1 ? ` (${selectedElection.round}o Turno)` : ''}
+                  {selectedElection.cargo} — {selectedElection.type === 'estadual_federal' ? `${selectedElection.state} (Estado)` : `${selectedElection.city}/${selectedElection.state}`} {selectedElection.year}{selectedElection.round > 1 ? ` (${selectedElection.round}º Turno)` : ''}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -1402,11 +1402,11 @@ export function ElectionResultsPage() {
       <Tabs defaultValue="resumo">
         <TabsList className="h-auto flex-wrap gap-1">
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
-          <TabsTrigger value="bairros">{selectedElection?.type === 'estadual_federal' ? 'Municipios' : 'Bairros'}</TabsTrigger>
-          <TabsTrigger value="secoes">Secoes</TabsTrigger>
+          <TabsTrigger value="bairros">{selectedElection?.type === 'estadual_federal' ? 'Municípios' : 'Bairros'}</TabsTrigger>
+          <TabsTrigger value="secoes">Seções</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
           <TabsTrigger value="comparar">Comparar</TabsTrigger>
-          <TabsTrigger value="projecoes">Projecoes</TabsTrigger>
+          <TabsTrigger value="projecoes">Projeções</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resumo">

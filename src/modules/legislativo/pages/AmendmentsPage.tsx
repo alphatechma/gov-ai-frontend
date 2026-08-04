@@ -13,7 +13,7 @@ import { formatCurrency } from '@/lib/utils'
 
 const statusLabels: Record<string, string> = {
   APROVADA: 'Aprovada',
-  EM_EXECUCAO: 'Em Execucao',
+  EM_EXECUCAO: 'Em Execução',
   EXECUTADA: 'Executada',
   CANCELADA: 'Cancelada',
 }
@@ -26,14 +26,14 @@ const statusColors: Record<string, 'default' | 'success' | 'warning' | 'destruct
 }
 
 const columns: Column<Amendment>[] = [
-  { key: 'code', label: 'Codigo', render: (a) => a.code ?? '-' },
-  { key: 'description', label: 'Descricao', render: (a) => <span className="line-clamp-1 max-w-xs">{a.description}</span> },
+  { key: 'code', label: 'Código', render: (a) => a.code ?? '-' },
+  { key: 'description', label: 'Descrição', render: (a) => <span className="line-clamp-1 max-w-xs">{a.description}</span> },
   { key: 'value', label: 'Valor', render: (a) => formatCurrency(a.value) },
   { key: 'status', label: 'Status', render: (a) => <Badge variant={statusColors[a.status] ?? 'secondary'}>{statusLabels[a.status] ?? a.status}</Badge> },
-  { key: 'executionPercentage', label: 'Execucao', render: (a) => `${a.executionPercentage}%` },
+  { key: 'executionPercentage', label: 'Execução', render: (a) => `${a.executionPercentage}%` },
   {
     key: 'id',
-    label: 'Acoes',
+    label: 'Ações',
     render: (a) => (
       <Button variant="ghost" size="sm" asChild>
         <Link to={`/emendas/${a.id}/editar`}><Pencil className="h-4 w-4" /></Link>
@@ -70,7 +70,7 @@ export function AmendmentsPage() {
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por descricao ou codigo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Buscar por descrição ou código..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
         </CardContent>
       </Card>

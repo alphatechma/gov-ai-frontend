@@ -58,62 +58,62 @@ const PROFILE_CONFIGS: Record<string, ProfileConfig> = {
   VEREADOR: {
     scope: 'street', viewMode: 'individual', groupBy: 'neighborhood',
     zoom: 14, clusterRadius: 40, markerRadius: 7,
-    label: 'Rua / Bairro', description: 'Visualizacao individual por rua e bairro',
+    label: 'Rua / Bairro', description: 'Visualização individual por rua e bairro',
     statsEndpoint: '/voters/stats/neighborhood', statsLabel: 'Bairro',
   },
   PREFEITO: {
     scope: 'neighborhood', viewMode: 'aggregated', groupBy: 'neighborhood',
     zoom: 13, clusterRadius: 50, markerRadius: 8,
-    label: 'Bairro', description: 'Concentracao agregada por bairro',
+    label: 'Bairro', description: 'Concentração agregada por bairro',
     statsEndpoint: '/voters/stats/neighborhood', statsLabel: 'Bairro',
   },
   VICE_PREFEITO: {
     scope: 'neighborhood', viewMode: 'aggregated', groupBy: 'neighborhood',
     zoom: 13, clusterRadius: 50, markerRadius: 8,
-    label: 'Bairro', description: 'Concentracao agregada por bairro',
+    label: 'Bairro', description: 'Concentração agregada por bairro',
     statsEndpoint: '/voters/stats/neighborhood', statsLabel: 'Bairro',
   },
   SECRETARIO: {
     scope: 'neighborhood', viewMode: 'aggregated', groupBy: 'neighborhood',
     zoom: 13, clusterRadius: 50, markerRadius: 8,
-    label: 'Bairro', description: 'Concentracao agregada por bairro',
+    label: 'Bairro', description: 'Concentração agregada por bairro',
     statsEndpoint: '/voters/stats/neighborhood', statsLabel: 'Bairro',
   },
   DEPUTADO_ESTADUAL: {
     scope: 'city', viewMode: 'aggregated', groupBy: 'city',
     zoom: 8, clusterRadius: 70, markerRadius: 9,
-    label: 'Municipio', description: 'Concentracao por municipio no estado',
-    statsEndpoint: '/voters/stats/city', statsLabel: 'Municipio',
+    label: 'Município', description: 'Concentração por município no estado',
+    statsEndpoint: '/voters/stats/city', statsLabel: 'Município',
   },
   GOVERNADOR: {
     scope: 'city', viewMode: 'aggregated', groupBy: 'city',
     zoom: 7, clusterRadius: 80, markerRadius: 10,
-    label: 'Municipio', description: 'Concentracao por municipio no estado',
-    statsEndpoint: '/voters/stats/city', statsLabel: 'Municipio',
+    label: 'Município', description: 'Concentração por município no estado',
+    statsEndpoint: '/voters/stats/city', statsLabel: 'Município',
   },
   VICE_GOVERNADOR: {
     scope: 'city', viewMode: 'aggregated', groupBy: 'city',
     zoom: 7, clusterRadius: 80, markerRadius: 10,
-    label: 'Municipio', description: 'Concentracao por municipio no estado',
-    statsEndpoint: '/voters/stats/city', statsLabel: 'Municipio',
+    label: 'Município', description: 'Concentração por município no estado',
+    statsEndpoint: '/voters/stats/city', statsLabel: 'Município',
   },
   DEPUTADO_FEDERAL: {
     scope: 'city', viewMode: 'aggregated', groupBy: 'city',
     zoom: 6, clusterRadius: 80, markerRadius: 10,
-    label: 'Municipio / Estado', description: 'Concentracao por municipio e estado',
-    statsEndpoint: '/voters/stats/city', statsLabel: 'Municipio',
+    label: 'Município / Estado', description: 'Concentração por município e estado',
+    statsEndpoint: '/voters/stats/city', statsLabel: 'Município',
   },
   SENADOR: {
     scope: 'state', viewMode: 'aggregated', groupBy: 'state',
     zoom: 5, clusterRadius: 100, markerRadius: 11,
-    label: 'Estado', description: 'Concentracao por estado',
-    statsEndpoint: '/voters/stats/city', statsLabel: 'Municipio',
+    label: 'Estado', description: 'Concentração por estado',
+    statsEndpoint: '/voters/stats/city', statsLabel: 'Município',
   },
   PRESIDENTE: {
     scope: 'state', viewMode: 'aggregated', groupBy: 'state',
     zoom: 4, clusterRadius: 120, markerRadius: 12,
-    label: 'Estado / Regiao', description: 'Concentracao por estado e regiao',
-    statsEndpoint: '/voters/stats/city', statsLabel: 'Municipio',
+    label: 'Estado / Região', description: 'Concentração por estado e região',
+    statsEndpoint: '/voters/stats/city', statsLabel: 'Município',
   },
 }
 
@@ -140,7 +140,7 @@ const PROFILE_LABELS: Record<string, string> = {
   VEREADOR: 'Vereador',
   PREFEITO: 'Prefeito',
   VICE_PREFEITO: 'Vice-Prefeito',
-  SECRETARIO: 'Secretario',
+  SECRETARIO: 'Secretário',
   DEPUTADO_ESTADUAL: 'Dep. Estadual',
   DEPUTADO_FEDERAL: 'Dep. Federal',
   SENADOR: 'Senador',
@@ -341,7 +341,7 @@ export function HeatmapPage() {
                 <p className="text-xs text-muted-foreground">
                   {geocodeStarted
                     ? `${geocodeStatus.groups} grupos restantes (~${Math.ceil(geocodeStatus.estimatedSeconds / 60)} min)`
-                    : `${geocodeStatus.groups} grupos unicos de bairro/cidade · Estimativa: ~${Math.ceil(geocodeStatus.estimatedSeconds / 60)} min`
+                    : `${geocodeStatus.groups} grupos únicos de bairro/cidade · Estimativa: ~${Math.ceil(geocodeStatus.estimatedSeconds / 60)} min`
                   }
                 </p>
               </div>
@@ -374,7 +374,7 @@ export function HeatmapPage() {
               <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
                 <Map className="h-12 w-12 mb-3 opacity-50" />
                 <p className="text-lg font-medium">Nenhum eleitor com coordenadas</p>
-                <p className="text-sm">Cadastre eleitores com endereco para visualizar o mapa.</p>
+                <p className="text-sm">Cadastre eleitores com endereço para visualizar o mapa.</p>
               </div>
             ) : (
               <MapContainer
@@ -500,23 +500,23 @@ export function HeatmapPage() {
               {isAggregated ? (
                 <>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Tamanho e cor proporcionais a quantidade
+                    Tamanho e cor proporcionais à quantidade
                   </p>
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-full bg-blue-500 shrink-0" />
-                    <span className="text-xs">Baixa concentracao</span>
+                    <span className="text-xs">Baixa concentração</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-full bg-yellow-500 shrink-0" />
-                    <span className="text-xs">Media concentracao</span>
+                    <span className="text-xs">Média concentração</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-full bg-orange-500 shrink-0" />
-                    <span className="text-xs">Alta concentracao</span>
+                    <span className="text-xs">Alta concentração</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded-full bg-red-500 shrink-0" />
-                    <span className="text-xs">Maior concentracao</span>
+                    <span className="text-xs">Maior concentração</span>
                   </div>
                 </>
               ) : (

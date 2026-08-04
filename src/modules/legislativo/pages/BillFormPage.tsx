@@ -16,13 +16,13 @@ const TYPE_LABELS: Record<string, string> = {
   PEC: 'PEC',
   PLP: 'Projeto de Lei Complementar',
   PDL: 'Projeto de Decreto Legislativo',
-  MPV: 'Medida Provisoria',
+  MPV: 'Medida Provisória',
   REQ: 'Requerimento',
-  INC: 'Indicacao',
+  INC: 'Indicação',
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  EM_TRAMITACAO: 'Em Tramitacao',
+  EM_TRAMITACAO: 'Em Tramitação',
   APROVADO: 'Aprovado',
   REJEITADO: 'Rejeitado',
   ARQUIVADO: 'Arquivado',
@@ -30,7 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const AUTHORSHIP_LABELS: Record<string, string> = {
-  PROPRIO: 'Proprio',
+  PROPRIO: 'Próprio',
   COAUTORIA: 'Coautoria',
   ACOMPANHAMENTO: 'Acompanhamento',
 }
@@ -118,13 +118,13 @@ export function BillFormPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{isEdit ? 'Editar Proposicao' : 'Nova Proposicao'}</h1>
+          <h1 className="text-2xl font-bold">{isEdit ? 'Editar Proposição' : 'Nova Proposição'}</h1>
           <p className="text-sm text-muted-foreground">
-            {isEdit ? 'Atualize os dados da proposicao' : 'Registre uma nova proposicao legislativa'}
+            {isEdit ? 'Atualize os dados da proposição' : 'Registre uma nova proposição legislativa'}
           </p>
         </div>
         {isEdit && (
-          <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta proposicao?')) remove.mutate() }}>
+          <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta proposição?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
@@ -132,14 +132,14 @@ export function BillFormPage() {
 
       <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} className="space-y-6">
         <Card>
-          <CardHeader><CardTitle>Dados da Proposicao</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Dados da Proposição</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Numero</label>
+              <label className="text-sm font-medium">Número</label>
               <Input value={form.number} onChange={(e) => set('number', e.target.value)} placeholder="Ex: PL 001/2026" />
             </div>
             <div className="space-y-2 sm:col-span-1 lg:col-span-2">
-              <label className="text-sm font-medium">Titulo *</label>
+              <label className="text-sm font-medium">Título *</label>
               <Input value={form.title} onChange={(e) => set('title', e.target.value)} required />
             </div>
             <div className="space-y-2">
@@ -163,8 +163,8 @@ export function BillFormPage() {
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Comissao</label>
-              <Input value={form.committee} onChange={(e) => set('committee', e.target.value)} placeholder="Ex: Comissao de Saude" />
+              <label className="text-sm font-medium">Comissão</label>
+              <Input value={form.committee} onChange={(e) => set('committee', e.target.value)} placeholder="Ex: Comissão de Saúde" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">URL do Documento</label>
@@ -178,7 +178,7 @@ export function BillFormPage() {
           <CardContent>
             <div className="space-y-2">
               <label className="text-sm font-medium">Ementa / Resumo</label>
-              <Textarea value={form.summary} onChange={(e) => set('summary', e.target.value)} rows={4} placeholder="Descreva a proposicao..." />
+              <Textarea value={form.summary} onChange={(e) => set('summary', e.target.value)} rows={4} placeholder="Descreva a proposição..." />
             </div>
           </CardContent>
         </Card>
@@ -187,7 +187,7 @@ export function BillFormPage() {
           <Button variant="outline" type="button" onClick={() => navigate('/proposicoes')}>Cancelar</Button>
           <Button type="submit" disabled={save.isPending}>
             {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Criar Proposicao'}
+            {isEdit ? 'Salvar' : 'Criar Proposição'}
           </Button>
         </div>
 

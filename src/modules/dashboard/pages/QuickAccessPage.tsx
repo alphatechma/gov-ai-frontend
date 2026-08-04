@@ -57,10 +57,10 @@ export function QuickAccessPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Ola, {user?.name?.split(' ')[0] ?? 'Usuario'}!
+          Olá, {user?.name?.split(' ')[0] ?? 'Usuário'}!
         </h1>
         <p className="text-sm text-muted-foreground">
-          Acesso rapido as funcionalidades do sistema
+          Acesso rápido às funcionalidades do sistema
         </p>
       </div>
 
@@ -96,7 +96,7 @@ export function QuickAccessPage() {
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           <QuickAccessCard
-            label="Configuracoes"
+            label="Configurações"
             icon={Settings}
             path="/configuracoes"
             color="bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"

@@ -22,15 +22,15 @@ import {
 const CATEGORY_LABELS: Record<string, string> = {
   PASSAGENS: 'Passagens',
   TELEFONIA: 'Telefonia',
-  POSTAIS: 'Servicos Postais',
-  MANUTENCAO: 'Manutencao',
+  POSTAIS: 'Serviços Postais',
+  MANUTENCAO: 'Manutenção',
   CONSULTORIA: 'Consultoria',
-  DIVULGACAO: 'Divulgacao',
-  COMBUSTIVEL: 'Combustivel',
+  DIVULGACAO: 'Divulgação',
+  COMBUSTIVEL: 'Combustível',
   HOSPEDAGEM: 'Hospedagem',
-  ALIMENTACAO: 'Alimentacao',
-  VEICULOS: 'Veiculos',
-  SEGURANCA: 'Seguranca',
+  ALIMENTACAO: 'Alimentação',
+  VEICULOS: 'Veículos',
+  SEGURANCA: 'Segurança',
   OUTROS: 'Outros',
 }
 
@@ -122,7 +122,7 @@ export function CeapPage() {
       ),
     },
     { key: 'category', label: 'Categoria', render: (c) => CATEGORY_LABELS[c.category] ?? c.category },
-    { key: 'description', label: 'Descricao', render: (c) => <span className="line-clamp-1 max-w-xs">{c.description}</span> },
+    { key: 'description', label: 'Descrição', render: (c) => <span className="line-clamp-1 max-w-xs">{c.description}</span> },
     { key: 'value', label: 'Valor', render: (c) => formatCurrency(c.value) },
     {
       key: 'status',
@@ -142,11 +142,11 @@ export function CeapPage() {
     <div className="space-y-6">
       <PageHeader
         title="Financeiro"
-        description="Gestao de receitas e despesas parlamentares"
+        description="Gestão de receitas e despesas parlamentares"
         action={
           <Button onClick={() => navigate('/ceap/novo')}>
             <Plus className="h-4 w-4" />
-            Nova Transacao
+            Nova Transação
           </Button>
         }
       />
@@ -207,7 +207,7 @@ export function CeapPage() {
       {/* Monthly Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Receitas x Despesas por Mes</CardTitle>
+          <CardTitle className="text-lg">Receitas x Despesas por Mês</CardTitle>
         </CardHeader>
         <CardContent>
           {chart.isLoading ? (
@@ -239,7 +239,7 @@ export function CeapPage() {
       {/* Filter Tabs + Table */}
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-lg">Transacoes</CardTitle>
+          <CardTitle className="text-lg">Transações</CardTitle>
           <div className="flex rounded-lg border bg-muted p-1">
             {(['TODAS', 'DESPESA', 'RECEITA'] as FilterTab[]).map((t) => (
               <button
