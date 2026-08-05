@@ -29,16 +29,48 @@ function getPartyColor(party: string) {
 
 function fmt(n: number) { return n.toLocaleString('pt-BR') }
 
+// ── Garante que um valor seja sempre um array (protege .map/.sort/.reduce) ──
+function asArray<T = any>(v: unknown): T[] {
+  if (Array.isArray(v)) return v as T[]
+  // Alguns endpoints podem envelopar a lista em { data: [...] } ou { items: [...] }
+  if (v && typeof v === 'object') {
+    const wrapped = (v as any).data ?? (v as any).items ?? (v as any).results
+    if (Array.isArray(wrapped)) return wrapped as T[]
+  }
+  return []
+}
+
 // ── Hook generico com electionId ──
-function useElection<T>(electionId: string | undefined, key: string, params?: Record<string, string | undefined>) {
+// `enabled` permite pular chamadas que dependem de parametros/nivel de eleicao
+// (evita disparar requests que o backend responderia com 500).
+function useElection<T>(
+  electionId: string | undefined,
+  key: string,
+  params?: Record<string, string | undefined>,
+  enabled: boolean = true,
+) {
   const query = new URLSearchParams()
   if (params) Object.entries(params).forEach(([k, v]) => { if (v) query.set(k, v) })
   const qs = query.toString()
   return useQuery<T>({
     queryKey: ['election', electionId, key, qs],
     queryFn: () => api.get<T>(`/election-results/elections/${electionId}/analysis/${key}${qs ? `?${qs}` : ''}`).then(r => r.data),
-    enabled: !!electionId,
+    enabled: !!electionId && enabled,
+    retry: false,
   })
+}
+
+// ── Variante para endpoints que retornam listas: coage qualquer resposta ──
+// nao-array (objeto de erro, HTML do service worker, envelope paginado) para [].
+function useElectionList<T = any>(
+  electionId: string | undefined,
+  key: string,
+  params?: Record<string, string | undefined>,
+  enabled: boolean = true,
+) {
+  const q = useElection<unknown>(electionId, key, params, enabled)
+  const data: T[] | undefined = q.data === undefined ? undefined : asArray<T>(q.data)
+  return { ...q, data }
 }
 
 function LoadingCards({ count = 4 }: { count?: number }) {
@@ -83,8 +115,8 @@ function NoElection() {
 // ══════════════════════════════════════════════════════
 function TabResumo({ electionId }: { electionId: string }) {
   const { data: summary, isLoading: loadingSummary } = useElection<any>(electionId, 'summary')
-  const { data: byParty, isLoading: loadingParty } = useElection<any[]>(electionId, 'by-party')
-  const { data: ranking, isLoading: loadingRanking } = useElection<any[]>(electionId, 'ranking', { limit: '10' })
+  const { data: byParty, isLoading: loadingParty } = useElectionList<any>(electionId, 'by-party')
+  const { data: ranking, isLoading: loadingRanking } = useElectionList<any>(electionId, 'ranking', { limit: '10' })
 
   if (loadingSummary) return <LoadingCards />
 
@@ -193,13 +225,15 @@ function TabBairros({ electionId, electionType }: { electionId: string; election
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null)
 
   // Para eleicoes estaduais: usa by-city; para municipais: usa by-neighborhood
-  const { data: neighborhoods, isLoading: loadingNeighborhoods } = useElection<any[]>(electionId, 'by-neighborhood')
-  const { data: cities, isLoading: loadingCities } = useElection<any[]>(electionId, 'by-city')
+  // So dispara o endpoint correspondente ao nivel da eleicao (evita 500 upstream).
+  const { data: neighborhoods, isLoading: loadingNeighborhoods } = useElectionList<any>(electionId, 'by-neighborhood', undefined, !isStateLevel)
+  const { data: cities, isLoading: loadingCities } = useElectionList<any>(electionId, 'by-city', undefined, isStateLevel)
 
   const { data: details } = useElection<any>(
     electionId,
     'neighborhood-details',
     !isStateLevel && selectedNeighborhood ? { neighborhood: selectedNeighborhood } : undefined,
+    !isStateLevel && !!selectedNeighborhood,
   )
 
   const NEIGHBORHOOD_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1']
@@ -310,19 +344,20 @@ function TabBairros({ electionId, electionType }: { electionId: string; election
 function TabSecoes({ electionId }: { electionId: string }) {
   const [selectedZone, setSelectedZone] = useState<string>('')
   const [selectedCandidate, setSelectedCandidate] = useState<string>('')
-  const { data: zones } = useElection<any[]>(electionId, 'by-zone')
-  const { data: candidates } = useElection<any[]>(electionId, 'candidates')
+  const { data: zones } = useElectionList<any>(electionId, 'by-zone')
+  const { data: candidates } = useElectionList<any>(electionId, 'candidates')
 
-  const { data: sectionDetails, isLoading: loadingSections } = useElection<any[]>(
+  const { data: sectionDetails, isLoading: loadingSections } = useElectionList<any>(
     electionId,
     'section-details',
     selectedZone ? { zone: selectedZone } : undefined,
   )
 
-  const { data: candidateSections, isLoading: loadingCandSections } = useElection<any[]>(
+  const { data: candidateSections, isLoading: loadingCandSections } = useElectionList<any>(
     electionId,
     'candidate-by-section',
     selectedCandidate ? { candidateName: selectedCandidate, ...(selectedZone ? { zone: selectedZone } : {}) } : undefined,
+    !!selectedCandidate,
   )
 
   const activeSections = selectedCandidate ? (candidateSections ?? []) : []
@@ -450,22 +485,25 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
   const { data: insights, isLoading } = useElection<any>(electionId, 'insights',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
   )
-  const { data: candidates } = useElection<any[]>(electionId, 'candidates')
+  const { data: candidates } = useElectionList<any>(electionId, 'candidates')
 
-  const { data: candidateByZone } = useElection<any[]>(
+  const { data: candidateByZone } = useElectionList<any>(
     electionId,
     'candidate-by-zone',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+    !!selectedCandidate,
   )
-  const { data: candidateBySection } = useElection<any[]>(
+  const { data: candidateBySection } = useElectionList<any>(
     electionId,
     'candidate-by-section',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+    !!selectedCandidate,
   )
-  const { data: candidateByCity } = useElection<any[]>(
+  const { data: candidateByCity } = useElectionList<any>(
     electionId,
     'candidate-by-city',
     isStateLevel && selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+    isStateLevel && !!selectedCandidate,
   )
 
   // Cross-election comparison
@@ -476,6 +514,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
     selectedCandidate && compareElectionId
       ? { candidateName: selectedCandidate, compareElectionId }
       : undefined,
+    !!selectedCandidate && !!compareElectionId,
   )
 
   if (isLoading) return <LoadingCards />
@@ -586,7 +625,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
       {/* Analise Estrategica */}
       {selectedCandidate && insights.candidateInsights && (() => {
         const ci = insights.candidateInsights
-        const byZone = ci.byZone ?? []
+        const byZone = asArray(ci.byZone)
         const avgPct = ci.avgPercentage ?? 0
         const strongZones = byZone.filter((z: any) => z.percentage > avgPct).sort((a: any, b: any) => b.votes - a.votes)
         const weakZones = byZone.filter((z: any) => z.percentage <= avgPct && z.votes > 0).sort((a: any, b: any) => a.percentage - b.percentage)
@@ -764,8 +803,8 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                 <Card>
                   <CardHeader><CardTitle>Evolução por Zona</CardTitle></CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={Math.max(300, (ev.byZone ?? []).length * 40)}>
-                      <BarChart data={ev.byZone ?? []} layout="vertical">
+                    <ResponsiveContainer width="100%" height={Math.max(300, asArray(ev.byZone).length * 40)}>
+                      <BarChart data={asArray(ev.byZone)} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" tickFormatter={(v) => fmt(v)} />
                         <YAxis type="category" dataKey="zone" tick={{ fontSize: 12 }} width={50}
@@ -794,7 +833,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                           </tr>
                         </thead>
                         <tbody>
-                          {(ev.byZone ?? []).map((z: any, i: number) => (
+                          {asArray(ev.byZone).map((z: any, i: number) => (
                             <tr key={z.zone} className={`border-b ${i % 2 === 0 ? 'bg-muted/20' : ''}`}>
                               <td className="p-3 font-medium">Zona {z.zone}</td>
                               <td className="p-3 text-right text-muted-foreground">{fmt(z.compareVotes)}</td>
@@ -814,25 +853,25 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                 </Card>
 
                 {/* Zonas ganhas/perdidas */}
-                {((ev.zonesGained ?? []).length > 0 || (ev.zonesLost ?? []).length > 0) && (
+                {(asArray(ev.zonesGained).length > 0 || asArray(ev.zonesLost).length > 0) && (
                   <div className="grid gap-4 md:grid-cols-2">
-                    {(ev.zonesGained ?? []).length > 0 && (
+                    {asArray(ev.zonesGained).length > 0 && (
                       <Card className="border-l-4 border-l-green-500">
                         <CardHeader className="pb-2"><CardTitle className="text-green-600 text-base">Zonas Conquistadas</CardTitle></CardHeader>
                         <CardContent>
                           <p className="text-sm">
-                            {(ev.zonesGained ?? []).map((z: number) => `Zona ${z}`).join(', ')}
+                            {asArray(ev.zonesGained).map((z: number) => `Zona ${z}`).join(', ')}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">Zonas onde não havia votos em {compareEl.year}</p>
                         </CardContent>
                       </Card>
                     )}
-                    {(ev.zonesLost ?? []).length > 0 && (
+                    {asArray(ev.zonesLost).length > 0 && (
                       <Card className="border-l-4 border-l-red-500">
                         <CardHeader className="pb-2"><CardTitle className="text-red-600 text-base">Zonas Perdidas</CardTitle></CardHeader>
                         <CardContent>
                           <p className="text-sm">
-                            {(ev.zonesLost ?? []).map((z: number) => `Zona ${z}`).join(', ')}
+                            {asArray(ev.zonesLost).map((z: number) => `Zona ${z}`).join(', ')}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">Zonas onde não há votos em {currentEl.year}</p>
                         </CardContent>
@@ -956,7 +995,7 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
                 <YAxis tickFormatter={(v) => `${v}%`} />
                 <Tooltip formatter={((v: number) => `${v}%`) as any} />
                 <Bar dataKey="vsAverage" name="vs Média">
-                  {(insights.performanceByZone ?? []).map((z: any, i: number) => (
+                  {asArray(insights.performanceByZone).map((z: any, i: number) => (
                     <Cell key={i} fill={z.vsAverage >= 0 ? '#16a34a' : '#dc2626'} />
                   ))}
                 </Bar>
@@ -975,13 +1014,14 @@ function TabInsights({ electionId, elections, electionType }: { electionId: stri
 function TabComparar({ electionId }: { electionId: string }) {
   const [cand1, setCand1] = useState<string>('')
   const [cand2, setCand2] = useState<string>('')
-  const { data: candidates } = useElection<any[]>(electionId, 'candidates')
+  const { data: candidates } = useElectionList<any>(electionId, 'candidates')
 
   const selectedNames = [cand1, cand2].filter(Boolean).join(',')
   const { data: comparison, isLoading } = useElection<any>(
     electionId,
     'comparison',
     selectedNames.includes(',') ? { candidates: selectedNames } : undefined,
+    selectedNames.includes(','),
   )
 
   return (
@@ -1059,7 +1099,7 @@ function TabComparar({ electionId }: { electionId: string }) {
             <CardHeader><CardTitle>Comparativo por Zona</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {(comparison.comparison ?? []).map((zc: any) => {
+                {asArray(comparison.comparison).map((zc: any) => {
                   const total = zc.candidate1Votes + zc.candidate2Votes || 1
                   const p1 = (zc.candidate1Votes / total) * 100
                   const p2 = (zc.candidate2Votes / total) * 100
@@ -1108,27 +1148,31 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
   const [selectedCandidate, setSelectedCandidate] = useState<string>('')
   const [activeScenario, setActiveScenario] = useState<string>('moderado')
   const [itemMultipliers, setItemMultipliers] = useState<Record<string, number>>({})
-  const { data: candidates } = useElection<any[]>(electionId, 'candidates')
+  const { data: candidates } = useElectionList<any>(electionId, 'candidates')
   const { data, isLoading } = useElection<any>(
     electionId,
     'projections',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+    !!selectedCandidate,
   )
   // Municipal: candidate-by-section | Estadual/Federal: candidate-by-city
-  const { data: candidateByZone } = useElection<any[]>(
-    !isStateLevel ? electionId : undefined,
+  const { data: candidateByZone } = useElectionList<any>(
+    electionId,
     'candidate-by-zone',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+    !isStateLevel && !!selectedCandidate,
   )
-  const { data: candidateBySection } = useElection<any[]>(
-    !isStateLevel && selectedCandidate ? electionId : undefined,
+  const { data: candidateBySection } = useElectionList<any>(
+    electionId,
     'candidate-by-section',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+    !isStateLevel && !!selectedCandidate,
   )
-  const { data: candidateByCity } = useElection<any[]>(
-    isStateLevel && selectedCandidate ? electionId : undefined,
+  const { data: candidateByCity } = useElectionList<any>(
+    electionId,
     'candidate-by-city',
     selectedCandidate ? { candidateName: selectedCandidate } : undefined,
+    isStateLevel && !!selectedCandidate,
   )
 
   const scenario = SCENARIOS.find(s => s.id === activeScenario)!
@@ -1247,7 +1291,7 @@ function TabProjecoes({ electionId, electionType }: { electionId: string; electi
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="font-medium">{entityLabelPlural} fracos:</span> {data.weakZonesCount} (abaixo da média)
                 </div>
-                {(data.scenarios ?? []).map((s: any, i: number) => (
+                {asArray(data.scenarios).map((s: any, i: number) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
                     <div>
                       <p className="text-sm font-medium">{s.label}</p>
