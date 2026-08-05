@@ -543,6 +543,7 @@ export function VotersListPage() {
     { key: 'tituloEleitor', label: 'Título de Eleitor' },
     { key: 'zona', label: 'Zona' },
     { key: 'secao', label: 'Seção' },
+    { key: 'localVotacao', label: 'Local de Votação' },
     { key: 'nivelConfianca', label: 'Nível de Confiança' },
     { key: 'tags', label: 'Tags' },
     { key: 'observacoes', label: 'Observações' },
