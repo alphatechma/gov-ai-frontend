@@ -86,6 +86,7 @@ export interface Voter {
   voterRegistration: string | null
   votingZone: string | null
   votingSection: string | null
+  votingLocation: string | null
   leaderId: string | null
   supportLevel: SupportLevel
   confidenceLevel: ConfidenceLevel

@@ -75,6 +75,7 @@ export function VoterFormPage() {
     voterRegistration: '',
     votingZone: '',
     votingSection: '',
+    votingLocation: '',
     leaderId: '',
     confidenceLevel: 'NEUTRO',
     tags: '',
@@ -124,6 +125,7 @@ export function VoterFormPage() {
         voterRegistration: v.voterRegistration ?? '',
         votingZone: v.votingZone ?? '',
         votingSection: v.votingSection ?? '',
+        votingLocation: v.votingLocation ?? '',
         leaderId: v.leaderId ?? '',
         confidenceLevel: v.confidenceLevel ?? 'NEUTRO',
         tags: v.tags?.join(', ') ?? '',
@@ -154,6 +156,7 @@ export function VoterFormPage() {
       if (form.voterRegistration) payload.voterRegistration = form.voterRegistration
       if (form.votingZone) payload.votingZone = form.votingZone
       if (form.votingSection) payload.votingSection = form.votingSection
+      if (form.votingLocation) payload.votingLocation = form.votingLocation
       if (form.leaderId) payload.leaderId = form.leaderId
       if (form.confidenceLevel) payload.confidenceLevel = form.confidenceLevel
       if (form.notes) payload.notes = form.notes
@@ -339,6 +342,10 @@ export function VoterFormPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Seção Eleitoral</label>
               <Input value={form.votingSection} onChange={(e) => set('votingSection', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Local de Votação</label>
+              <Input value={form.votingLocation} onChange={(e) => set('votingLocation', e.target.value)} placeholder="Ex: Escola Municipal João Silva" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Nível de Confiança</label>
