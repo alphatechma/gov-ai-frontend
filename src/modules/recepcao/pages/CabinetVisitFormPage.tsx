@@ -12,6 +12,7 @@ import {
   checkVoterMatch,
   checkVoterMatchByData,
 } from '../services/cabinetVisitsApi'
+import { usePermissions } from '@/lib/permissions'
 import type { Visitor } from '@/types/entities'
 
 const SUPPORT_LABELS: Record<string, string> = {
@@ -24,6 +25,8 @@ const SUPPORT_LABELS: Record<string, string> = {
 export function CabinetVisitFormPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { canCreate } = usePermissions()
+  const canCreateVisit = canCreate('cabinet-visits')
 
   // Visit form
   const [purpose, setPurpose] = useState('')
@@ -369,10 +372,12 @@ export function CabinetVisitFormPage() {
           <Button type="button" variant="outline" onClick={() => navigate('/eleitores?tab=recepcao')}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={!canSave || saveMutation.isPending}>
-            {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Registrar Visita
-          </Button>
+          {canCreateVisit && (
+            <Button type="submit" disabled={!canSave || saveMutation.isPending}>
+              {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Registrar Visita
+            </Button>
+          )}
         </div>
       </form>
     </div>

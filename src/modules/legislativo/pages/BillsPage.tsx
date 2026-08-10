@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { Bill } from '@/types/entities'
 
 const typeLabels: Record<string, string> = {
@@ -42,26 +43,35 @@ const authorshipLabels: Record<string, string> = {
   ACOMPANHAMENTO: 'Acompanhamento',
 }
 
-const columns: Column<Bill>[] = [
-  { key: 'number', label: 'Nº', render: (b) => b.number ?? '-' },
-  { key: 'title', label: 'Título' },
-  { key: 'type', label: 'Tipo', render: (b) => <Badge variant="default">{typeLabels[b.type] ?? b.type}</Badge> },
-  { key: 'status', label: 'Status', render: (b) => <Badge variant={statusColors[b.status] ?? 'secondary'}>{statusLabels[b.status] ?? b.status}</Badge> },
-  { key: 'authorship', label: 'Autoria', render: (b) => authorshipLabels[b.authorship ?? ''] ?? b.authorship ?? '-' },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (b) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/proposicoes/${b.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<Bill>[] {
+  const columns: Column<Bill>[] = [
+    { key: 'number', label: 'Nº', render: (b) => b.number ?? '-' },
+    { key: 'title', label: 'Título' },
+    { key: 'type', label: 'Tipo', render: (b) => <Badge variant="default">{typeLabels[b.type] ?? b.type}</Badge> },
+    { key: 'status', label: 'Status', render: (b) => <Badge variant={statusColors[b.status] ?? 'secondary'}>{statusLabels[b.status] ?? b.status}</Badge> },
+    { key: 'authorship', label: 'Autoria', render: (b) => authorshipLabels[b.authorship ?? ''] ?? b.authorship ?? '-' },
+  ]
+
+  if (canEdit) {
+    columns.push({
+      key: 'id',
+      label: 'Ações',
+      render: (b) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/proposicoes/${b.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+
+  return columns
+}
 
 export function BillsPage() {
+  const { canCreate, canEdit } = usePermissions()
   const [search, setSearch] = useState('')
   const { list } = useCrud<Bill>('bills')
+  const columns = buildColumns(canEdit('bills'))
 
   const filtered = (list.data ?? []).filter((b) =>
     b.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -74,12 +84,14 @@ export function BillsPage() {
         title="Proposições"
         description="Proposições legislativas"
         action={
-          <Button asChild>
-            <Link to="/proposicoes/novo">
-              <Plus className="h-4 w-4" />
-              Nova Proposição
-            </Link>
-          </Button>
+          canCreate('bills') && (
+            <Button asChild>
+              <Link to="/proposicoes/novo">
+                <Plus className="h-4 w-4" />
+                Nova Proposição
+              </Link>
+            </Button>
+          )
         }
       />
 

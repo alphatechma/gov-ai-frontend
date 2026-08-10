@@ -6,12 +6,15 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 import { fetchVisitor, createVisitor, updateVisitor, deleteVisitor } from '../services/cabinetVisitsApi'
+import { usePermissions } from '@/lib/permissions'
 
 export function VisitorFormPage() {
   const { id } = useParams()
   const isEdit = !!id
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('cabinet-visits') : canCreate('cabinet-visits')
 
   const [form, setForm] = useState({
     name: '',
@@ -89,7 +92,7 @@ export function VisitorFormPage() {
             {isEdit ? 'Atualize os dados do visitante' : 'Cadastre um novo visitante'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('cabinet-visits') && (
           <Button
             variant="destructive"
             size="icon"
@@ -149,10 +152,12 @@ export function VisitorFormPage() {
           <Button type="button" variant="outline" onClick={() => navigate('/eleitores?tab=visitantes')}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Salvar
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Salvar
+            </Button>
+          )}
         </div>
       </form>
     </div>

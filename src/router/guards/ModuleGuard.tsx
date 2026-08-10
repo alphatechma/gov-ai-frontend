@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useTenantStore } from '@/stores/tenantStore'
 import { useAuthStore } from '@/stores/authStore'
+import { usePermissions } from '@/lib/permissions'
 import { UserRole } from '@/types/enums'
 
 interface ModuleGuardProps {
@@ -10,6 +11,7 @@ interface ModuleGuardProps {
 export function ModuleGuard({ moduleKey }: ModuleGuardProps) {
   const hasModule = useTenantStore((s) => s.hasModule)
   const user = useAuthStore((s) => s.user)
+  const { canView } = usePermissions()
 
   if (user?.role === UserRole.SUPER_ADMIN) {
     return <Outlet />
@@ -28,6 +30,11 @@ export function ModuleGuard({ moduleKey }: ModuleGuardProps) {
     if (!user.allowedModules.includes(moduleKey)) {
       return <Navigate to="/" replace />
     }
+  }
+
+  // Sem permissão de visualizar → não entra na tela.
+  if (!canView(moduleKey)) {
+    return <Navigate to="/" replace />
   }
 
   return <Outlet />

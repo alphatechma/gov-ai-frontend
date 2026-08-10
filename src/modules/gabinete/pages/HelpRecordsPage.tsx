@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
+import { usePermissions } from '@/lib/permissions'
 import type { HelpRecord } from '@/types/entities'
 import { formatDate } from '@/lib/utils'
 
@@ -36,21 +37,26 @@ const categoryLabels: Record<string, string> = {
   OUTROS: 'Outros',
 }
 
-const columns: Column<HelpRecord>[] = [
-  { key: 'category', label: 'Categoria', render: (h) => h.category ? (categoryLabels[h.category] ?? h.category) : '-' },
-  { key: 'observations', label: 'Descrição', render: (h) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
-  { key: 'status', label: 'Status', render: (h) => <Badge variant={statusColors[h.status] ?? 'secondary'}>{statusLabels[h.status] ?? h.status}</Badge> },
-  { key: 'createdAt', label: 'Data', render: (h) => formatDate(h.createdAt) },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (h) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/atendimentos/${h.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<HelpRecord>[] {
+  const cols: Column<HelpRecord>[] = [
+    { key: 'category', label: 'Categoria', render: (h) => h.category ? (categoryLabels[h.category] ?? h.category) : '-' },
+    { key: 'observations', label: 'Descrição', render: (h) => <span className="line-clamp-1 max-w-xs">{h.observations ?? '-'}</span> },
+    { key: 'status', label: 'Status', render: (h) => <Badge variant={statusColors[h.status] ?? 'secondary'}>{statusLabels[h.status] ?? h.status}</Badge> },
+    { key: 'createdAt', label: 'Data', render: (h) => formatDate(h.createdAt) },
+  ]
+  if (canEdit) {
+    cols.push({
+      key: 'id',
+      label: 'Ações',
+      render: (h) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/atendimentos/${h.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+  return cols
+}
 
 interface PaginatedResponse<T> {
   data: T[]
@@ -72,6 +78,7 @@ export function HelpRecordsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const debouncedSearch = useDebounce(search)
+  const { canCreate, canEdit } = usePermissions()
 
   useEffect(() => { setPage(1) }, [debouncedSearch])
 
@@ -96,12 +103,14 @@ export function HelpRecordsPage() {
         title="Gabinete Social"
         description="Gerencie os atendimentos do gabinete"
         action={
-          <Button asChild>
-            <Link to="/atendimentos/novo">
-              <Plus className="h-4 w-4" />
-              Novo Atendimento
-            </Link>
-          </Button>
+          canCreate('help-records') && (
+            <Button asChild>
+              <Link to="/atendimentos/novo">
+                <Plus className="h-4 w-4" />
+                Novo Atendimento
+              </Link>
+            </Button>
+          )
         }
       />
 
@@ -115,7 +124,7 @@ export function HelpRecordsPage() {
       </Card>
 
       <DataTable
-        columns={columns}
+        columns={buildColumns(canEdit('help-records'))}
         data={records}
         isLoading={query.isLoading}
         page={page}

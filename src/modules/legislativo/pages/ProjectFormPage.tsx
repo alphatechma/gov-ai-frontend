@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 import { ProjectStatus } from '@/types/enums'
+import { usePermissions } from '@/lib/permissions'
 import type { Project } from '@/types/entities'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -23,6 +24,8 @@ const STATUS_LABELS: Record<string, string> = {
 export function ProjectFormPage() {
   const { id } = useParams()
   const isEdit = !!id
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('projects') : canCreate('projects')
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -107,7 +110,7 @@ export function ProjectFormPage() {
             {isEdit ? 'Atualize os dados do projeto' : 'Registre um novo projeto legislativo'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('projects') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir este projeto?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -169,10 +172,12 @@ export function ProjectFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/projetos')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Criar Projeto'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Criar Projeto'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

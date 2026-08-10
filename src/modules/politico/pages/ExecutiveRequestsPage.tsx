@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { ExecutiveRequest } from '@/types/entities'
 import { formatDate } from '@/lib/utils'
 
@@ -33,27 +34,34 @@ const typeLabels: Record<string, string> = {
   REQUERIMENTO: 'Requerimento',
 }
 
-const columns: Column<ExecutiveRequest>[] = [
-  { key: 'type', label: 'Tipo', render: (r) => typeLabels[r.type] ?? r.type },
-  { key: 'protocolNumber', label: 'Protocolo', render: (r) => r.protocolNumber ?? '-' },
-  { key: 'subject', label: 'Assunto', render: (r) => <span className="line-clamp-1 max-w-xs">{r.subject}</span> },
-  { key: 'recipientOrgan', label: 'Destinatário', render: (r) => r.recipientOrgan ?? '-' },
-  { key: 'status', label: 'Status', render: (r) => <Badge variant={statusColors[r.status] ?? 'secondary'}>{statusLabels[r.status] ?? r.status}</Badge> },
-  { key: 'createdAt', label: 'Data', render: (r) => formatDate(r.createdAt) },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (r) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/requerimentos/${r.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<ExecutiveRequest>[] {
+  const cols: Column<ExecutiveRequest>[] = [
+    { key: 'type', label: 'Tipo', render: (r) => typeLabels[r.type] ?? r.type },
+    { key: 'protocolNumber', label: 'Protocolo', render: (r) => r.protocolNumber ?? '-' },
+    { key: 'subject', label: 'Assunto', render: (r) => <span className="line-clamp-1 max-w-xs">{r.subject}</span> },
+    { key: 'recipientOrgan', label: 'Destinatário', render: (r) => r.recipientOrgan ?? '-' },
+    { key: 'status', label: 'Status', render: (r) => <Badge variant={statusColors[r.status] ?? 'secondary'}>{statusLabels[r.status] ?? r.status}</Badge> },
+    { key: 'createdAt', label: 'Data', render: (r) => formatDate(r.createdAt) },
+  ]
+  if (canEdit) {
+    cols.push({
+      key: 'id',
+      label: 'Ações',
+      render: (r) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/requerimentos/${r.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+  return cols
+}
 
 export function ExecutiveRequestsPage() {
   const [search, setSearch] = useState('')
+  const { canCreate, canEdit } = usePermissions()
   const { list } = useCrud<ExecutiveRequest>('executive-requests')
+  const columns = buildColumns(canEdit('executive-requests'))
 
   const filtered = (list.data ?? []).filter((r) =>
     r.subject.toLowerCase().includes(search.toLowerCase()) ||
@@ -66,12 +74,14 @@ export function ExecutiveRequestsPage() {
         title="Requerimentos"
         description="Ofícios, indicações e requerimentos ao executivo"
         action={
-          <Button asChild>
-            <Link to="/requerimentos/novo">
-              <Plus className="h-4 w-4" />
-              Novo Requerimento
-            </Link>
-          </Button>
+          canCreate('executive-requests') && (
+            <Button asChild>
+              <Link to="/requerimentos/novo">
+                <Plus className="h-4 w-4" />
+                Novo Requerimento
+              </Link>
+            </Button>
+          )
         }
       />
 

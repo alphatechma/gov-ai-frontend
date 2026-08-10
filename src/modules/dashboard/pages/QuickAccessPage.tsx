@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { navigation } from '@/config/navigation'
 import { useAuthStore } from '@/stores/authStore'
 import { useTenantStore } from '@/stores/tenantStore'
+import { usePermissions } from '@/lib/permissions'
 import { Settings, type LucideIcon } from 'lucide-react'
 
 interface QuickAccessCardProps {
@@ -41,15 +42,27 @@ function QuickAccessCard({ label, icon: Icon, path, color }: QuickAccessCardProp
 export function QuickAccessPage() {
   const user = useAuthStore((s) => s.user)
   const hasModule = useTenantStore((s) => s.hasModule)
+  const { canView } = usePermissions()
   const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+  const isAdmin = isSuperAdmin || user?.role === 'TENANT_ADMIN'
+  const allowedModules = user?.allowedModules
 
   const filteredGroups = navigation
     .filter((group) => group.label !== 'Acesso Rapido')
     .map((group) => ({
       ...group,
-      items: group.items.filter(
-        (item) => !item.moduleKey || isSuperAdmin || hasModule(item.moduleKey),
-      ),
+      items: group.items.filter((item) => {
+        // Espelha o filtro da Sidebar: adminOnly + módulo habilitado +
+        // allowedModules (legado) + permissão de visualizar.
+        if (item.adminOnly && !isAdmin) return false
+        if (isSuperAdmin) return true
+        if (item.moduleKey && !hasModule(item.moduleKey)) return false
+        if (allowedModules && allowedModules.length > 0 && item.moduleKey) {
+          if (!allowedModules.includes(item.moduleKey)) return false
+        }
+        if (item.moduleKey && !canView(item.moduleKey)) return false
+        return true
+      }),
     }))
     .filter((group) => group.items.length > 0)
 

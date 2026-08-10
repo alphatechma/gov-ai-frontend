@@ -9,6 +9,9 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2, Plus } from 'lucide-react'
+import { usePermissions } from '@/lib/permissions'
+import { useAuthStore } from '@/stores/authStore'
+import { UserRole } from '@/types/enums'
 import type { Voter, Leader } from '@/types/entities'
 
 const GENDER_OPTIONS = [
@@ -57,6 +60,10 @@ async function geocodeAddress(
 export function VoterFormPage() {
   const { id } = useParams()
   const isEdit = !!id
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('voters') : canCreate('voters')
+  // Liderança logada: eleitor é auto-vinculado a ela no backend; sem seletor.
+  const isLeader = useAuthStore((s) => s.user?.role) === UserRole.LEADER
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -237,7 +244,7 @@ export function VoterFormPage() {
             {isEdit ? 'Atualize os dados do eleitor' : 'Cadastre um novo eleitor na base'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('voters') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir este eleitor?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -355,6 +362,7 @@ export function VoterFormPage() {
                 <option value="BAIXO">Baixo</option>
               </Select>
             </div>
+            {!isLeader && (
             <div className="space-y-2 relative" ref={leaderRef}>
               <label className="text-sm font-medium">Liderança</label>
               <Input
@@ -404,6 +412,7 @@ export function VoterFormPage() {
                 </div>
               )}
             </div>
+            )}
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium">Tags</label>
               <Input value={form.tags} onChange={(e) => set('tags', e.target.value)} placeholder="Separadas por vírgula: tag1, tag2" />
@@ -420,10 +429,12 @@ export function VoterFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/eleitores')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Cadastrar Eleitor'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Cadastrar Eleitor'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

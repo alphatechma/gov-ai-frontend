@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 import { AmendmentStatus } from '@/types/enums'
+import { usePermissions } from '@/lib/permissions'
 import type { Amendment } from '@/types/entities'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -21,6 +22,8 @@ const STATUS_LABELS: Record<string, string> = {
 export function AmendmentFormPage() {
   const { id } = useParams()
   const isEdit = !!id
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('amendments') : canCreate('amendments')
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -105,7 +108,7 @@ export function AmendmentFormPage() {
             {isEdit ? 'Atualize os dados da emenda' : 'Registre uma nova emenda parlamentar'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('amendments') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta emenda?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -161,10 +164,12 @@ export function AmendmentFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/emendas')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Criar Emenda'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Criar Emenda'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

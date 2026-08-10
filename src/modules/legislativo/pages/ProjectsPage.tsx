@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { Project } from '@/types/entities'
 
 const statusLabels: Record<string, string> = {
@@ -28,25 +29,34 @@ const statusColors: Record<string, 'secondary' | 'default' | 'warning' | 'succes
   ARQUIVADO: 'secondary',
 }
 
-const columns: Column<Project>[] = [
-  { key: 'number', label: 'Nº', render: (p) => p.number ?? '-' },
-  { key: 'title', label: 'Título' },
-  { key: 'status', label: 'Status', render: (p) => <Badge variant={statusColors[p.status] ?? 'secondary'}>{statusLabels[p.status] ?? p.status}</Badge> },
-  { key: 'views', label: 'Visualizações' },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (p) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/projetos/${p.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<Project>[] {
+  const columns: Column<Project>[] = [
+    { key: 'number', label: 'Nº', render: (p) => p.number ?? '-' },
+    { key: 'title', label: 'Título' },
+    { key: 'status', label: 'Status', render: (p) => <Badge variant={statusColors[p.status] ?? 'secondary'}>{statusLabels[p.status] ?? p.status}</Badge> },
+    { key: 'views', label: 'Visualizações' },
+  ]
+
+  if (canEdit) {
+    columns.push({
+      key: 'id',
+      label: 'Ações',
+      render: (p) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/projetos/${p.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+
+  return columns
+}
 
 export function ProjectsPage() {
+  const { canCreate, canEdit } = usePermissions()
   const [search, setSearch] = useState('')
   const { list } = useCrud<Project>('projects')
+  const columns = buildColumns(canEdit('projects'))
 
   const filtered = (list.data ?? []).filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -59,12 +69,14 @@ export function ProjectsPage() {
         title="Projetos de Lei"
         description="Acompanhe os projetos legislativos"
         action={
-          <Button asChild>
-            <Link to="/projetos/novo">
-              <Plus className="h-4 w-4" />
-              Novo Projeto
-            </Link>
-          </Button>
+          canCreate('projects') && (
+            <Button asChild>
+              <Link to="/projetos/novo">
+                <Plus className="h-4 w-4" />
+                Novo Projeto
+              </Link>
+            </Button>
+          )
         }
       />
 

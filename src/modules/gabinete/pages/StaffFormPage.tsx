@@ -11,6 +11,7 @@ import { ArrowLeft, Loader2, Save, Trash2, UserPlus, Shield } from 'lucide-react
 import type { User } from '@/types/entities'
 import { UserRole } from '@/types/enums'
 import { useAuthStore } from '@/stores/authStore'
+import { usePermissions } from '@/lib/permissions'
 
 const accessRoles = [
   { value: UserRole.TENANT_ADMIN, label: 'Administrador', description: 'Acesso total ao gabinete, incluindo gestão de equipe' },
@@ -28,6 +29,8 @@ export function StaffFormPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const currentUser = useAuthStore((s) => s.user)
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('staff') : canCreate('staff')
 
   const [form, setForm] = useState({
     name: '',
@@ -139,7 +142,7 @@ export function StaffFormPage() {
               : 'Cadastre um novo usuário no gabinete'}
           </p>
         </div>
-        {isEdit && !isSelf && (
+        {isEdit && !isSelf && canDelete('staff') && (
           <Button
             variant="destructive"
             size="icon"
@@ -332,14 +335,16 @@ export function StaffFormPage() {
           <Button variant="outline" type="button" onClick={() => navigate('/equipe')}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {isEdit ? 'Salvar' : 'Criar Usuário'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isEdit ? 'Salvar' : 'Criar Usuário'}
+            </Button>
+          )}
         </div>
 
         {save.isError && (

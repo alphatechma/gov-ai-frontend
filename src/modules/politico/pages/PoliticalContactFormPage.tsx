@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 import { ContactRole, ContactRelationship } from '@/types/enums'
+import { usePermissions } from '@/lib/permissions'
 import type { PoliticalContact } from '@/types/entities'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -38,6 +39,8 @@ export function PoliticalContactFormPage() {
   const isEdit = !!id
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('political-contacts') : canCreate('political-contacts')
 
   const [form, setForm] = useState({
     name: '',
@@ -124,7 +127,7 @@ export function PoliticalContactFormPage() {
             {isEdit ? 'Atualize os dados do contato' : 'Adicione um novo contato a sua rede politica'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('political-contacts') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir este contato?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -201,10 +204,12 @@ export function PoliticalContactFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/contatos-politicos')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Criar Contato'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Criar Contato'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

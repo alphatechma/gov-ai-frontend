@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil, CalendarDays, List } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { Appointment } from '@/types/entities'
 import { formatDateTime } from '@/lib/utils'
 import { CalendarView } from '../components/CalendarView'
@@ -37,28 +38,35 @@ const typeLabels: Record<string, string> = {
 
 type ViewMode = 'calendar' | 'list'
 
-const columns: Column<Appointment>[] = [
-  { key: 'title', label: 'Título' },
-  { key: 'type', label: 'Tipo', render: (a) => typeLabels[a.type] ?? a.type },
-  { key: 'startDate', label: 'Início', render: (a) => formatDateTime(a.startDate) },
-  { key: 'location', label: 'Local', render: (a) => a.location ?? '-' },
-  { key: 'status', label: 'Status', render: (a) => <Badge variant={statusColors[a.status] ?? 'secondary'}>{statusLabels[a.status] ?? a.status}</Badge> },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (a) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/agenda/${a.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<Appointment>[] {
+  const cols: Column<Appointment>[] = [
+    { key: 'title', label: 'Título' },
+    { key: 'type', label: 'Tipo', render: (a) => typeLabels[a.type] ?? a.type },
+    { key: 'startDate', label: 'Início', render: (a) => formatDateTime(a.startDate) },
+    { key: 'location', label: 'Local', render: (a) => a.location ?? '-' },
+    { key: 'status', label: 'Status', render: (a) => <Badge variant={statusColors[a.status] ?? 'secondary'}>{statusLabels[a.status] ?? a.status}</Badge> },
+  ]
+  if (canEdit) {
+    cols.push({
+      key: 'id',
+      label: 'Ações',
+      render: (a) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/agenda/${a.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+  return cols
+}
 
 export function AppointmentsPage() {
   const navigate = useNavigate()
+  const { canCreate, canEdit } = usePermissions()
   const [view, setView] = useState<ViewMode>('calendar')
   const [search, setSearch] = useState('')
   const { list } = useCrud<Appointment>('appointments')
+  const columns = buildColumns(canEdit('agenda'))
 
   const filtered = (list.data ?? []).filter((a) =>
     a.title.toLowerCase().includes(search.toLowerCase()),
@@ -97,10 +105,12 @@ export function AppointmentsPage() {
               </button>
             </div>
 
-            <Button onClick={() => navigate('/agenda/novo')}>
-              <Plus className="h-4 w-4" />
-              Novo Compromisso
-            </Button>
+            {canCreate('agenda') && (
+              <Button onClick={() => navigate('/agenda/novo')}>
+                <Plus className="h-4 w-4" />
+                Novo Compromisso
+              </Button>
+            )}
           </div>
         }
       />

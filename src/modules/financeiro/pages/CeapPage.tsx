@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Plus, TrendingUp, TrendingDown, Wallet, Clock } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { usePermissions } from '@/lib/permissions'
 import {
   BarChart,
   Bar,
@@ -82,6 +83,7 @@ type FilterTab = 'TODAS' | 'DESPESA' | 'RECEITA'
 
 export function CeapPage() {
   const navigate = useNavigate()
+  const { canCreate, canEdit } = usePermissions()
   const [tab, setTab] = useState<FilterTab>('TODAS')
 
   const list = useQuery({
@@ -144,10 +146,12 @@ export function CeapPage() {
         title="Financeiro"
         description="Gestão de receitas e despesas parlamentares"
         action={
-          <Button onClick={() => navigate('/ceap/novo')}>
-            <Plus className="h-4 w-4" />
-            Nova Transação
-          </Button>
+          canCreate('ceap') && (
+            <Button onClick={() => navigate('/ceap/novo')}>
+              <Plus className="h-4 w-4" />
+              Nova Transação
+            </Button>
+          )
         }
       />
 
@@ -261,7 +265,7 @@ export function CeapPage() {
             columns={columns}
             data={filtered}
             isLoading={list.isLoading}
-            onRowClick={(item) => navigate(`/ceap/${item.id}/editar`)}
+            onRowClick={canEdit('ceap') ? (item) => navigate(`/ceap/${item.id}/editar`) : undefined}
           />
         </CardContent>
       </Card>

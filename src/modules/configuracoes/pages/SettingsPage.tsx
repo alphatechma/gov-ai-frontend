@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
+import { usePermissions } from '@/lib/permissions'
 import { useThemeStore } from '@/stores/themeStore'
 import { cn } from '@/lib/utils'
 import {
@@ -40,7 +41,7 @@ const allTabs = [
   { key: 'geral', label: 'Geral', icon: Settings, adminOnly: false },
   { key: 'aparencia', label: 'Aparência', icon: Palette, adminOnly: true },
   { key: 'permissoes', label: 'Permissões', icon: Shield, adminOnly: true },
-  { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, adminOnly: false },
+  { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, adminOnly: false, moduleKey: 'whatsapp' },
   { key: 'conta', label: 'Conta', icon: CreditCard, adminOnly: true },
   { key: 'perfil', label: 'Meu Perfil', icon: UserPen, adminOnly: false },
   { key: 'ajuda', label: 'Ajuda', icon: HelpCircle, adminOnly: false },
@@ -492,8 +493,14 @@ export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('geral')
   const userRole = useAuthStore((s) => s.user?.role)
   const isAdmin = userRole === UserRole.SUPER_ADMIN || userRole === UserRole.TENANT_ADMIN
+  const { canView } = usePermissions()
 
-  const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin)
+  const tabs = allTabs.filter((tab) => {
+    if (tab.adminOnly && !isAdmin) return false
+    const mk = (tab as { moduleKey?: string }).moduleKey
+    if (mk && !canView(mk)) return false
+    return true
+  })
 
   return (
     <div className="space-y-6">

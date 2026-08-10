@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { Amendment } from '@/types/entities'
 import { formatCurrency } from '@/lib/utils'
 
@@ -25,26 +26,35 @@ const statusColors: Record<string, 'default' | 'success' | 'warning' | 'destruct
   CANCELADA: 'destructive',
 }
 
-const columns: Column<Amendment>[] = [
-  { key: 'code', label: 'Código', render: (a) => a.code ?? '-' },
-  { key: 'description', label: 'Descrição', render: (a) => <span className="line-clamp-1 max-w-xs">{a.description}</span> },
-  { key: 'value', label: 'Valor', render: (a) => formatCurrency(a.value) },
-  { key: 'status', label: 'Status', render: (a) => <Badge variant={statusColors[a.status] ?? 'secondary'}>{statusLabels[a.status] ?? a.status}</Badge> },
-  { key: 'executionPercentage', label: 'Execução', render: (a) => `${a.executionPercentage}%` },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (a) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/emendas/${a.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<Amendment>[] {
+  const columns: Column<Amendment>[] = [
+    { key: 'code', label: 'Código', render: (a) => a.code ?? '-' },
+    { key: 'description', label: 'Descrição', render: (a) => <span className="line-clamp-1 max-w-xs">{a.description}</span> },
+    { key: 'value', label: 'Valor', render: (a) => formatCurrency(a.value) },
+    { key: 'status', label: 'Status', render: (a) => <Badge variant={statusColors[a.status] ?? 'secondary'}>{statusLabels[a.status] ?? a.status}</Badge> },
+    { key: 'executionPercentage', label: 'Execução', render: (a) => `${a.executionPercentage}%` },
+  ]
+
+  if (canEdit) {
+    columns.push({
+      key: 'id',
+      label: 'Ações',
+      render: (a) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/emendas/${a.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+
+  return columns
+}
 
 export function AmendmentsPage() {
+  const { canCreate, canEdit } = usePermissions()
   const [search, setSearch] = useState('')
   const { list } = useCrud<Amendment>('amendments')
+  const columns = buildColumns(canEdit('amendments'))
 
   const filtered = (list.data ?? []).filter((a) =>
     a.description.toLowerCase().includes(search.toLowerCase()) ||
@@ -57,12 +67,14 @@ export function AmendmentsPage() {
         title="Emendas"
         description="Emendas parlamentares"
         action={
-          <Button asChild>
-            <Link to="/emendas/novo">
-              <Plus className="h-4 w-4" />
-              Nova Emenda
-            </Link>
-          </Button>
+          canCreate('amendments') && (
+            <Button asChild>
+              <Link to="/emendas/novo">
+                <Plus className="h-4 w-4" />
+                Nova Emenda
+              </Link>
+            </Button>
+          )
         }
       />
 

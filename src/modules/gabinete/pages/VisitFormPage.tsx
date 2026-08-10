@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2, Plus } from 'lucide-react'
 import type { Visit, Voter, Leader } from '@/types/entities'
 import { VisitStatus } from '@/types/enums'
+import { usePermissions } from '@/lib/permissions'
 
 const statusLabels: Record<string, string> = {
   [VisitStatus.AGENDADA]: 'Agendada',
@@ -47,6 +48,8 @@ export function VisitFormPage() {
   const isEdit = !!id
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('visits') : canCreate('visits')
 
   const [form, setForm] = useState({
     voterId: '',
@@ -215,7 +218,7 @@ export function VisitFormPage() {
             {isEdit ? 'Atualize os dados da visita' : 'Registre uma nova visita'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('visits') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta visita?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -421,10 +424,12 @@ export function VisitFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/visitas')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Registrar Visita'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Registrar Visita'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

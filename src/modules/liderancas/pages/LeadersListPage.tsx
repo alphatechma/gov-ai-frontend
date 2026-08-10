@@ -13,6 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { Leader } from '@/types/entities'
 
 interface LeaderRanking {
@@ -25,29 +26,45 @@ interface LeaderRanking {
   score: number
 }
 
-const columns: Column<Leader>[] = [
-  { key: 'name', label: 'Nome' },
-  { key: 'phone', label: 'Telefone' },
-  { key: 'region', label: 'Região' },
-  { key: 'votersCount', label: 'Eleitores', render: (l) => <span>{l.votersCount} / {l.votersGoal}</span> },
-  {
-    key: 'active',
-    label: 'Status',
-    render: (l) => <Badge variant={l.active ? 'success' : 'secondary'}>{l.active ? 'Ativo' : 'Inativo'}</Badge>,
-  },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (l) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/liderancas/${l.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<Leader>[] {
+  const cols: Column<Leader>[] = [
+    { key: 'name', label: 'Nome' },
+    { key: 'phone', label: 'Telefone' },
+    { key: 'region', label: 'Região' },
+    { key: 'votersCount', label: 'Eleitores', render: (l) => <span>{l.votersCount} / {l.votersGoal}</span> },
+    {
+      key: 'active',
+      label: 'Status',
+      render: (l) => <Badge variant={l.active ? 'success' : 'secondary'}>{l.active ? 'Ativo' : 'Inativo'}</Badge>,
+    },
+    {
+      key: 'userId',
+      label: 'Acesso',
+      render: (l) =>
+        l.userId ? (
+          <Badge variant="default">Com acesso</Badge>
+        ) : (
+          <Badge variant="secondary">Sem acesso</Badge>
+        ),
+    },
+  ]
+  if (canEdit) {
+    cols.push({
+      key: 'id',
+      label: 'Ações',
+      render: (l) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/liderancas/${l.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+  return cols
+}
 
 export function LeadersListPage() {
   const [search, setSearch] = useState('')
+  const { canCreate, canEdit } = usePermissions()
   const { list } = useCrud<Leader>('leaders')
   const filtered = (list.data ?? []).filter((l) => l.name.toLowerCase().includes(search.toLowerCase()))
 
@@ -64,9 +81,11 @@ export function LeadersListPage() {
         title="Lideranças"
         description="Gerencie suas lideranças comunitárias"
         action={
-          <Button asChild>
-            <Link to="/liderancas/nova"><Plus className="h-4 w-4" />Nova Liderança</Link>
-          </Button>
+          canCreate('leaders') && (
+            <Button asChild>
+              <Link to="/liderancas/nova"><Plus className="h-4 w-4" />Nova Liderança</Link>
+            </Button>
+          )
         }
       />
 
@@ -137,7 +156,7 @@ export function LeadersListPage() {
       </Card>
 
       <Card><CardContent className="p-4"><div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div></CardContent></Card>
-      <DataTable columns={columns} data={filtered} isLoading={list.isLoading} />
+      <DataTable columns={buildColumns(canEdit('leaders'))} data={filtered} isLoading={list.isLoading} />
     </div>
   )
 }

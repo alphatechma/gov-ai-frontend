@@ -8,6 +8,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
+import { usePermissions } from '@/lib/permissions'
 
 const TYPE_LABELS: Record<string, string> = {
   DESPESA: 'Despesa',
@@ -53,6 +54,8 @@ export function CeapFormPage() {
   const isEdit = !!id
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('ceap') : canCreate('ceap')
 
   const [form, setForm] = useState({
     type: 'DESPESA',
@@ -142,7 +145,7 @@ export function CeapFormPage() {
             {isEdit ? `Atualize os dados da ${titleLabel.toLowerCase()}` : 'Registre uma nova receita ou despesa'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('ceap') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir este registro?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -206,10 +209,12 @@ export function CeapFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/ceap')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Criar'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Criar'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

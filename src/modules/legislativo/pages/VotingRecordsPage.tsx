@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
 import { formatDateTime } from '@/lib/utils'
+import { usePermissions } from '@/lib/permissions'
 import type { VotingRecord } from '@/types/entities'
 
 const voteLabels: Record<string, string> = {
@@ -39,26 +40,35 @@ const resultColors: Record<string, 'success' | 'destructive' | 'warning'> = {
   ADIADO: 'warning',
 }
 
-const columns: Column<VotingRecord>[] = [
-  { key: 'subject', label: 'Matéria', render: (v) => <span className="line-clamp-1 max-w-xs">{v.subject}</span> },
-  { key: 'date', label: 'Data', render: (v) => formatDateTime(v.date) },
-  { key: 'session', label: 'Sessão', render: (v) => v.session ?? '-' },
-  { key: 'vote', label: 'Voto', render: (v) => <Badge variant={voteColors[v.vote] ?? 'secondary'}>{voteLabels[v.vote] ?? v.vote}</Badge> },
-  { key: 'result', label: 'Resultado', render: (v) => v.result ? <Badge variant={resultColors[v.result] ?? 'secondary'}>{resultLabels[v.result] ?? v.result}</Badge> : '-' },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (v) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/votacoes/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<VotingRecord>[] {
+  const columns: Column<VotingRecord>[] = [
+    { key: 'subject', label: 'Matéria', render: (v) => <span className="line-clamp-1 max-w-xs">{v.subject}</span> },
+    { key: 'date', label: 'Data', render: (v) => formatDateTime(v.date) },
+    { key: 'session', label: 'Sessão', render: (v) => v.session ?? '-' },
+    { key: 'vote', label: 'Voto', render: (v) => <Badge variant={voteColors[v.vote] ?? 'secondary'}>{voteLabels[v.vote] ?? v.vote}</Badge> },
+    { key: 'result', label: 'Resultado', render: (v) => v.result ? <Badge variant={resultColors[v.result] ?? 'secondary'}>{resultLabels[v.result] ?? v.result}</Badge> : '-' },
+  ]
+
+  if (canEdit) {
+    columns.push({
+      key: 'id',
+      label: 'Ações',
+      render: (v) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/votacoes/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+
+  return columns
+}
 
 export function VotingRecordsPage() {
+  const { canCreate, canEdit } = usePermissions()
   const [search, setSearch] = useState('')
   const { list } = useCrud<VotingRecord>('voting-records')
+  const columns = buildColumns(canEdit('voting-records'))
 
   const filtered = (list.data ?? []).filter((v) =>
     v.subject.toLowerCase().includes(search.toLowerCase()),
@@ -70,12 +80,14 @@ export function VotingRecordsPage() {
         title="Votações"
         description="Registro de votações"
         action={
-          <Button asChild>
-            <Link to="/votacoes/novo">
-              <Plus className="h-4 w-4" />
-              Nova Votação
-            </Link>
-          </Button>
+          canCreate('voting-records') && (
+            <Button asChild>
+              <Link to="/votacoes/novo">
+                <Plus className="h-4 w-4" />
+                Nova Votação
+              </Link>
+            </Button>
+          )
         }
       />
 

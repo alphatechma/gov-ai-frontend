@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
 import type { User } from '@/types/entities'
 import { UserRole } from '@/types/enums'
+import { usePermissions } from '@/lib/permissions'
 
 const roleLabels: Record<string, string> = {
   [UserRole.SUPER_ADMIN]: 'Super Admin',
@@ -23,7 +24,7 @@ const roleLabels: Record<string, string> = {
   [UserRole.RECEPTIONIST]: 'Recepcionista',
 }
 
-const columns: Column<User>[] = [
+const buildColumns = (canEdit: boolean): Column<User>[] => [
   { key: 'name', label: 'Nome' },
   { key: 'email', label: 'E-mail' },
   { key: 'role', label: 'Perfil', render: (u) => roleLabels[u.role] || u.role },
@@ -51,21 +52,25 @@ const columns: Column<User>[] = [
           })
         : 'Nunca',
   },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (u) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/equipe/${u.id}/editar`}>
-          <Pencil className="h-4 w-4" />
-        </Link>
-      </Button>
-    ),
-  },
+  ...(canEdit
+    ? [{
+        key: 'id',
+        label: 'Ações',
+        render: (u: User) => (
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/equipe/${u.id}/editar`}>
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </Button>
+        ),
+      } satisfies Column<User>]
+    : []),
 ]
 
 export function StaffPage() {
   const [search, setSearch] = useState('')
+  const { canCreate, canEdit } = usePermissions()
+  const columns = buildColumns(canEdit('staff'))
 
   const usersQuery = useQuery({
     queryKey: ['tenant-users'],
@@ -85,12 +90,14 @@ export function StaffPage() {
         title="Equipe"
         description="Gerencie os usuários do seu gabinete"
         action={
-          <Button asChild>
-            <Link to="/equipe/novo">
-              <Plus className="h-4 w-4" />
-              Novo Usuário
-            </Link>
-          </Button>
+          canCreate('staff') && (
+            <Button asChild>
+              <Link to="/equipe/novo">
+                <Plus className="h-4 w-4" />
+                Novo Usuário
+              </Link>
+            </Button>
+          )
         }
       />
 

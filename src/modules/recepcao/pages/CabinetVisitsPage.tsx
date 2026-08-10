@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Trash2, UserCheck } from 'lucide-react'
 import { fetchCabinetVisits, deleteCabinetVisit } from '../services/cabinetVisitsApi'
+import { usePermissions } from '@/lib/permissions'
 import type { CabinetVisit } from '@/types/entities'
 import { cn } from '@/lib/utils'
 
@@ -22,6 +23,7 @@ export function CabinetVisitsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const qc = useQueryClient()
+  const { canCreate, canDelete } = usePermissions()
 
   const { data, isLoading } = useQuery({
     queryKey: ['cabinet-visits', page, search],
@@ -64,21 +66,23 @@ export function CabinetVisitsPage() {
     },
     { key: 'purpose', label: 'Motivo', render: (v) => <span className="line-clamp-1 max-w-xs">{v.purpose || '-'}</span> },
     { key: 'attendedBy', label: 'Atendido por', render: (v) => v.attendedBy || '-' },
-    {
-      key: 'id',
-      label: 'Ações',
-      render: (v) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            if (confirm('Excluir esta visita?')) remove.mutate(v.id)
-          }}
-        >
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </Button>
-      ),
-    },
+    ...(canDelete('cabinet-visits')
+      ? [{
+          key: 'id',
+          label: 'Ações',
+          render: (v: CabinetVisit) => (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (confirm('Excluir esta visita?')) remove.mutate(v.id)
+              }}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          ),
+        } as Column<CabinetVisit>]
+      : []),
   ]
 
   return (
@@ -87,12 +91,14 @@ export function CabinetVisitsPage() {
         title="Visitas ao Gabinete"
         description="Registro de visitas presenciais"
         action={
-          <Button asChild>
-            <Link to="/recepcao/visitas/nova">
-              <Plus className="h-4 w-4" />
-              Nova Visita
-            </Link>
-          </Button>
+          canCreate('cabinet-visits') && (
+            <Button asChild>
+              <Link to="/recepcao/visitas/nova">
+                <Plus className="h-4 w-4" />
+                Nova Visita
+              </Link>
+            </Button>
+          )
         }
       />
 

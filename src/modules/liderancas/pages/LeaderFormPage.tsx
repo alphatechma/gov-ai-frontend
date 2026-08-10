@@ -5,7 +5,9 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Loader2, Save, Trash2, UserPlus } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, Loader2, Save, Trash2, UserPlus, KeyRound, ShieldOff, ShieldCheck } from 'lucide-react'
+import { usePermissions } from '@/lib/permissions'
 import type { Leader } from '@/types/entities'
 
 export function LeaderFormPage() {
@@ -13,6 +15,8 @@ export function LeaderFormPage() {
   const isEdit = !!id
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('leaders') : canCreate('leaders')
 
   const [form, setForm] = useState({
     name: '',
@@ -81,6 +85,40 @@ export function LeaderFormPage() {
     },
   })
 
+  // --- Gestão de acesso (modo edição) ---
+  const hasAccess = !!leader.data?.userId
+  const [accessEmail, setAccessEmail] = useState('')
+  const [grantPassword, setGrantPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+
+  const invalidateLeader = () => {
+    qc.invalidateQueries({ queryKey: ['leaders'] })
+    qc.invalidateQueries({ queryKey: ['leader', id] })
+  }
+
+  const grantAccess = useMutation({
+    mutationFn: () =>
+      api.post(`/leaders/${id}/access`, {
+        email: accessEmail || form.email || undefined,
+        password: grantPassword,
+      }),
+    onSuccess: () => {
+      invalidateLeader()
+      setGrantPassword('')
+    },
+  })
+
+  const revokeAccess = useMutation({
+    mutationFn: () => api.delete(`/leaders/${id}/access`),
+    onSuccess: invalidateLeader,
+  })
+
+  const resetPassword = useMutation({
+    mutationFn: () =>
+      api.patch(`/leaders/${id}/access/password`, { password: newPassword }),
+    onSuccess: () => setNewPassword(''),
+  })
+
   const set = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }))
 
   if (isEdit && leader.isLoading) {
@@ -99,7 +137,7 @@ export function LeaderFormPage() {
             {isEdit ? 'Atualize os dados da liderança' : 'Cadastre uma nova liderança comunitária'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('leaders') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta liderança?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -197,10 +235,12 @@ export function LeaderFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/liderancas')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Cadastrar Liderança'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Cadastrar Liderança'}
+            </Button>
+          )}
         </div>
 
         {save.isError && (
@@ -209,6 +249,131 @@ export function LeaderFormPage() {
           </p>
         )}
       </form>
+
+      {/* Gestão de acesso — só no modo edição e para quem pode editar lideranças */}
+      {isEdit && canEdit('leaders') && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4" />
+              Acesso à Plataforma
+              {hasAccess ? (
+                <Badge variant="default" className="ml-2">Com acesso</Badge>
+              ) : (
+                <Badge variant="secondary" className="ml-2">Sem acesso</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {hasAccess ? (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  Esta liderança acessa a plataforma. Você pode redefinir a senha
+                  ou remover o acesso.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Nova senha</label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      minLength={6}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={newPassword.length < 6 || resetPassword.isPending}
+                      onClick={() => resetPassword.mutate()}
+                    >
+                      {resetPassword.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <KeyRound className="h-4 w-4" />
+                      )}
+                      Redefinir senha
+                    </Button>
+                  </div>
+                </div>
+                {resetPassword.isSuccess && (
+                  <p className="text-sm text-green-600">Senha redefinida com sucesso.</p>
+                )}
+                <div className="border-t pt-4">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={revokeAccess.isPending}
+                    onClick={() => {
+                      if (confirm('Remover o acesso desta liderança? O login será excluído.'))
+                        revokeAccess.mutate()
+                    }}
+                  >
+                    {revokeAccess.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShieldOff className="h-4 w-4" />
+                    )}
+                    Remover acesso
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  Esta liderança não tem login. Conceda acesso para ela entrar na
+                  plataforma (perfil: Liderança).
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">E-mail de acesso</label>
+                    <Input
+                      type="email"
+                      value={accessEmail || form.email}
+                      onChange={(e) => setAccessEmail(e.target.value)}
+                      placeholder="email@exemplo.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Senha</label>
+                    <Input
+                      type="password"
+                      value={grantPassword}
+                      onChange={(e) => setGrantPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  disabled={
+                    grantPassword.length < 6 ||
+                    !(accessEmail || form.email) ||
+                    grantAccess.isPending
+                  }
+                  onClick={() => grantAccess.mutate()}
+                >
+                  {grantAccess.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4" />
+                  )}
+                  Conceder acesso
+                </Button>
+              </>
+            )}
+            {(grantAccess.isError || revokeAccess.isError || resetPassword.isError) && (
+              <p className="text-sm text-destructive">
+                {((grantAccess.error || revokeAccess.error || resetPassword.error) as any)
+                  ?.response?.data?.message || 'Erro ao processar a ação.'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

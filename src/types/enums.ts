@@ -23,6 +23,14 @@ export const UserRole = {
 } as const
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
+export const PermissionAction = {
+  VIEW: 'view',
+  CREATE: 'create',
+  EDIT: 'edit',
+  DELETE: 'delete',
+} as const
+export type PermissionAction = (typeof PermissionAction)[keyof typeof PermissionAction]
+
 export const SupportLevel = {
   FIRME: 'FIRME',
   SIMPATIZANTE: 'SIMPATIZANTE',

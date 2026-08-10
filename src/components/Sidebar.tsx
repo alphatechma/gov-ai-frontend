@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useTenantStore } from '@/stores/tenantStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useBrandingStore } from '@/stores/brandingStore'
+import { usePermissions } from '@/lib/permissions'
 import { navigation } from '@/config/navigation'
 import { UserRole } from '@/types/enums'
 import { X, ChevronDown, ChevronLeft, ChevronRight, Settings, LogOut } from 'lucide-react'
@@ -23,6 +24,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const isTenantAdmin = userRole === UserRole.TENANT_ADMIN
   const isAdmin = isSuperAdmin || isTenantAdmin
   const allowedModules = user?.allowedModules
+  const { canView } = usePermissions()
   const brandingLogo = useBrandingStore((s) => s.logoUrl)
   const brandingAppName = useBrandingStore((s) => s.appName)
   const dashboardBannerUrl = useBrandingStore((s) => s.dashboardBannerUrl)
@@ -115,8 +117,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   if (isSuperAdmin) return true
                   if (item.moduleKey && !hasModule(item.moduleKey)) return false
                   if (allowedModules && allowedModules.length > 0 && item.moduleKey) {
-                    return allowedModules.includes(item.moduleKey)
+                    if (!allowedModules.includes(item.moduleKey)) return false
                   }
+                  // Sem permissão de visualizar o módulo → aba não aparece.
+                  if (item.moduleKey && !canView(item.moduleKey)) return false
                   return true
                 },
               )

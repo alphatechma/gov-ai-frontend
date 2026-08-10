@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 import { VoteChoice } from '@/types/enums'
+import { usePermissions } from '@/lib/permissions'
 import type { VotingRecord } from '@/types/entities'
 
 const VOTE_LABELS: Record<string, string> = {
@@ -28,6 +29,8 @@ const RESULT_LABELS: Record<string, string> = {
 export function VotingRecordFormPage() {
   const { id } = useParams()
   const isEdit = !!id
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('voting-records') : canCreate('voting-records')
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -107,7 +110,7 @@ export function VotingRecordFormPage() {
             {isEdit ? 'Atualize os dados da votação' : 'Registre uma nova votação'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('voting-records') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta votação?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -158,10 +161,12 @@ export function VotingRecordFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/votacoes')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Registrar Votação'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Registrar Votação'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

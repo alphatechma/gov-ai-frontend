@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { Visit } from '@/types/entities'
 import { VisitStatus } from '@/types/enums'
 import { formatDate, cn } from '@/lib/utils'
@@ -28,7 +29,7 @@ const requestTypeLabels: Record<string, string> = {
   OUTROS: 'Outros',
 }
 
-const columns: Column<Visit>[] = [
+const buildColumns = (canEdit: boolean): Column<Visit>[] => [
   { key: 'date', label: 'Data', render: (v) => formatDate(v.date) },
   {
     key: 'visitorName',
@@ -59,20 +60,24 @@ const columns: Column<Visit>[] = [
     },
   },
   { key: 'objective', label: 'Objetivo', render: (v) => <span className="line-clamp-1 max-w-xs">{v.objective ?? '-'}</span> },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (v) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/visitas/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
+  ...(canEdit
+    ? [{
+        key: 'id',
+        label: 'Ações',
+        render: (v: Visit) => (
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/visitas/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+          </Button>
+        ),
+      } satisfies Column<Visit>]
+    : []),
 ]
 
 export function VisitsPage() {
   const [search, setSearch] = useState('')
   const { list } = useCrud<Visit>('visits')
+  const { canCreate, canEdit } = usePermissions()
+  const columns = buildColumns(canEdit('visits'))
 
   const filtered = (list.data ?? []).filter((v) =>
     (v.visitorName ?? '').toLowerCase().includes(search.toLowerCase()) ||
@@ -85,12 +90,14 @@ export function VisitsPage() {
         title="Visitas"
         description="Registro de visitas"
         action={
-          <Button asChild>
-            <Link to="/visitas/nova">
-              <Plus className="h-4 w-4" />
-              Nova Visita
-            </Link>
-          </Button>
+          canCreate('visits') && (
+            <Button asChild>
+              <Link to="/visitas/nova">
+                <Plus className="h-4 w-4" />
+                Nova Visita
+              </Link>
+            </Button>
+          )
         }
       />
 

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { PoliticalContact } from '@/types/entities'
 
 const roleLabels: Record<string, string> = {
@@ -33,26 +34,33 @@ const relationshipColors: Record<string, 'success' | 'secondary' | 'destructive'
   OPOSICAO: 'destructive',
 }
 
-const columns: Column<PoliticalContact>[] = [
-  { key: 'name', label: 'Nome' },
-  { key: 'role', label: 'Cargo', render: (c) => roleLabels[c.role] ?? c.role },
-  { key: 'party', label: 'Partido', render: (c) => c.party ?? '-' },
-  { key: 'phone', label: 'Telefone', render: (c) => c.phone ?? '-' },
-  { key: 'relationship', label: 'Relação', render: (c) => <Badge variant={relationshipColors[c.relationship] ?? 'secondary'}>{relationshipLabels[c.relationship] ?? c.relationship}</Badge> },
-  {
-    key: 'id',
-    label: 'Ações',
-    render: (c) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/contatos-politicos/${c.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-      </Button>
-    ),
-  },
-]
+function buildColumns(canEdit: boolean): Column<PoliticalContact>[] {
+  const cols: Column<PoliticalContact>[] = [
+    { key: 'name', label: 'Nome' },
+    { key: 'role', label: 'Cargo', render: (c) => roleLabels[c.role] ?? c.role },
+    { key: 'party', label: 'Partido', render: (c) => c.party ?? '-' },
+    { key: 'phone', label: 'Telefone', render: (c) => c.phone ?? '-' },
+    { key: 'relationship', label: 'Relação', render: (c) => <Badge variant={relationshipColors[c.relationship] ?? 'secondary'}>{relationshipLabels[c.relationship] ?? c.relationship}</Badge> },
+  ]
+  if (canEdit) {
+    cols.push({
+      key: 'id',
+      label: 'Ações',
+      render: (c) => (
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/contatos-politicos/${c.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+        </Button>
+      ),
+    })
+  }
+  return cols
+}
 
 export function PoliticalContactsPage() {
   const [search, setSearch] = useState('')
+  const { canCreate, canEdit } = usePermissions()
   const { list } = useCrud<PoliticalContact>('political-contacts')
+  const columns = buildColumns(canEdit('political-contacts'))
 
   const filtered = (list.data ?? []).filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -65,12 +73,14 @@ export function PoliticalContactsPage() {
         title="Contatos Políticos"
         description="Rede de contatos políticos"
         action={
-          <Button asChild>
-            <Link to="/contatos-politicos/novo">
-              <Plus className="h-4 w-4" />
-              Novo Contato
-            </Link>
-          </Button>
+          canCreate('political-contacts') && (
+            <Button asChild>
+              <Link to="/contatos-politicos/novo">
+                <Plus className="h-4 w-4" />
+                Novo Contato
+              </Link>
+            </Button>
+          )
         }
       />
 

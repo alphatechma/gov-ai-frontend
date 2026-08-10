@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
 import { fetchVisitors, deleteVisitor } from '../services/cabinetVisitsApi'
+import { usePermissions } from '@/lib/permissions'
 import type { Visitor } from '@/types/entities'
 import { formatDate } from '@/lib/utils'
 
@@ -15,6 +16,7 @@ export function VisitorsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const qc = useQueryClient()
+  const { canCreate, canEdit, canDelete } = usePermissions()
 
   const { data, isLoading } = useQuery({
     queryKey: ['cabinet-visitors', page, search],
@@ -32,28 +34,34 @@ export function VisitorsPage() {
     { key: 'email', label: 'E-mail', render: (v) => v.email || '-' },
     { key: 'organization', label: 'Organização', render: (v) => v.organization || '-' },
     { key: 'createdAt', label: 'Cadastrado em', render: (v) => formatDate(v.createdAt) },
-    {
-      key: 'id',
-      label: 'Ações',
-      render: (v) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={`/recepcao/visitantes/${v.id}/editar`}>
-              <Pencil className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (confirm('Excluir este visitante?')) remove.mutate(v.id)
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
+    ...(canEdit('cabinet-visits') || canDelete('cabinet-visits')
+      ? [{
+          key: 'id',
+          label: 'Ações',
+          render: (v: Visitor) => (
+            <div className="flex items-center gap-1">
+              {canEdit('cabinet-visits') && (
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to={`/recepcao/visitantes/${v.id}/editar`}>
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+              {canDelete('cabinet-visits') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm('Excluir este visitante?')) remove.mutate(v.id)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
+            </div>
+          ),
+        } as Column<Visitor>]
+      : []),
   ]
 
   return (
@@ -62,12 +70,14 @@ export function VisitorsPage() {
         title="Visitantes"
         description="Cadastro de visitantes do gabinete"
         action={
-          <Button asChild>
-            <Link to="/recepcao/visitantes/novo">
-              <Plus className="h-4 w-4" />
-              Novo Visitante
-            </Link>
-          </Button>
+          canCreate('cabinet-visits') && (
+            <Button asChild>
+              <Link to="/recepcao/visitantes/novo">
+                <Plus className="h-4 w-4" />
+                Novo Visitante
+              </Link>
+            </Button>
+          )
         }
       />
 

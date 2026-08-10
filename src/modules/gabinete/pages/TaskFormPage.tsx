@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 import { TaskPriority, TaskStatus } from '@/types/enums'
 import type { Task } from '@/types/entities'
+import { usePermissions } from '@/lib/permissions'
 
 const PRIORITY_LABELS: Record<string, string> = {
   BAIXA: 'Baixa',
@@ -32,6 +33,8 @@ export function TaskFormPage() {
   const isEdit = !!id
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('tasks') : canCreate('tasks')
 
   const initialStatus = searchParams.get('status') ?? TaskStatus.PENDENTE
 
@@ -112,7 +115,7 @@ export function TaskFormPage() {
             {isEdit ? 'Atualize os dados da tarefa' : 'Crie uma nova tarefa no kanban'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('tasks') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir esta tarefa?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -155,10 +158,12 @@ export function TaskFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/tarefas')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Criar Tarefa'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Criar Tarefa'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

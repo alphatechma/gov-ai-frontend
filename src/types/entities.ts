@@ -41,6 +41,8 @@ export interface User {
   avatarUrl: string | null
   active: boolean
   allowedModules?: string[] | null
+  /** Permissões efetivas `module:action` (ex.: 'voters:create'). Vem do login/`/me`. */
+  permissions?: string[] | null
   lastLoginAt: string | null
   createdAt: string
   updatedAt: string

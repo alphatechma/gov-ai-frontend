@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-react'
 import { RequestType, RequestStatus } from '@/types/enums'
+import { usePermissions } from '@/lib/permissions'
 import type { ExecutiveRequest } from '@/types/entities'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -31,6 +32,8 @@ export function ExecutiveRequestFormPage() {
   const isEdit = !!id
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { canCreate, canEdit, canDelete } = usePermissions()
+  const canSave = isEdit ? canEdit('executive-requests') : canCreate('executive-requests')
 
   const [form, setForm] = useState({
     protocolNumber: '',
@@ -118,7 +121,7 @@ export function ExecutiveRequestFormPage() {
             {isEdit ? 'Atualize os dados do requerimento' : 'Registre um novo pedido ao executivo'}
           </p>
         </div>
-        {isEdit && (
+        {isEdit && canDelete('executive-requests') && (
           <Button variant="destructive" size="icon" onClick={() => { if (confirm('Excluir este requerimento?')) remove.mutate() }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -180,10 +183,12 @@ export function ExecutiveRequestFormPage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => navigate('/requerimentos')}>Cancelar</Button>
-          <Button type="submit" disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? 'Salvar' : 'Registrar Requerimento'}
-          </Button>
+          {canSave && (
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isEdit ? 'Salvar' : 'Registrar Requerimento'}
+            </Button>
+          )}
         </div>
 
         {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}

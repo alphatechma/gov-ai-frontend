@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Plus } from 'lucide-react'
 import { useCrud } from '@/lib/useCrud'
+import { usePermissions } from '@/lib/permissions'
 import type { Task } from '@/types/entities'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
@@ -37,6 +38,7 @@ export function TasksPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { list } = useCrud<Task>('tasks')
+  const { canCreate } = usePermissions()
   const tasks = list.data ?? []
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
@@ -70,12 +72,14 @@ export function TasksPage() {
         title="Tarefas"
         description="Kanban de tarefas do gabinete"
         action={
-          <Button asChild>
-            <Link to="/tarefas/nova">
-              <Plus className="h-4 w-4" />
-              Nova Tarefa
-            </Link>
-          </Button>
+          canCreate('tasks') && (
+            <Button asChild>
+              <Link to="/tarefas/nova">
+                <Plus className="h-4 w-4" />
+                Nova Tarefa
+              </Link>
+            </Button>
+          )
         }
       />
 
@@ -101,9 +105,11 @@ export function TasksPage() {
                   <div className={`h-3 w-3 rounded-full ${col.color}`} />
                   <span className="text-sm font-semibold">{col.label}</span>
                   <Badge variant="secondary" className="ml-auto">{colTasks.length}</Badge>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
-                    <Link to={`/tarefas/nova?status=${col.key}`}><Plus className="h-3 w-3" /></Link>
-                  </Button>
+                  {canCreate('tasks') && (
+                    <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                      <Link to={`/tarefas/nova?status=${col.key}`}><Plus className="h-3 w-3" /></Link>
+                    </Button>
+                  )}
                 </div>
                 <div className="space-y-2">
                   {colTasks.map((task) => (

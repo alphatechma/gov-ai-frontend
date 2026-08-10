@@ -14,6 +14,7 @@ import { Plus, Search, Pencil, Trash2, Upload, Download, Loader2, CheckCircle, A
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn, formatDate } from '@/lib/utils'
+import { usePermissions } from '@/lib/permissions'
 import type { Voter, HelpType, Leader, CabinetVisit, Visitor } from '@/types/entities'
 import { fetchCabinetVisits, deleteCabinetVisit, fetchVisitors, deleteVisitor } from '@/modules/recepcao/services/cabinetVisitsApi'
 
@@ -31,8 +32,12 @@ const confidenceLevelLabels: Record<string, string> = {
 }
 
 /* ─── Voters columns (built inside component to access delete handler) ─── */
-function buildVoterColumns(onDelete: (id: string) => void): Column<Voter>[] {
-  return [
+function buildVoterColumns(
+  onDelete: (id: string) => void,
+  canEdit: boolean,
+  canDelete: boolean,
+): Column<Voter>[] {
+  const columns: Column<Voter>[] = [
     { key: 'name', label: 'Nome' },
     { key: 'phone', label: 'Telefone' },
     { key: 'neighborhood', label: 'Bairro' },
@@ -45,29 +50,38 @@ function buildVoterColumns(onDelete: (id: string) => void): Column<Voter>[] {
         </Badge>
       ),
     },
-    {
+  ]
+
+  if (canEdit || canDelete) {
+    columns.push({
       key: 'id',
       label: 'Ações',
       render: (v) => (
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={`/eleitores/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (window.confirm('Tem certeza que deseja excluir este eleitor?')) {
-                onDelete(v.id)
-              }
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
+          {canEdit && (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to={`/eleitores/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (window.confirm('Tem certeza que deseja excluir este eleitor?')) {
+                  onDelete(v.id)
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          )}
         </div>
       ),
-    },
-  ]
+    })
+  }
+
+  return columns
 }
 
 /* ─── Status config ─── */
@@ -163,6 +177,7 @@ function useDebounce(value: string, delay = 400) {
 }
 
 export function VotersListPage() {
+  const { canCreate, canEdit, canDelete } = usePermissions()
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState<Tab>(() => {
     const t = searchParams.get('tab')
@@ -471,7 +486,11 @@ export function VotersListPage() {
     },
   })
 
-  const voterColumns = buildVoterColumns((id) => deleteVoter.mutate(id))
+  const voterColumns = buildVoterColumns(
+    (id) => deleteVoter.mutate(id),
+    canEdit('voters'),
+    canDelete('voters'),
+  )
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -688,12 +707,14 @@ export function VotersListPage() {
               <Upload className="h-4 w-4" />
               Importar
             </Button>
-            <Button asChild>
-              <Link to="/eleitores/novo">
-                <Plus className="h-4 w-4" />
-                Novo Eleitor
-              </Link>
-            </Button>
+            {canCreate('voters') && (
+              <Button asChild>
+                <Link to="/eleitores/novo">
+                  <Plus className="h-4 w-4" />
+                  Novo Eleitor
+                </Link>
+              </Button>
+            )}
           </div>
         )}
         {tab === 'atendimentos' && (
