@@ -624,8 +624,55 @@ export function VotersListPage() {
     }).finally(() => setExporting(false))
   }
 
+  const [showHelpExportDialog, setShowHelpExportDialog] = useState(false)
+
+  const HELP_EXPORT_FIELDS = [
+    { key: 'data', label: 'Data' },
+    { key: 'tipo', label: 'Tipo' },
+    { key: 'categoria', label: 'Categoria' },
+    { key: 'status', label: 'Status' },
+    { key: 'eleitor', label: 'Eleitor' },
+    { key: 'bairro', label: 'Bairro' },
+    { key: 'cpf', label: 'CPF' },
+    { key: 'telefone', label: 'Telefone' },
+    { key: 'email', label: 'Email' },
+    { key: 'endereco', label: 'Endereço' },
+    { key: 'cidade', label: 'Cidade' },
+    { key: 'estado', label: 'Estado' },
+    { key: 'cep', label: 'CEP' },
+    { key: 'tituloEleitor', label: 'Título de Eleitor' },
+    { key: 'zona', label: 'Zona' },
+    { key: 'secao', label: 'Seção' },
+    { key: 'localVotacao', label: 'Local de Votação' },
+    { key: 'lideranca', label: 'Liderança' },
+    { key: 'observacoes', label: 'Observações' },
+    { key: 'resolucao', label: 'Resolução' },
+  ] as const
+
+  const [selectedHelpExportFields, setSelectedHelpExportFields] = useState<Set<string>>(
+    () => new Set(HELP_EXPORT_FIELDS.map((f) => f.key)),
+  )
+
+  const toggleHelpExportField = (key: string) => {
+    setSelectedHelpExportFields((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const toggleAllHelpExportFields = () => {
+    if (selectedHelpExportFields.size === HELP_EXPORT_FIELDS.length) {
+      setSelectedHelpExportFields(new Set())
+    } else {
+      setSelectedHelpExportFields(new Set(HELP_EXPORT_FIELDS.map((f) => f.key)))
+    }
+  }
+
   const exportHelp = () => {
     setExporting(true)
+    setShowHelpExportDialog(false)
     const params = new URLSearchParams()
     if (helpSearch) params.set('search', helpSearch)
     if (filterType) params.set('type', filterType)
@@ -633,6 +680,9 @@ export function VotersListPage() {
     if (filterBairro) params.set('neighborhood', filterBairro)
     if (filterDateFrom) params.set('dateFrom', filterDateFrom)
     if (filterDateTo) params.set('dateTo', filterDateTo)
+    if (selectedHelpExportFields.size < HELP_EXPORT_FIELDS.length) {
+      params.set('fields', Array.from(selectedHelpExportFields).join(','))
+    }
     const qs = params.toString()
     api.get(`/help-records/export${qs ? `?${qs}` : ''}`, { responseType: 'blob' }).then((res) => {
       const url = window.URL.createObjectURL(new Blob([res.data]))
@@ -730,7 +780,7 @@ export function VotersListPage() {
         )}
         {tab === 'atendimentos' && (
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={exportHelp} disabled={exporting}>
+            <Button variant="outline" onClick={() => setShowHelpExportDialog(true)} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Exportar
             </Button>
@@ -1291,6 +1341,46 @@ export function VotersListPage() {
             <Button onClick={exportVoters} disabled={selectedExportFields.size === 0}>
               <Download className="h-4 w-4" />
               Exportar ({selectedExportFields.size})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Export atendimentos fields dialog ─── */}
+      <Dialog open={showHelpExportDialog} onOpenChange={setShowHelpExportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Atendimentos</DialogTitle>
+            <DialogDescription>Selecione os campos que deseja incluir na exportação.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 max-h-80 overflow-y-auto py-2">
+            <label className="flex items-center gap-3 cursor-pointer px-1">
+              <Checkbox
+                checked={selectedHelpExportFields.size === HELP_EXPORT_FIELDS.length}
+                onCheckedChange={toggleAllHelpExportFields}
+              />
+              <span className="text-sm font-medium">Selecionar todos</span>
+            </label>
+            <div className="border-t" />
+            {HELP_EXPORT_FIELDS.map((field) => (
+              <label key={field.key} className="flex items-center gap-3 cursor-pointer px-1">
+                <Checkbox
+                  checked={selectedHelpExportFields.has(field.key)}
+                  onCheckedChange={() => toggleHelpExportField(field.key)}
+                />
+                <span className="text-sm">{field.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowHelpExportDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={exportHelp} disabled={selectedHelpExportFields.size === 0}>
+              <Download className="h-4 w-4" />
+              Exportar ({selectedHelpExportFields.size})
             </Button>
           </DialogFooter>
         </DialogContent>
