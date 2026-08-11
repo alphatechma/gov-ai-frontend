@@ -8,10 +8,10 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Loader2, Save, Trash2, Plus } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Trash2, Plus, ShieldCheck, Send } from 'lucide-react'
 import { usePermissions } from '@/lib/permissions'
 import { useAuthStore } from '@/stores/authStore'
-import { UserRole } from '@/types/enums'
+import { UserRole, VoterChangeRequestType } from '@/types/enums'
 import type { Voter, Leader } from '@/types/entities'
 
 const GENDER_OPTIONS = [
@@ -61,9 +61,11 @@ export function VoterFormPage() {
   const { id } = useParams()
   const isEdit = !!id
   const { canCreate, canEdit, canDelete } = usePermissions()
-  const canSave = isEdit ? canEdit('voters') : canCreate('voters')
   // Liderança logada: eleitor é auto-vinculado a ela no backend; sem seletor.
   const isLeader = useAuthStore((s) => s.user?.role) === UserRole.LEADER
+  // Liderança não edita/exclui direto: ao editar, envia solicitação para o ADM.
+  const requestMode = isEdit && isLeader && !canEdit('voters')
+  const canSave = requestMode || (isEdit ? canEdit('voters') : canCreate('voters'))
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -145,8 +147,53 @@ export function VoterFormPage() {
     }
   }, [voter.data, leaders.data])
 
+  // Monta apenas os campos que a liderança alterou, comparando com o eleitor atual.
+  const buildProposedChanges = (): Record<string, unknown> => {
+    const v = voter.data
+    if (!v) return {}
+    const changes: Record<string, unknown> = {}
+    const cmp = (key: string, formVal: string, origVal: string | null | undefined) => {
+      if ((formVal ?? '') !== (origVal ?? '')) changes[key] = formVal
+    }
+    cmp('name', form.name, v.name)
+    cmp('cpf', form.cpf, v.cpf ?? '')
+    cmp('phone', form.phone, v.phone ?? '')
+    cmp('email', form.email, v.email ?? '')
+    cmp('birthDate', form.birthDate, v.birthDate ? v.birthDate.substring(0, 10) : '')
+    cmp('gender', form.gender, v.gender ?? '')
+    cmp('address', form.address, v.address ?? '')
+    cmp('neighborhood', form.neighborhood, v.neighborhood ?? '')
+    cmp('city', form.city, v.city ?? '')
+    cmp('state', form.state, v.state ?? '')
+    cmp('zipCode', form.zipCode, v.zipCode ?? '')
+    cmp('voterRegistration', form.voterRegistration, v.voterRegistration ?? '')
+    cmp('votingZone', form.votingZone, v.votingZone ?? '')
+    cmp('votingSection', form.votingSection, v.votingSection ?? '')
+    cmp('votingLocation', form.votingLocation, v.votingLocation ?? '')
+    cmp('confidenceLevel', form.confidenceLevel, v.confidenceLevel ?? 'NEUTRO')
+    cmp('notes', form.notes, v.notes ?? '')
+    const origTags = v.tags?.join(', ') ?? ''
+    if (form.tags.trim() !== origTags) {
+      changes.tags = form.tags.split(',').map((t) => t.trim()).filter(Boolean)
+    }
+    return changes
+  }
+
   const save = useMutation({
     mutationFn: async () => {
+      // Liderança editando: abre solicitação de alteração para aprovação do ADM.
+      if (requestMode) {
+        const proposedChanges = buildProposedChanges()
+        if (Object.keys(proposedChanges).length === 0) {
+          throw new Error('NO_CHANGES')
+        }
+        return api.post('/voter-change-requests', {
+          voterId: id,
+          type: VoterChangeRequestType.UPDATE,
+          proposedChanges,
+        })
+      }
+
       const payload: Record<string, unknown> = {
         name: form.name,
       }
@@ -182,6 +229,11 @@ export function VoterFormPage() {
       return isEdit ? api.patch(`/voters/${id}`, payload) : api.post('/voters', payload)
     },
     onSuccess: () => {
+      if (requestMode) {
+        qc.invalidateQueries({ queryKey: ['voter-change-requests'] })
+        navigate('/eleitores/solicitacoes')
+        return
+      }
       qc.invalidateQueries({ queryKey: ['voters'] })
       qc.invalidateQueries({ queryKey: ['voters-heatmap'] })
       if (isEdit) qc.invalidateQueries({ queryKey: ['voter', id] })
@@ -195,6 +247,16 @@ export function VoterFormPage() {
       qc.invalidateQueries({ queryKey: ['voters'] })
       qc.removeQueries({ queryKey: ['voter', id] })
       navigate('/eleitores')
+    },
+  })
+
+  // Liderança: solicita exclusão do eleitor para aprovação do ADM.
+  const requestDelete = useMutation({
+    mutationFn: () =>
+      api.post('/voter-change-requests', { voterId: id, type: VoterChangeRequestType.DELETE }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['voter-change-requests'] })
+      navigate('/eleitores/solicitacoes')
     },
   })
 
@@ -249,7 +311,32 @@ export function VoterFormPage() {
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
+        {isEdit && requestMode && (
+          <Button
+            variant="destructive"
+            onClick={() => {
+              if (confirm('Enviar solicitação de exclusão deste eleitor para aprovação do administrador?')) requestDelete.mutate()
+            }}
+            disabled={requestDelete.isPending}
+          >
+            {requestDelete.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            Solicitar exclusão
+          </Button>
+        )}
       </div>
+
+      {requestMode && (
+        <div className="flex items-start gap-3 rounded-md border border-primary/30 bg-primary/5 p-4 text-sm">
+          <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
+          <div>
+            <p className="font-medium">As alterações passam por aprovação</p>
+            <p className="text-muted-foreground">
+              Você pode ajustar os dados, mas eles só serão aplicados após o administrador aprovar sua solicitação.
+              Acompanhe o andamento em <span className="font-medium">Eleitores → Solicitações</span>.
+            </p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} className="space-y-6">
         <Card>
@@ -431,13 +518,19 @@ export function VoterFormPage() {
           <Button variant="outline" type="button" onClick={() => navigate('/eleitores')}>Cancelar</Button>
           {canSave && (
             <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {isEdit ? 'Salvar' : 'Cadastrar Eleitor'}
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : requestMode ? <Send className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+              {requestMode ? 'Enviar para aprovação' : isEdit ? 'Salvar' : 'Cadastrar Eleitor'}
             </Button>
           )}
         </div>
 
-        {save.isError && <p className="text-sm text-destructive">Erro ao salvar. Verifique os dados e tente novamente.</p>}
+        {save.isError && (
+          <p className="text-sm text-destructive">
+            {(save.error as Error)?.message === 'NO_CHANGES'
+              ? 'Nenhuma alteração detectada. Ajuste algum campo antes de enviar.'
+              : 'Erro ao salvar. Verifique os dados e tente novamente.'}
+          </p>
+        )}
       </form>
     </div>
   )

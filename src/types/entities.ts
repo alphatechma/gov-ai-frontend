@@ -1,4 +1,4 @@
-import type { PoliticalProfile, UserRole, SupportLevel, ConfidenceLevel, HelpStatus, TaskStatus, TaskPriority, AppointmentStatus, ProjectStatus, RequestType, RequestStatus, VisitStatus } from './enums'
+import type { PoliticalProfile, UserRole, SupportLevel, ConfidenceLevel, HelpStatus, TaskStatus, TaskPriority, AppointmentStatus, ProjectStatus, RequestType, RequestStatus, VisitStatus, VoterChangeRequestType, VoterChangeRequestStatus, NotificationType } from './enums'
 
 export interface Tenant {
   id: string
@@ -113,6 +113,35 @@ export interface Leader {
   active: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface VoterChangeRequest {
+  id: string
+  tenantId: string
+  voterId: string
+  leaderId: string | null
+  requestedById: string
+  type: VoterChangeRequestType
+  status: VoterChangeRequestStatus
+  proposedChanges: Record<string, unknown> | null
+  snapshotBefore: Record<string, unknown> | null
+  reviewNote: string | null
+  reviewedById: string | null
+  reviewedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Notification {
+  id: string
+  tenantId: string
+  userId: string
+  type: NotificationType
+  title: string
+  message: string
+  data: Record<string, unknown> | null
+  read: boolean
+  createdAt: string
 }
 
 export interface HelpType {

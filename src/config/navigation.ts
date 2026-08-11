@@ -22,6 +22,7 @@ import {
   Handshake,
   Zap,
   Megaphone,
+  ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -59,6 +60,7 @@ export const navigation: NavGroup[] = [
     icon: Users,
     items: [
       { label: 'Eleitores', path: '/eleitores', icon: Users, moduleKey: 'voters' },
+      { label: 'Solicitações', path: '/eleitores/solicitacoes', icon: ClipboardCheck, moduleKey: 'voters' },
       { label: 'Mapa de Calor', path: '/mapa-calor', icon: Map, moduleKey: 'heatmap' },
       { label: 'Lideranças', path: '/liderancas', icon: Crown, moduleKey: 'leaders' },
       { label: 'Análise Eleitoral', path: '/resultados-eleitorais', icon: BarChart3, moduleKey: 'election-analysis' },

@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn, formatDate } from '@/lib/utils'
 import { usePermissions } from '@/lib/permissions'
+import { useAuthStore } from '@/stores/authStore'
+import { UserRole } from '@/types/enums'
 import type { Voter, HelpType, Leader, CabinetVisit, Visitor } from '@/types/entities'
 import { fetchCabinetVisits, deleteCabinetVisit, fetchVisitors, deleteVisitor } from '@/modules/recepcao/services/cabinetVisitsApi'
 
@@ -36,6 +38,8 @@ function buildVoterColumns(
   onDelete: (id: string) => void,
   canEdit: boolean,
   canDelete: boolean,
+  // Liderança não edita direto, mas abre o formulário para solicitar alteração.
+  canRequest: boolean,
 ): Column<Voter>[] {
   const columns: Column<Voter>[] = [
     { key: 'name', label: 'Nome' },
@@ -52,15 +56,20 @@ function buildVoterColumns(
     },
   ]
 
-  if (canEdit || canDelete) {
+  if (canEdit || canDelete || canRequest) {
     columns.push({
       key: 'id',
       label: 'Ações',
       render: (v) => (
         <div className="flex items-center gap-1">
-          {canEdit && (
+          {(canEdit || canRequest) && (
             <Button variant="ghost" size="sm" asChild>
-              <Link to={`/eleitores/${v.id}/editar`}><Pencil className="h-4 w-4" /></Link>
+              <Link
+                to={`/eleitores/${v.id}/editar`}
+                title={canEdit ? 'Editar' : 'Solicitar alteração'}
+              >
+                <Pencil className="h-4 w-4" />
+              </Link>
             </Button>
           )}
           {canDelete && (
@@ -178,6 +187,7 @@ function useDebounce(value: string, delay = 400) {
 
 export function VotersListPage() {
   const { canCreate, canEdit, canDelete } = usePermissions()
+  const isLeader = useAuthStore((s) => s.user?.role) === UserRole.LEADER
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState<Tab>(() => {
     const t = searchParams.get('tab')
@@ -490,6 +500,7 @@ export function VotersListPage() {
     (id) => deleteVoter.mutate(id),
     canEdit('voters'),
     canDelete('voters'),
+    isLeader && !canEdit('voters'),
   )
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {

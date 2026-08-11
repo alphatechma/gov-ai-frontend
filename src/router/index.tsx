@@ -17,6 +17,7 @@ import { DashboardPage } from '@/modules/dashboard/pages/DashboardPage'
 // Eleitoral
 import { VotersListPage } from '@/modules/eleitores/pages/VotersListPage'
 import { VoterFormPage } from '@/modules/eleitores/pages/VoterFormPage'
+import { VoterRequestsPage } from '@/modules/eleitores/pages/VoterRequestsPage'
 const HeatmapPage = lazy(() =>
   import('@/modules/eleitores/pages/HeatmapPage').then((m) => ({ default: m.HeatmapPage })),
 )
@@ -120,6 +121,7 @@ export const router = createBrowserRouter([
 
           // Eleitoral
           moduleRoute('voters', '/eleitores', <VotersListPage />),
+          moduleRoute('voters', '/eleitores/solicitacoes', <VoterRequestsPage />),
           moduleRoute('voters', '/eleitores/novo', <VoterFormPage />),
           moduleRoute('voters', '/eleitores/:id/editar', <VoterFormPage />),
           moduleRoute('heatmap', '/mapa-calor', <HeatmapPage />),

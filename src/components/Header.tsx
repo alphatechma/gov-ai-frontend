@@ -1,5 +1,6 @@
 import { Menu, Moon, Sun, LogOut, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { NotificationBell } from '@/components/NotificationBell'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useBrandingStore } from '@/stores/brandingStore'
@@ -39,6 +40,8 @@ export function Header({ onMenuClick }: HeaderProps) {
       <div className="hidden lg:block" />
 
       <div className="flex items-center gap-2">
+        <NotificationBell />
+
         <Button variant="ghost" size="icon" onClick={toggleTheme}>
           {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>

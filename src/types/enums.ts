@@ -202,3 +202,24 @@ export const ContactRelationship = {
   OPOSICAO: 'OPOSICAO',
 } as const
 export type ContactRelationship = (typeof ContactRelationship)[keyof typeof ContactRelationship]
+
+export const VoterChangeRequestType = {
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+} as const
+export type VoterChangeRequestType = (typeof VoterChangeRequestType)[keyof typeof VoterChangeRequestType]
+
+export const VoterChangeRequestStatus = {
+  PENDENTE: 'PENDENTE',
+  APROVADA: 'APROVADA',
+  REJEITADA: 'REJEITADA',
+} as const
+export type VoterChangeRequestStatus = (typeof VoterChangeRequestStatus)[keyof typeof VoterChangeRequestStatus]
+
+export const NotificationType = {
+  CHANGE_REQUEST_CREATED: 'CHANGE_REQUEST_CREATED',
+  CHANGE_REQUEST_APPROVED: 'CHANGE_REQUEST_APPROVED',
+  CHANGE_REQUEST_REJECTED: 'CHANGE_REQUEST_REJECTED',
+  CHANGE_REQUEST_RESUBMITTED: 'CHANGE_REQUEST_RESUBMITTED',
+} as const
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
