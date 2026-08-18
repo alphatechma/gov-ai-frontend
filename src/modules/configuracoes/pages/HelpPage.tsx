@@ -1,8 +1,34 @@
 import { useState } from 'react'
 import { PageHeader } from '@/components/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChevronDown, BookOpen, Zap, Shield, Users, BarChart3 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ChevronDown, BookOpen, Zap, Shield, Users, BarChart3, MessageCircle, FileDown, Youtube } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+const resources = [
+  {
+    icon: MessageCircle,
+    title: 'Suporte via WhatsApp',
+    description: 'Fale com nossa equipe de suporte',
+    action: 'Chamar no WhatsApp',
+    href: 'https://wa.me/5598999120897',
+  },
+  {
+    icon: FileDown,
+    title: 'POP da Aplicação',
+    description: 'Baixe o Procedimento Operacional Padrão em PDF',
+    action: 'Baixar PDF',
+    href: '/GOVERNEAI POP.pdf',
+    download: true,
+  },
+  {
+    icon: Youtube,
+    title: 'Canal no YouTube',
+    description: 'Tutoriais e novidades da plataforma',
+    action: 'Acessar canal',
+    href: 'https://www.youtube.com/@GoverneAI',
+  },
+]
 
 interface FaqItem {
   question: string
@@ -129,6 +155,31 @@ export function HelpPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Ajuda" description="Perguntas frequentes e guias de uso" />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {resources.map((resource) => (
+          <Card key={resource.title} className="hover:shadow-md transition-shadow">
+            <CardContent className="flex flex-col items-center p-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <resource.icon className="h-6 w-6" />
+              </div>
+              <h3 className="mt-3 text-sm font-semibold">{resource.title}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{resource.description}</p>
+              <Button variant="outline" size="sm" className="mt-4" asChild>
+                <a
+                  href={resource.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...(resource.download ? { download: true } : {})}
+                >
+                  <resource.icon className="h-4 w-4" />
+                  {resource.action}
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       <div className="space-y-6">
         {faqSections.map((section) => (

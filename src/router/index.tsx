@@ -94,6 +94,7 @@ import { VisitorFormPage } from '@/modules/recepcao/pages/VisitorFormPage'
 
 // Config
 import { SettingsPage } from '@/modules/configuracoes/pages/SettingsPage'
+import { HelpPage } from '@/modules/configuracoes/pages/HelpPage'
 
 function moduleRoute(moduleKey: string, path: string, element: React.ReactNode) {
   return {
@@ -201,6 +202,7 @@ export const router = createBrowserRouter([
 
           // Config (sem module guard)
           { path: '/configuracoes', element: <SettingsPage /> },
+          { path: '/ajuda', element: <HelpPage /> },
 
           // Quick Access (home)
           { path: '/', element: <QuickAccessPage /> },

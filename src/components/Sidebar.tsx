@@ -8,7 +8,7 @@ import { useBrandingStore } from '@/stores/brandingStore'
 import { usePermissions } from '@/lib/permissions'
 import { navigation } from '@/config/navigation'
 import { UserRole } from '@/types/enums'
-import { X, ChevronDown, ChevronLeft, ChevronRight, Settings, LogOut } from 'lucide-react'
+import { X, ChevronDown, ChevronLeft, ChevronRight, Settings, HelpCircle, LogOut } from 'lucide-react'
 
 interface SidebarProps {
   open: boolean
@@ -272,6 +272,21 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           >
             <Settings className={cn(collapsed ? 'h-5 w-5' : 'h-4 w-4')} />
             {!collapsed && 'Configurações'}
+          </Link>
+          <Link
+            to="/ajuda"
+            onClick={onClose}
+            title={collapsed ? 'Ajuda' : undefined}
+            className={cn(
+              'flex items-center rounded-md py-2 text-sm font-medium transition-colors',
+              collapsed ? 'justify-center px-2' : 'gap-3 px-3',
+              location.pathname.startsWith('/ajuda')
+                ? 'bg-sidebar-accent text-primary'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent/50',
+            )}
+          >
+            <HelpCircle className={cn(collapsed ? 'h-5 w-5' : 'h-4 w-4')} />
+            {!collapsed && 'Ajuda'}
           </Link>
           <button
             onClick={() => {
