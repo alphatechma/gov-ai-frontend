@@ -14,13 +14,15 @@ import {
   MessageCircle, Send, Search, Wifi, WifiOff,
   Phone, X, RefreshCw, Check, CheckCheck, Clock,
   AlertCircle, Megaphone, ArrowLeft, Paperclip, ImagePlus, Loader2, Plus,
-  MailOpen, MailX, Timer, Trash2, Settings, MoreVertical, Ban,
+  MailOpen, MailX, Timer, Trash2, Settings, MoreVertical, Ban, Mic, Square,
+  Play, Pause,
 } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useWhatsappSocket } from '../hooks/useWhatsappSocket'
 import { useWhatsappConnections } from '../hooks/useWhatsappConnections'
+import { useAudioRecorder, formatDuration } from '../hooks/useAudioRecorder'
 
 /* ─── types ─── */
 interface WaChat {
@@ -50,6 +52,7 @@ interface WaMessage {
   direction: 'INBOUND' | 'OUTBOUND'
   status: string
   mediaUrl: string | null
+  mediaDuration: number | null
   reactions: { emoji: string; from: string }[]
   createdAt: string
   deleted?: boolean
@@ -155,10 +158,118 @@ function MediaImage({ messageId, className }: { messageId: string; className?: s
   )
 }
 
-function MediaAudio({ messageId }: { messageId: string }) {
+const PLAYBACK_RATES = [1, 1.5, 2] as const
+
+function MediaAudio({
+  messageId,
+  isMine,
+  knownDuration,
+}: {
+  messageId: string
+  isMine: boolean
+  knownDuration?: number | null
+}) {
   const src = useMediaUrl(messageId)
-  if (!src) return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-  return <audio src={src} controls className="max-w-full" preload="metadata" />
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+  const [playing, setPlaying] = useState(false)
+  const [current, setCurrent] = useState(0)
+  // Seeded from the stored length so the bubble reads "0:34" before loading.
+  const [duration, setDuration] = useState(knownDuration && knownDuration > 0 ? knownDuration : 0)
+  const [rate, setRate] = useState<number>(1)
+
+  const toggle = () => {
+    const el = audioRef.current
+    if (!el) return
+    if (el.paused) void el.play().catch(() => setPlaying(false))
+    else el.pause()
+  }
+
+  const cycleRate = () => {
+    const next = PLAYBACK_RATES[(PLAYBACK_RATES.indexOf(rate as 1 | 1.5 | 2) + 1) % PLAYBACK_RATES.length]
+    setRate(next)
+    if (audioRef.current) audioRef.current.playbackRate = next
+  }
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = audioRef.current
+    const bar = barRef.current
+    if (!el || !bar || !duration) return
+    const rect = bar.getBoundingClientRect()
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
+    el.currentTime = ratio * duration
+    setCurrent(ratio * duration)
+  }
+
+  const pct = duration > 0 ? (current / duration) * 100 : 0
+
+  return (
+    <div className={cn('flex min-w-[210px] items-center gap-2', isMine ? 'text-white' : 'text-foreground')}>
+      <audio
+        ref={audioRef}
+        src={src ?? undefined}
+        preload="metadata"
+        className="hidden"
+        onLoadedMetadata={e => {
+          // A stream with no duration header reports Infinity/NaN — treat as unknown.
+          // Keep the stored length when the container reports none.
+          const d = e.currentTarget.duration
+          if (Number.isFinite(d) && d > 0) setDuration(d)
+        }}
+        onTimeUpdate={e => setCurrent(e.currentTarget.currentTime)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setCurrent(0) }}
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={!src}
+        title={playing ? 'Pausar' : 'Reproduzir'}
+        className={cn(
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition disabled:opacity-60',
+          isMine ? 'bg-white/20 hover:bg-white/30' : 'bg-green-500/15 hover:bg-green-500/25',
+        )}
+      >
+        {!src ? <Loader2 className="h-4 w-4 animate-spin" />
+          : playing ? <Pause className="h-4 w-4" />
+          : <Play className="h-4 w-4" />}
+      </button>
+
+      <div className="min-w-0 flex-1">
+        <div
+          ref={barRef}
+          onClick={handleSeek}
+          className={cn(
+            'h-1.5 w-full rounded-full',
+            duration > 0 ? 'cursor-pointer' : 'cursor-default',
+            isMine ? 'bg-white/30' : 'bg-muted-foreground/25',
+          )}
+        >
+          <div
+            className={cn('h-full rounded-full', isMine ? 'bg-white' : 'bg-green-500')}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className={cn('mt-1 flex justify-between text-[10px] tabular-nums', isMine ? 'text-white/70' : 'text-muted-foreground')}>
+          <span>{formatDuration(Math.floor(current))}</span>
+          <span>{duration > 0 ? formatDuration(Math.round(duration)) : '--:--'}</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={cycleRate}
+        title="Velocidade de reprodução"
+        className={cn(
+          'shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium transition',
+          isMine ? 'bg-white/20 hover:bg-white/30' : 'bg-muted-foreground/15 hover:bg-muted-foreground/25',
+        )}
+      >
+        {rate}x
+      </button>
+    </div>
+  )
 }
 
 function MediaVideo({ messageId, className }: { messageId: string; className?: string }) {
@@ -400,6 +511,7 @@ export function WhatsappCrmPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const chatListRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const recorder = useAudioRecorder()
 
   /* ─── queries ─── */
   const connectionQueryParam = isAll ? '' : `&connectionId=${selectedId}`
@@ -449,6 +561,25 @@ export function WhatsappCrmPage() {
     },
     onSettled: () => {
       clearMedia()
+    },
+  })
+
+  const sendAudioMsg = useMutation({
+    mutationFn: (data: { connectionId: string; phone: string; blob: Blob; seconds: number }) => {
+      const fd = new FormData()
+      fd.append('connectionId', data.connectionId)
+      fd.append('phone', data.phone)
+      fd.append('seconds', String(data.seconds))
+      // Filename is only for multer; Evolution decides the format by content.
+      fd.append('file', data.blob, 'voice-note')
+      return api.post('/whatsapp/send-audio', fd).then(r => r.data)
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'messages', vars.connectionId, vars.phone] })
+      qc.invalidateQueries({ queryKey: ['whatsapp', 'chats'] })
+    },
+    onSettled: () => {
+      recorder.reset()
     },
   })
 
@@ -596,6 +727,15 @@ export function WhatsappCrmPage() {
 
   const handleSend = () => {
     if (!selectedChat) return
+    if (recorder.recorded) {
+      sendAudioMsg.mutate({
+        connectionId: selectedChat.connectionId,
+        phone: selectedChat.phone,
+        blob: recorder.recorded.blob,
+        seconds: recorder.recorded.seconds,
+      })
+      return
+    }
     if (mediaFile) {
       sendMediaMsg.mutate({
         connectionId: selectedChat.connectionId,
@@ -1063,9 +1203,9 @@ export function WhatsappCrmPage() {
                             <p className="whitespace-pre-wrap break-words mt-1">{msg.content}</p>
                           )}
                         </div>
-                      ) : msg.type === 'audio' && msg.mediaUrl ? (
+                      ) : (msg.type === 'audio' || msg.type === 'ptt') && msg.mediaUrl ? (
                         <div className="mb-1">
-                          <MediaAudio messageId={msg.id} />
+                          <MediaAudio messageId={msg.id} isMine={isMine} knownDuration={msg.mediaDuration} />
                         </div>
                       ) : msg.type === 'document' && msg.mediaUrl ? (
                         <div className="mb-1">
@@ -1138,6 +1278,21 @@ export function WhatsappCrmPage() {
                 </Button>
               </div>
             )}
+            {/* Recorded voice note, pending send */}
+            {recorder.recorded && (
+              <div className="mb-2 flex items-center gap-2 rounded-lg bg-muted p-2">
+                <audio src={recorder.recorded.url} controls className="h-8 min-w-0 flex-1" />
+                <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                  {formatDuration(recorder.recorded.seconds)}
+                </span>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={recorder.cancel}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+            {recorder.error && (
+              <p className="mb-2 text-xs text-red-500">{recorder.error}</p>
+            )}
             <form onSubmit={e => { e.preventDefault(); handleSend() }} className="flex gap-2">
               <input
                 ref={fileInputRef}
@@ -1146,29 +1301,77 @@ export function WhatsappCrmPage() {
                 className="hidden"
                 onChange={handleFileSelect}
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <ImagePlus className="h-4 w-4" />
-              </Button>
-              <Input
-                placeholder={mediaFile ? 'Legenda (opcional)...' : 'Digite uma mensagem...'}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={(!input.trim() && !mediaFile) || sendMsg.isPending || sendMediaMsg.isPending}
-                className="bg-green-500 hover:bg-green-600"
-              >
-                {sendMediaMsg.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
+              {recorder.isRecording ? (
+                <>
+                  <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={recorder.cancel}>
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                  <div className="flex flex-1 items-center gap-2 rounded-md border px-3">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                    <span className="text-sm tabular-nums">{formatDuration(recorder.seconds)}</span>
+                    <span className="text-xs text-muted-foreground">Gravando...</span>
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    onClick={recorder.stop}
+                    title="Parar gravação"
+                    className="bg-green-500 hover:bg-green-600"
+                  >
+                    <Square className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                  </Button>
+                  {!recorder.recorded && !mediaFile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={recorder.start}
+                      title="Gravar áudio"
+                    >
+                      <Mic className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Input
+                    placeholder={
+                      recorder.recorded
+                        ? 'Áudio pronto para enviar'
+                        : mediaFile
+                          ? 'Legenda (opcional)...'
+                          : 'Digite uma mensagem...'
+                    }
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    disabled={!!recorder.recorded}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    disabled={
+                      (!input.trim() && !mediaFile && !recorder.recorded) ||
+                      sendMsg.isPending || sendMediaMsg.isPending || sendAudioMsg.isPending
+                    }
+                    className="bg-green-500 hover:bg-green-600"
+                  >
+                    {sendMediaMsg.isPending || sendAudioMsg.isPending
+                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : <Send className="h-4 w-4" />}
+                  </Button>
+                </>
+              )}
             </form>
           </div>
         </>
